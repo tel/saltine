@@ -1,0 +1,62 @@
+name:                salty
+version:             0.0.0.0
+synopsis:            A Haskell libsodium binding
+description:
+
+  NaCl (pronounced "salt") is a new easy-to-use high-speed software
+  library for network communica tion, encryption, decryption,
+  signatures, etc. NaCl's goal is to provide all of the core
+  operations needed to build higher-level cryptographic tools.
+  
+  http://nacl.cr.yp.to/
+
+  Sodium is a portable, cross-compilable, installable, packageable
+  crypto library based on NaCl, with a compatible API.
+
+  https://github.com/jedisct1/libsodium
+
+  Salty is a Haskell binding to the NaCl primitives going through
+  libsodium for build convenience and, eventually, portability.
+
+license:             MIT
+license-file:        LICENSE
+author:              Joseph Abrahamson
+maintainer:          Joseph Abrahamson <me@jspha.com>
+bug-reports:         http://github.com/tel/salty/issues
+copyright:           Copyright (c) Joseph Abrahamson 2013
+category:            Crypto
+build-type:          Simple
+cabal-version:       >=1.10
+tested-with:         GHC==7.6.3
+
+source-repository head
+  type: git
+  location: https://github.com/tel/salty.git
+
+library
+  hs-source-dirs:     src
+  exposed-modules:
+    Crypto.Salty
+  other-modules:
+    Crypto.Salty.ByteSizes
+  extra-libraries:    sodium
+  cc-options:         -Wall
+  ghc-options:        -Wall -O2 -funbox-strict-fields
+  default-language:   Haskell2010
+  build-depends:       
+    base ==4.6.*,
+    bytestring,
+    vector
+    
+test-suite properties
+  type:    exitcode-stdio-1.0
+  main-is: properties.hs
+  ghc-options: -Wall -threaded -O0 -rtsopts
+  hs-source-dirs: tests
+  default-language: Haskell2010
+  build-depends:
+    base == 4.6.*,
+    salty,
+    bytestring,
+    vector,
+    QuickCheck
