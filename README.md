@@ -13,6 +13,8 @@ main = do
   let ciphertext = encrypt k n "Hello world"
   print $ decrypt k n ciphertext
 
+-- Just "Hello world"
+
 ```
 
 In
