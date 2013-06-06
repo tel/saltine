@@ -51,7 +51,7 @@ and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/C
 If you can think of ways to use Haskell's type system to enforce 
 security invariants, please suggest them.
 
-Tested with `libsodium-4.1`.
+Tested with [`libsodium-4.1`](http://download.dnscrypt.org/libsodium/releases/).
 
 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
 
