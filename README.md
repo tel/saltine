@@ -64,7 +64,8 @@ instead of `libsodium`.
 
 # Backlog
 
-* `Message` type for easy `Vector` encoding
+* `Message` type for easy `Vector` encoding (see
+  [`message`](https://github.com/tel/saltine/tree/message) branch)
 * Ideas for how to isolate key generation `IO` from general use, noncing strategies
 * How in the world should `ScalarMult` be packaged?
   * Built-in hashed DH exchange? Based on `pipes`?
