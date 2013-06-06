@@ -24,14 +24,6 @@ import Crypto.Saltine.Core.SecretBox
   so as to ensure `close` is called and that it is used in a threadsafe
   manner.
 
-* Keys are insecurely read from disk---they may be copied and then
-  paged back to disk. Use at your own risk.
-
--}
-
-{- Todo:
-
-* Refactor secretbox/secretboxOpen
 
 -}
 

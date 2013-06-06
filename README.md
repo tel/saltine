@@ -3,18 +3,15 @@
 A Haskell binding for @jedisct1's portable binding for djb's NaCl.
 
 ``` haskell
--- not implemented yet
-
 import Crypto.Saltine
 
 main = do
   k <- newKey
   n <- newNonce
-  let ciphertext = encrypt k n "Hello world"
-  print $ decrypt k n ciphertext
+  let ciphertext = secretbox k n "Hello world"
+  print $ secreboxOpen k n ciphertext
 
 -- Just "Hello world"
-
 ```
 
 In
@@ -32,6 +29,13 @@ interface. [Saltine](http://github.com/tel/saltine) is a Haskell
 binding to NaCl (via
 [`libsodium`](https://github.com/jedisct1/libsodium)) which hopes to
 provide even more simplicity and safty to the usage of cryptography.
+
+Note that it's still possible to shoot yourself in the foot pretty
+easily using Saltine. `Crypto.Saltine.Core.Stream` produces messages
+which can be undetectably tampered with in-flight. Keys are insecurely
+read from disk---they may be copied and then paged back to disk. Use
+Saltine at your own risk.
+
 
 Tested with `libsodium-4.1`.
 
