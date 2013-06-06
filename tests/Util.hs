@@ -1,11 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Util where
 
 import Test.QuickCheck
 
 import Data.Word
 import qualified Data.ByteString as S
+import qualified Data.ByteString.Char8 as S8
 import qualified Data.Vector.Storable as V
 
 import Control.Applicative
@@ -20,7 +19,7 @@ newtype Message = Message S.ByteString
                 deriving (Show)
 
 instance Arbitrary Message where
-  arbitrary = Message . S.intercalate " " <$> listOf (oneof [
+  arbitrary = Message . S.intercalate (S8.pack " ") <$> listOf (oneof [
     return "word",
     return "other word"
     ])
