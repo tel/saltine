@@ -59,4 +59,4 @@ instead of `libsodium`.
   `randombytes_random`, `randombytes_uniform`, `randombytes_buf`,
   `randombytes_close`, `crypto_sign_keypair`, and
   `crypto_box_keypair`.
-*
+* Benchmarks (does `-O2` or `-funbox-strict-fields` help?)
