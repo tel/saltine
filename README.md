@@ -6,14 +6,15 @@ yet stake your life or job on it.
 
 ``` haskell
 import Crypto.Saltine
+import qualified Data.Vector.Storable as V
 
 main = do
   k <- newKey
   n <- newNonce
-  let ciphertext = secretbox k n "Hello world"
+  let ciphertext = secretbox k n (V.fromList [1,2,3,4,5])
   print $ secreboxOpen k n ciphertext
 
--- Just "Hello world"
+-- Just (fromList [1,2,3,4,5])
 ```
 
 In
