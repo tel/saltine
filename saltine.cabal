@@ -1,6 +1,6 @@
 name:                saltine
 version:             0.0.0.1
-synopsis:            A Haskell libsodium binding
+synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
   /NaCl/ (pronounced \"salt\") is a new easy-to-use high-speed software
@@ -24,7 +24,7 @@ author:              Joseph Abrahamson
 maintainer:          Joseph Abrahamson <me@jspha.com>
 bug-reports:         http://github.com/tel/saltine/issues
 copyright:           Copyright (c) Joseph Abrahamson 2013
-category:            Crypto
+category:            Cryptography
 build-type:          Simple
 cabal-version:       >=1.10
 tested-with:         GHC==7.6.3
