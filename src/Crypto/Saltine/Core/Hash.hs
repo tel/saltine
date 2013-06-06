@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.Hash
+-- Module      : Crypto.Saltine.Core.Hash
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -7,7 +7,7 @@
 -- Stability   : experimental
 -- Portability : non-portable
 -- 
--- Hashing: "Crypto.Saltine.Internal.Hash"
+-- Hashing: "Crypto.Saltine.Core.Hash"
 -- 
 -- The 'hash' function hashes a message 'V.Vector' and returns a
 -- hash. Hashes are always of length 'Bytes.hash'. The 'shorthash'
@@ -40,7 +40,7 @@
 -- 
 -- This is version 2010.08.30 of the hash.html web page. Information
 -- about SipHash has been added.
-module Crypto.Saltine.Internal.Hash (
+module Crypto.Saltine.Core.Hash (
   ShorthashKey,
   hash,
   shorthash, newShorthashKey

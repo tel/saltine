@@ -6,7 +6,7 @@ module AuthProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Internal.Auth as A
+import qualified Crypto.Saltine.Core.Auth as A
 
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework

@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.SecretBox
+-- Module      : Crypto.Saltine.Core.SecretBox
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -8,7 +8,7 @@
 -- Portability : non-portable
 -- 
 -- Secret-key authenticated encryption:
--- "Crypto.Saltine.Internal.SecretBox"
+-- "Crypto.Saltine.Core.SecretBox"
 -- 
 -- The 'secretbox' function encrypts and authenticates a message
 -- 'V.Vector' using a secret key and a nonce. The 'secretboxOpen'
@@ -16,7 +16,7 @@
 -- key and a nonce. If the ciphertext fails validation,
 -- 'secretboxOpen' returns 'Nothing'.
 -- 
--- The "Crypto.Saltine.Internal.SecretBox" module is designed to meet
+-- The "Crypto.Saltine.Core.SecretBox" module is designed to meet
 -- the standard notions of privacy and authenticity for a secret-key
 -- authenticated-encryption scheme using nonces. For formal
 -- definitions see, e.g., Bellare and Namprempre, "Authenticated
@@ -30,14 +30,14 @@
 -- second message, etc. Nonces are long enough that randomly generated
 -- nonces have negligible risk of collision.
 -- 
--- "Crypto.Saltine.Internal.SecretBox" is
+-- "Crypto.Saltine.Core.SecretBox" is
 -- @crypto_secretbox_xsalsa20poly1305@, a particular combination of
 -- Salsa20 and Poly1305 specified in \"Cryptography in NaCl\"
 -- (<http://nacl.cr.yp.to/valid.html>). This function is conjectured
 -- to meet the standard notions of privacy and authenticity.
 -- 
 -- This is version 2010.08.30 of the secretbox.html web page.
-module Crypto.Saltine.Internal.SecretBox (
+module Crypto.Saltine.Core.SecretBox (
   Key, Nonce,
   secretbox, secretboxOpen,
   newKey, newNonce

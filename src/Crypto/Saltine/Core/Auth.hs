@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.Auth
+-- Module      : Crypto.Saltine.Core.Auth
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -8,7 +8,7 @@
 -- Portability : non-portable
 -- 
 -- Secret-key message authentication: 
--- "Crypto.Saltine.Internal.Auth"
+-- "Crypto.Saltine.Core.Auth"
 -- 
 -- The 'auth' function authenticates a message 'V.Vector' using a
 -- secret key The function returns an authenticator. The 'verify'
@@ -31,13 +31,13 @@
 -- into another valid authenticator for the same message. NaCl also
 -- does not make any promises regarding \"truncated unforgeability.\"
 -- 
--- "Crypto.Saltine.Internal.Auth" is currently an implementation of
+-- "Crypto.Saltine.Core.Auth" is currently an implementation of
 -- HMAC-SHA-512-256, i.e., the first 256 bits of
 -- HMAC-SHA-512. HMAC-SHA-512-256 is conjectured to meet the standard
 -- notion of unforgeability.
 -- 
 -- This is version 2010.08.30 of the auth.html web page.
-module Crypto.Saltine.Internal.Auth (
+module Crypto.Saltine.Core.Auth (
   Key,
   newKey,
   auth, verify

@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.Stream
+-- Module      : Crypto.Saltine.Core.Stream
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -8,7 +8,7 @@
 -- Portability : non-portable
 -- 
 -- Secret-key encryption:
--- "Crypto.Saltine.Internal.Stream"
+-- "Crypto.Saltine.Core.Stream"
 -- 
 -- The 'stream' function produces a sized stream 'V.Vector' as a
 -- function of a secret key and a nonce. The 'xor' function encrypts a
@@ -40,14 +40,14 @@
 -- crypto_stream to \"related-key attacks.\" It is the caller's
 -- responsibility to use proper key-derivation functions.
 -- 
--- "Crypto.Saltine.Internal.Stream" is @crypto_stream_xsalsa20@, a
+-- "Crypto.Saltine.Core.Stream" is @crypto_stream_xsalsa20@, a
 -- particular cipher specified in \"Cryptography in NaCl\"
 -- (<http://nacl.cr.yp.to/valid.html>), Section 7. This cipher is
 -- conjectured to meet the standard notion of unpredictability.
 -- 
 -- This is version 2010.08.30 of the stream.html web page.
 
-module Crypto.Saltine.Internal.Stream (
+module Crypto.Saltine.Core.Stream (
   Key, Nonce,
   newKey, newNonce,
   stream, xor

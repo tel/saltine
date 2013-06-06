@@ -6,7 +6,7 @@ module SecretBoxProperties (
 
 import Util
 
-import Crypto.Saltine.Internal.SecretBox
+import Crypto.Saltine.Core.SecretBox
 
 import qualified Data.Vector.Storable as V
 

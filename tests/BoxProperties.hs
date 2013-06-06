@@ -6,7 +6,7 @@ module BoxProperties (
 
 import Util
 
-import Crypto.Saltine.Internal.Box
+import Crypto.Saltine.Core.Box
 
 import qualified Data.Vector.Storable as V
 

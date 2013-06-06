@@ -6,7 +6,7 @@ module SignProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Internal.Sign as S
+import qualified Crypto.Saltine.Core.Sign as S
 
 import qualified Data.Vector.Storable as V
 

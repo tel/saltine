@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.Sign
+-- Module      : Crypto.Saltine.Core.Sign
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -7,7 +7,7 @@
 -- Stability   : experimental
 -- Portability : non-portable
 -- 
--- Signatures: "Crypto.Saltine.Internal.Sign"
+-- Signatures: "Crypto.Saltine.Core.Sign"
 -- 
 -- The 'newKeypair' function randomly generates a secret key and a
 -- corresponding public key. The 'sign' function signs a message
@@ -16,7 +16,7 @@
 -- signed message using the signer's public key then returns the
 -- message without its signature.
 -- 
--- "Crypto.Saltine.Internal.Sign" is an EdDSA signature using
+-- "Crypto.Saltine.Core.Sign" is an EdDSA signature using
 -- elliptic-curve Curve25519 (see: <http://ed25519.cr.yp.to/>). See
 -- also, \"Daniel J. Bernstein, Niels Duif, Tanja Lange, Peter
 -- Schwabe, Bo-Yin Yang. High-speed high-security signatures. Journal
@@ -25,7 +25,7 @@
 --
 -- This is current information as of 2013 June 6.
 
-module Crypto.Saltine.Internal.Sign (
+module Crypto.Saltine.Core.Sign (
   SecretKey, PublicKey, Keypair,
   newKeypair,
   sign, signOpen

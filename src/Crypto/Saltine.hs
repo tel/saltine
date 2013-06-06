@@ -2,12 +2,17 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Crypto.Saltine where
+module Crypto.Saltine (
+  optimize,
+  module Crypto.Saltine.Internal.SecretBox
+  ) where
 
 import Foreign.C
 
 import Data.Data
 import Control.Exception
+
+import Crypto.Saltine.Internal.SecretBox
 
 {- Notes:
 

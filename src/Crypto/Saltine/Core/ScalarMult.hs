@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.ScalarMult
+-- Module      : Crypto.Saltine.Core.ScalarMult
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -7,7 +7,7 @@
 -- Stability   : experimental
 -- Portability : non-portable
 -- 
--- Scalar multiplication: "Crypto.Saltine.Internal.ScalarMult"
+-- Scalar multiplication: "Crypto.Saltine.Core.ScalarMult"
 -- 
 -- The 'mult' function multiplies a group element by an integer of
 -- length 'Bytes.multScalar'. It returns the resulting group element
@@ -50,7 +50,7 @@
 -- 3958 (2006), 207–228, <http://cr.yp.to/papers.html#curve25519>.
 -- 
 -- This is version 2010.08.30 of the scalarmult.html web page.
-module Crypto.Saltine.Internal.ScalarMult (
+module Crypto.Saltine.Core.ScalarMult (
   mult, multBase
   ) where
 

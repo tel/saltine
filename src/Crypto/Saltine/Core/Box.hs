@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.Box
+-- Module      : Crypto.Saltine.Core.Box
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -8,7 +8,7 @@
 -- Portability : non-portable
 -- 
 -- Public-key authenticated encryption:
--- "Crypto.Saltine.Internal.Box"
+-- "Crypto.Saltine.Core.Box"
 -- 
 -- The 'box' function encrypts and authenticates a message 'V.Vector'
 -- using the sender's secret key, the receiver's public key, and a
@@ -17,7 +17,7 @@
 -- key, and a nonce. If the ciphertext fails verification, 'boxOpen'
 -- returns 'Nothing'.
 -- 
--- The "Crypto.Saltine.Internal.Box" module is designed to meet the
+-- The "Crypto.Saltine.Core.Box" module is designed to meet the
 -- standard notions of privacy and third-party unforgeability for a
 -- public-key authenticated-encryption scheme using nonces. For formal
 -- definitions see, e.g., Jee Hea An, "Authenticated encryption in the
@@ -40,7 +40,7 @@
 -- two different messages if the messages are sent to two different
 -- public keys.
 -- 
--- The "Crypto.Saltine.Internal.Box" module is not meant to provide
+-- The "Crypto.Saltine.Core.Box" module is not meant to provide
 -- non-repudiation. On the contrary: the crypto_box function
 -- guarantees repudiability. A receiver can freely modify a boxed
 -- message, and therefore cannot convince third parties that this
@@ -54,9 +54,9 @@
 -- Users who want public verifiability (or receiver-assisted public
 -- verifiability) should instead use signatures (or
 -- signcryption). Signatures are documented in the
--- "Crypto.Saltine.Internal.Sign" module.
+-- "Crypto.Saltine.Core.Sign" module.
 -- 
--- "Crypto.Saltine.Internal.Box" is @curve25519xsalsa20poly1305@, a
+-- "Crypto.Saltine.Core.Box" is @curve25519xsalsa20poly1305@, a
 -- particular combination of Curve25519, Salsa20, and Poly1305
 -- specified in "Cryptography in NaCl"
 -- (<http://nacl.cr.yp.to/valid.html>). This function is conjectured
@@ -64,7 +64,7 @@
 -- unforgeability.
 -- 
 -- This is version 2010.08.30 of the box.html web page.
-module Crypto.Saltine.Internal.Box (
+module Crypto.Saltine.Core.Box (
   SecretKey, PublicKey, Keypair, CombinedKey, Nonce,
   newKeypair, beforeNM, newNonce,
   box, boxOpen,

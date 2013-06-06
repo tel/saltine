@@ -46,5 +46,5 @@ instead of `libsodium`.
 
 * Tests for Hash
 * Tests for ScalarMult
-* Typesafe keys to prevent buffer size errors
+* Typesafety for `ScalarMult` (How?)
 * Extract unit tests from "[Cryptography in NaCl](http://cr.yp.to/highspeed/naclcrypto-20090310.pdf)"

@@ -38,12 +38,14 @@ library
   exposed-modules:
     Crypto.Saltine
     Crypto.Saltine.Internal.ByteSizes
-    Crypto.Saltine.Internal.SecretBox
-    Crypto.Saltine.Internal.Box
-    Crypto.Saltine.Internal.Stream
-    Crypto.Saltine.Internal.Auth
-    Crypto.Saltine.Internal.OneTimeAuth
-    Crypto.Saltine.Internal.Sign
+    Crypto.Saltine.Core.SecretBox
+    Crypto.Saltine.Core.Box
+    Crypto.Saltine.Core.Stream
+    Crypto.Saltine.Core.Auth
+    Crypto.Saltine.Core.OneTimeAuth
+    Crypto.Saltine.Core.Sign
+    Crypto.Saltine.Core.Hash
+    Crypto.Saltine.Core.ScalarMult
     Crypto.Saltine.Class
   other-modules:
     Crypto.Saltine.Internal.Util

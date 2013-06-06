@@ -1,5 +1,5 @@
 -- |
--- Module      : Crypto.Saltine.Internal.OneTimeAuth
+-- Module      : Crypto.Saltine.Core.OneTimeAuth
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 -- 
@@ -8,7 +8,7 @@
 -- Portability : non-portable
 -- 
 -- Secret-key single-message authentication:
--- "Crypto.Saltine.Internal.OneTimeAuth"
+-- "Crypto.Saltine.Core.OneTimeAuth"
 -- 
 -- The 'auth' function authenticates a message 'V.Vector' using a
 -- secret key The function returns an authenticator. The 'verify'
@@ -26,7 +26,7 @@
 -- the same key should be expected to reveal enough information to
 -- allow forgeries of authenticators on other messages.
 -- 
--- "Crypto.Saltine.Internal.OneTimeAuth" is
+-- "Crypto.Saltine.Core.OneTimeAuth" is
 -- @crypto_onetimeauth_poly1305@, an authenticator specified in
 -- "Cryptography in NaCl" (<http://nacl.cr.yp.to/valid.html>), Section
 -- 9. This authenticator is proven to meet the standard notion of
@@ -34,7 +34,7 @@
 -- 
 -- This is version 2010.08.30 of the onetimeauth.html web page.
 
-module Crypto.Saltine.Internal.OneTimeAuth (
+module Crypto.Saltine.Core.OneTimeAuth (
   newKey,
   auth, verify
   ) where

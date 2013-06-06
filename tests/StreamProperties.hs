@@ -6,7 +6,7 @@ module StreamProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Internal.Stream as S
+import qualified Crypto.Saltine.Core.Stream as S
 
 import qualified Data.Vector.Storable as V
 
