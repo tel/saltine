@@ -15,23 +15,23 @@ import Control.Applicative
 
 
 
--- | Encryption can be decrypted
+-- | Ciphertext can be decrypted
 rightInverseProp :: V.Vector Word8 -> V.Vector Word8 -> Message -> Bool
 rightInverseProp k n (Message bs) =
   Just bs == (toBS <$> SB.secretboxOpen k n (SB.secretbox k n (fromBS bs)))
 
--- | Encryption cannot be decrypted if the ciphertext is perturbed
+-- | Ciphertext cannot be decrypted if the ciphertext is perturbed
 rightInverseFailureProp :: V.Vector Word8 -> V.Vector Word8 -> Message -> Bool
 rightInverseFailureProp k n (Message bs) =
   Nothing == (toBS <$> SB.secretboxOpen k n (V.reverse $ SB.secretbox k n (fromBS bs)))
 
--- | Encryption cannot be decrypted with a different key
+-- | Ciphertext cannot be decrypted with a different key
 cannotDecryptKeyProp
   :: V.Vector Word8 -> V.Vector Word8 -> V.Vector Word8 -> Message -> Bool
 cannotDecryptKeyProp k1 k2 n (Message bs) =
   Nothing == (toBS <$> SB.secretboxOpen k2 n (SB.secretbox k1 n (fromBS bs)))
 
--- | Encryption cannot be decrypted with a different nonce
+-- | Ciphertext cannot be decrypted with a different nonce
 cannotDecryptNonceProp
   :: V.Vector Word8 -> V.Vector Word8 -> V.Vector Word8 -> Message -> Bool
 cannotDecryptNonceProp k n1 n2 (Message bs) =

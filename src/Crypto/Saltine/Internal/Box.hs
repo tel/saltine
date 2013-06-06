@@ -62,7 +62,11 @@
 -- (<http://nacl.cr.yp.to/valid.html>). This function is conjectured
 -- to meet the standard notions of privacy and third-party
 -- unforgeability.
-module Crypto.Saltine.Internal.Box where
+module Crypto.Saltine.Internal.Box (
+  newKeypair, beforeNM, newNonce,
+  box, boxOpen,
+  boxAfterNM, boxOpenAfterNM  
+  ) where
 
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
@@ -83,10 +87,19 @@ newKeypair = do
     c_box_keypair pkbuf skbuf
   return (sk, pk)
 
+beforeNM :: V.Vector Word8
+            -- ^ Your secret key
+            -> V.Vector Word8
+            -- ^ Your correspondant's public key
+            -> V.Vector Word8
+            -- ^ The combined key
+beforeNM sk pk = snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ckbuf ->
+  constVectors [pk, sk] $ \[ppk, psk] ->
+  c_box_beforenm ckbuf ppk psk
+
 -- | Randomly generates a nonce for usage with 'box' and 'boxOpen'.
 newNonce :: IO (V.Vector Word8)
 newNonce = randomVector Bytes.boxNonce
-
 
 -- | Executes @crypto_box@ on the passed 'V.Vector's. THIS IS MEMORY
 -- UNSAFE unless the key and nonce are precisely the right sizes.
@@ -107,7 +120,7 @@ box pk sk nonce msg =
   where len    = V.length msg + Bytes.boxZero
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
-        
+
 -- | Executes @crypto_box_open@ on the passed 'V.Vector's. THIS
 -- IS MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
@@ -130,6 +143,46 @@ boxOpen pk sk nonce cipher =
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
 
+-- | Executes @crypto_box_afternm on the passed 'V.Vector's. THIS IS
+-- MEMORY UNSAFE unless the key and nonce are precisely the right
+-- sizes.
+boxAfterNM :: V.Vector Word8
+              -- ^ Public key
+              -> V.Vector Word8
+              -- ^ Nonce
+              -> V.Vector Word8
+              -- ^ Message
+              -> V.Vector Word8
+              -- ^ Ciphertext
+boxAfterNM ck nonce msg =
+  unpad' . snd . buildUnsafeCVector len $ \pc ->
+    constVectors [ck, pad' msg, nonce] $ \[pck, pm, pn] ->
+    c_box_afternm pc pm (fromIntegral len) pn pck
+  where len    = V.length msg + Bytes.boxZero
+        pad'   = pad Bytes.boxZero
+        unpad' = unpad Bytes.boxBoxZero
+
+
+-- | Executes @crypto_box_afternm_open@ on the passed
+-- 'V.Vector's. THIS IS MEMORY UNSAFE unless the key and nonce are
+-- precisely the right sizes.
+boxOpenAfterNM :: V.Vector Word8
+           -- ^ Public key
+           -> V.Vector Word8
+           -- ^ Nonce
+           -> V.Vector Word8
+           -- ^ Ciphertext
+           -> Maybe (V.Vector Word8)
+           -- ^ Message
+boxOpenAfterNM ck nonce cipher =
+  let (err, vec) = buildUnsafeCVector len $ \pm ->
+        constVectors [ck, pad' cipher, nonce] $ \[pck, pc, pn] ->
+        c_box_open_afternm pm pc (fromIntegral len) pn pck
+  in hush . handleErrno err $ unpad' vec
+  where len    = V.length cipher + Bytes.boxBoxZero
+        pad'   = pad Bytes.boxBoxZero
+        unpad' = unpad Bytes.boxZero
+
 
 -- | Should always return a 0.
 foreign import ccall "crypto_box_keypair"
@@ -140,7 +193,7 @@ foreign import ccall "crypto_box_keypair"
                    -> IO CInt
                    -- ^ Always 0
 
--- | The secretbox C API uses 0-padded C strings. Always returns 0.
+-- | The secretbox C API uses 0-padded C strings.
 foreign import ccall "crypto_box"
   c_box :: Ptr Word8
            -- ^ Cipher 0-padded output buffer
@@ -155,8 +208,9 @@ foreign import ccall "crypto_box"
            -> Ptr Word8
            -- ^ Constant secret key buffer
            -> IO CInt
+           -- ^ Always 0
 
--- | The secretbox C API uses 0-padded C strings. Always returns 0.
+-- | The secretbox C API uses 0-padded C strings.
 foreign import ccall "crypto_box_open"
   c_box_open :: Ptr Word8
                 -- ^ Message 0-padded output buffer
@@ -171,3 +225,45 @@ foreign import ccall "crypto_box_open"
                 -> Ptr Word8
                 -- ^ Constant secret key buffer
                 -> IO CInt
+                -- ^ 0 for success, -1 for failure to verify
+
+-- | Single target key precompilation.
+foreign import ccall "crypto_box_beforenm"
+  c_box_beforenm :: Ptr Word8
+                    -- ^ Combined key output buffer
+                    -> Ptr Word8
+                    -- ^ Constant public key buffer
+                    -> Ptr Word8
+                    -- ^ Constant secret key buffer
+                    -> IO CInt
+                    -- ^ Always 0
+
+-- | Precompiled key crypto box. Uses 0-padded C strings.
+foreign import ccall "crypto_box_afternm"
+  c_box_afternm :: Ptr Word8
+                   -- ^ Cipher 0-padded output buffer
+                   -> Ptr Word8
+                   -- ^ Constant 0-padded message input buffer
+                   -> CInt
+                   -- ^ Length of message input buffer (incl. 0s)
+                   -> Ptr Word8
+                   -- ^ Constant nonce buffer
+                   -> Ptr Word8
+                   -- ^ Constant combined key buffer
+                   -> IO CInt
+                   -- ^ Always 0
+
+-- | The secretbox C API uses 0-padded C strings.
+foreign import ccall "crypto_box_open_afternm"
+  c_box_open_afternm :: Ptr Word8
+                        -- ^ Message 0-padded output buffer
+                        -> Ptr Word8
+                        -- ^ Constant 0-padded ciphertext input buffer
+                        -> CInt
+                        -- ^ Length of message input buffer (incl. 0s)
+                        -> Ptr Word8
+                        -- ^ Constant nonce buffer
+                        -> Ptr Word8
+                        -- ^ Constant combined key buffer
+                        -> IO CInt
+                        -- ^ 0 for success, -1 for failure to verify

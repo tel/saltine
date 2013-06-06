@@ -13,44 +13,119 @@ import qualified Data.Vector.Storable as V
 
 import Control.Applicative
 
+import Test.QuickCheck.Property
+import Test.QuickCheck.Monadic
 
-
--- | Encryption can be decrypted
+-- | Ciphertext can be decrypted
 rightInverseProp
-  :: V.Vector Word8 -> V.Vector Word8 -> V.Vector Word8
+  ::    (V.Vector Word8, V.Vector Word8)
+     -> (V.Vector Word8, V.Vector Word8)
+     -> V.Vector Word8
      -> Message -> Bool
-rightInverseProp pk sk n (Message bs) =
-  Just bs == (toBS <$> B.boxOpen pk sk n (B.box pk sk n (fromBS bs)))
+rightInverseProp (sk1, pk1) (sk2, pk2) n (Message bs) =
+  let
+    -- person 1 sends encrypting for person 2
+    enc = B.box pk2 sk1 n $ fromBS bs
+    -- person 2 receives decrypting for person 1
+    dec = toBS <$> B.boxOpen pk1 sk2 n enc
+  in Just bs == dec
 
--- | Encryption cannot be decrypted if the ciphertext is perturbed
-rightInverseFailureProp
-  :: V.Vector Word8 -> V.Vector Word8 -> V.Vector Word8
+-- | Cannot decrypt without the corrent secret key
+rightInverseFailureProp1
+  ::    (V.Vector Word8, V.Vector Word8)
+     -> (V.Vector Word8, V.Vector Word8)
+     -> V.Vector Word8
      -> Message -> Bool
-rightInverseFailureProp pk sk n (Message bs) =
-  Nothing == (toBS <$> B.boxOpen pk sk n (V.reverse $ B.box pk sk n (fromBS bs)))
+rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n (Message bs) =
+  let
+    -- person 1 sends encrypting for person 2
+    enc = B.box pk2 sk1 n $ fromBS bs
+    -- person 2 receives decrypting for nobody
+    dec = toBS <$> B.boxOpen pk1 (V.reverse sk2) n enc
+  in Nothing == dec
 
--- | Encryption cannot be decrypted with a different key
-cannotDecryptKeyProp
-  :: V.Vector Word8 -> V.Vector Word8
-     -> V.Vector Word8 -> V.Vector Word8
-     -> V.Vector Word8 -> Message -> Bool
-cannotDecryptKeyProp pk1 sk1 pk2 sk2 n (Message bs) =
-  Nothing == (toBS <$> B.boxOpen pk2 sk2 n (B.box pk1 sk1 n (fromBS bs)))
+-- | Cannot decrypt when not sent to you
+rightInverseFailureProp2
+  ::    (V.Vector Word8, V.Vector Word8)
+     -> (V.Vector Word8, V.Vector Word8)
+     -> V.Vector Word8
+     -> Message -> Bool
+rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n (Message bs) =
+  let
+    -- person 1 sends encrypting for person 2
+    enc = B.box (V.reverse pk2) sk1 n $ fromBS bs
+    -- person 2 receives decrypting for nobody
+    dec = toBS <$> B.boxOpen pk1 sk2 n enc
+  in Nothing == dec
 
--- | Encryption cannot be decrypted with a different nonce
+-- | Ciphertext cannot be decrypted (verification failure) if the
+-- ciphertext is perturbed
+rightInverseFailureProp3
+  :: (V.Vector Word8, V.Vector Word8)
+     -> (V.Vector Word8, V.Vector Word8)
+     -> V.Vector Word8
+     -> Message -> Bool
+rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n (Message bs) =
+  Nothing == (toBS <$> B.boxOpen pk1 sk2 n (V.reverse $ B.box pk2 sk1 n (fromBS bs)))
+
+-- | Ciphertext cannot be decrypted with a different nonce
 cannotDecryptNonceProp
-  :: V.Vector Word8 -> V.Vector Word8 -> V.Vector Word8 -> V.Vector Word8
+  :: (V.Vector Word8, V.Vector Word8)
+     -> (V.Vector Word8, V.Vector Word8)
+     -> V.Vector Word8 -> V.Vector Word8
      -> Message -> Bool
-cannotDecryptNonceProp pk sk n1 n2 (Message bs) =
-  Nothing == (toBS <$> B.boxOpen pk sk n2 (B.box pk sk n1 (fromBS bs)))
+cannotDecryptNonceProp (sk1, pk1) (sk2, pk2) n1 n2 (Message bs) =
+  Nothing == (toBS <$> B.boxOpen pk1 sk2 n2 (B.box pk2 sk1 n1 (fromBS bs)))
+
+-- | BeforeNM creates identical secret keys when called in an
+-- anti-symmetric fashion.
+beforeNMCreateSecretKeyProp :: Test.QuickCheck.Property.Property
+beforeNMCreateSecretKeyProp = monadicIO . (assert =<<) . run $ do
+  (sk1, pk1) <- B.newKeypair
+  (sk2, pk2) <- B.newKeypair
+  let ck_1for2 = B.beforeNM sk1 pk2
+      ck_2for1 = B.beforeNM sk2 pk1
+  return (ck_1for2 == ck_2for1)
+
+-- | Ciphertext can be decrypted using combined keys
+rightInverseAfterNMProp
+  ::    V.Vector Word8 -> V.Vector Word8
+     -> V.Vector Word8
+     -> Message -> Bool
+rightInverseAfterNMProp ck_1for2 ck_2for1 n (Message bs) =
+  let
+    -- person 1 sends encrypting for person 2
+    enc = B.boxAfterNM ck_1for2 n $ fromBS bs
+    -- person 2 receives decrypting for person 1
+    dec = toBS <$> B.boxOpenAfterNM ck_2for1 n enc
+  in Just bs == dec
+
+-- | Perturbed ciphertext cannot be decrypted using combined keys
+rightInverseFailureAfterNMProp1
+  ::    V.Vector Word8 -> V.Vector Word8
+     -> V.Vector Word8
+     -> Message -> Bool
+rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n (Message bs) =
+  let
+    -- person 1 sends encrypting for person 2
+    enc = B.boxAfterNM ck_1for2 n $ fromBS bs
+    -- person 2 receives decrypting for person 1
+    dec = toBS <$> B.boxOpenAfterNM ck_2for1 n (V.reverse enc)
+  in Nothing == dec
 
 testBox :: IO ()
 testBox = do
   (sk1, pk1) <- B.newKeypair
   (sk2, pk2) <- B.newKeypair
+  let ck_1for2 = B.beforeNM sk1 pk2
+      ck_2for1 = B.beforeNM sk2 pk1
   n1 <- B.newNonce
   n2 <- B.newNonce
-  qc (rightInverseProp pk1 sk1 n1)
-  qc (rightInverseFailureProp pk1 sk1 n1)
-  qc (cannotDecryptKeyProp pk1 sk1 pk2 sk2 n1)
-  qc (cannotDecryptNonceProp pk1 sk1 n1 n2)
+  qc (rightInverseProp (sk1, pk1) (sk2, pk2) n1)
+  qc (rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n1)
+  qc (rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n1)
+  qc (rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n1)
+  qc (cannotDecryptNonceProp (sk1, pk1) (sk2, pk2) n1 n2)
+  qc beforeNMCreateSecretKeyProp
+  qc (rightInverseAfterNMProp ck_1for2 ck_2for1 n1)
+  qc (rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n1)
