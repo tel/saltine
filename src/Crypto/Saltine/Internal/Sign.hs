@@ -62,7 +62,7 @@ sign :: V.Vector Word8
         -- ^ Signed message
 sign k m = unsafePerformIO $ 
   alloca $ \psmlen -> do
-    (err, sm) <- buildUnsafeCVector' (len + Bytes.sign) $ \psmbuf ->
+    (_err, sm) <- buildUnsafeCVector' (len + Bytes.sign) $ \psmbuf ->
       constVectors [k, m] $ \[pk, pm] ->
       c_sign psmbuf psmlen pm (fromIntegral len) pk
     smlen <- peek psmlen

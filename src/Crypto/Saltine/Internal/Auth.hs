@@ -38,10 +38,12 @@
 -- 
 -- This is version 2010.08.30 of the auth.html web page.
 module Crypto.Saltine.Internal.Auth (
+  Key,
   newKey,
   auth, verify
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -50,19 +52,34 @@ import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
 
+import Control.Applicative
+
+-- $types
+
+-- | An opaque 'auth' cryptographic key.
+newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding Key where
+  decode v = case V.length v == Bytes.authKey of
+    True -> Just (Key v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
-newKey :: IO (V.Vector Word8)
-newKey = randomVector Bytes.authKey
+newKey :: IO Key
+newKey = Key <$> randomVector Bytes.authKey
 
 -- | Executes @crypto_auth@ on the passed 'V.Vector's. THIS IS MEMORY
 -- UNSAFE unless the key and nonce are precisely the right sizes.
-auth :: V.Vector Word8
-          -- ^ Key
-          -> V.Vector Word8
-          -- ^ Message
-          -> V.Vector Word8
-          -- ^ Authenticator
-auth key msg =
+auth :: Key 
+        -- ^ Key
+        -> V.Vector Word8
+        -- ^ Message
+        -> V.Vector Word8
+        -- ^ Authenticator
+auth (Key key) msg =
   snd . buildUnsafeCVector Bytes.auth $ \pa ->
     constVectors [key, msg] $ \[pk, pm] ->
     c_auth pa pm (fromIntegral $ V.length msg) pk
@@ -70,7 +87,7 @@ auth key msg =
 -- | Executes @crypto_auth_verify@ on the passed 'V.Vector's. THIS IS
 -- MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-verify :: V.Vector Word8
+verify :: Key
           -- ^ Key
           -> V.Vector Word8
           -- ^ Message
@@ -78,7 +95,7 @@ verify :: V.Vector Word8
           -- ^ Authenticator
           -> Bool
           -- ^ Is this message authentic?
-verify key msg a =
+verify (Key key) msg a =
   unsafeDidSucceed $ constVectors [key, msg, a] $ \[pk, pm, pa] ->
   return $ c_auth_verify pa pm (fromIntegral $ V.length msg) pk
 

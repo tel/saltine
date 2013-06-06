@@ -16,8 +16,8 @@ import Test.QuickCheck
 
 testSign :: Test
 testSign = buildTest $ do
-  (sk1, pk1) <- S.newKeypair
-  (sk2, pk2) <- S.newKeypair
+  (sk1,  pk1) <- S.newKeypair
+  (_sk2, pk2) <- S.newKeypair
 
   return $ testGroup "...Internal.Sign" [
 

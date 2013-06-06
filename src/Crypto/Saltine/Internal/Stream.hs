@@ -47,7 +47,11 @@
 -- 
 -- This is version 2010.08.30 of the stream.html web page.
 
-module Crypto.Saltine.Internal.Stream where
+module Crypto.Saltine.Internal.Stream (
+  Key, Nonce,
+  newKey, newNonce,
+  stream, xor
+  ) where
 
 import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
