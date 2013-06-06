@@ -41,10 +41,12 @@
 -- This is version 2010.08.30 of the hash.html web page. Information
 -- about SipHash has been added.
 module Crypto.Saltine.Internal.Hash (
+  ShorthashKey,
   hash,
   shorthash, newShorthashKey
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -56,6 +58,8 @@ import System.IO.Unsafe
 import Data.Word
 import qualified Data.Vector.Storable as V
 
+import Control.Applicative
+
 hash :: V.Vector Word8
         -- ^ Message
         -> V.Vector Word8
@@ -63,16 +67,26 @@ hash :: V.Vector Word8
 hash m = snd . buildUnsafeCVector Bytes.hash $ \ph ->
   constVectors [m] $ \[pm] -> c_hash ph pm (fromIntegral $ V.length m)
 
-newShorthashKey :: IO (V.Vector Word8)
-newShorthashKey = randomVector Bytes.shorthashKey
+-- | An opaque 'shorthash' cryptographic secret key.
+newtype ShorthashKey = ShK (V.Vector Word8) deriving (Eq, Ord)
 
-shorthash :: V.Vector Word8
-             -- ^ Key
+instance IsEncoding ShorthashKey where
+  decode v = case V.length v == Bytes.shorthashKey of
+    True -> Just (ShK v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (ShK v) = v
+  {-# INLINE encode #-}
+
+newShorthashKey :: IO ShorthashKey
+newShorthashKey = ShK <$> randomVector Bytes.shorthashKey
+
+shorthash :: ShorthashKey
              -> V.Vector Word8
              -- ^ Message
              -> V.Vector Word8
              -- ^ Hash
-shorthash k m = snd . buildUnsafeCVector Bytes.shorthash $ \ph ->
+shorthash (ShK k) m = snd . buildUnsafeCVector Bytes.shorthash $ \ph ->
   constVectors [k, m] $ \[pk, pm] ->
   c_shorthash ph pm (fromIntegral $ V.length m) pk
              
