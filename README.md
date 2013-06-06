@@ -60,3 +60,11 @@ instead of `libsodium`.
   `randombytes_close`, `crypto_sign_keypair`, and
   `crypto_box_keypair`.
 * Benchmarks (does `-O2` or `-funbox-strict-fields` help?)
+
+# Backlog
+
+* `Message` type for easy `Vector` encoding
+* Ideas for how to isolate key generation `IO` from general use, noncing strategies
+* How in the world should `ScalarMult` be packaged?
+  * Built-in hashed DH exchange? Based on `pipes`?
+* Benchmarking
