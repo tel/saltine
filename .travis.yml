@@ -1,4 +1,13 @@
 language: haskell
+before_install:
+  - wget http://download.dnscrypt.org/libsodium/releases/libsodium-0.4.1.tar.gz
+  - tar xf libsodium-0.4.1.tar.gz 
+  - cd libsodium-0.4.1
+  - ./autogen.sh
+  - ./configure && make check
+  - sudo make install
+  - sudo ldconfig
+  - cd ..
 install:
   - cabal install --only-dependencies --enable-tests
   - cabal configure --enable-tests
