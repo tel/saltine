@@ -33,10 +33,10 @@ binding to NaCl (via
 provide even more simplicity and safty to the usage of cryptography.
 
 Note that it's still possible to shoot yourself in the foot pretty
-easily using Saltine. `Crypto.Saltine.Core.Stream` produces messages
-which can be undetectably tampered with in-flight. Keys are insecurely
-read from disk---they may be copied and then paged back to disk. Use
-Saltine at your own risk.
+easily using Saltine. Nonces must always be unique. 
+`Crypto.Saltine.Core.Stream` produces messages which can be 
+undetectably tampered with in-flight. Keys are insecurely read from 
+disk—they may be copied and then paged back to disk. Use Saltine carefully.
 
 
 Tested with `libsodium-4.1`.
