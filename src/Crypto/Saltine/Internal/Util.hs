@@ -11,8 +11,6 @@ import Data.Monoid
 import qualified Data.Vector.Storable as V
 import qualified Data.Vector.Storable.Mutable as VM
 
-import Control.Monad.Trans.Cont
-
 foreign import ccall "randombytes_buf"
   c_randombytes_buf :: Ptr Word8 -> CInt -> IO ()
 
