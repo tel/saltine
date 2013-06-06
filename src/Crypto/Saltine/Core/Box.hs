@@ -73,14 +73,17 @@ module Crypto.Saltine.Core.Box (
 
 import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Core.Hash (hash)
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as S8
 
 import Control.Applicative
+import Control.Monad
 
 -- $types
 
@@ -95,6 +98,11 @@ instance IsEncoding SecretKey where
   encode (SK v) = v
   {-# INLINE encode #-}
 
+instance Show SecretKey where
+  show k = "Box.SecretKey {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
+
 -- | An opaque 'box' cryptographic public key.
 newtype PublicKey = PK (V.Vector Word8) deriving (Eq, Ord)
 
@@ -105,6 +113,8 @@ instance IsEncoding PublicKey where
   {-# INLINE decode #-}
   encode (PK v) = v
   {-# INLINE encode #-}
+
+instance Show PublicKey where show = ashexShow "Box.PublicKey"
 
 -- | A convenience type for keypairs
 type Keypair = (SecretKey, PublicKey)
@@ -120,6 +130,11 @@ instance IsEncoding CombinedKey where
   encode (CK v) = v
   {-# INLINE encode #-}
 
+instance Show CombinedKey where
+  show k = "Box.CombinedKey {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
+
 -- | An opaque 'box' nonce.
 newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
 
@@ -134,6 +149,8 @@ instance IsEncoding Nonce where
 instance IsNonce Nonce where
   zero = Nonce (V.replicate Bytes.boxNonce 0)
   nudge (Nonce n) = Nonce (nudgeVector n)
+
+instance Show Nonce where show = ashexShow "Box.Nonce"
 
 -- | Randomly generates a secret key and a corresponding public key.
 newKeypair :: IO Keypair
@@ -161,64 +178,54 @@ beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ck
 -- key. They must have your public key in order to decrypt the
 -- message. It is infeasible for an attacker to decrypt the message so
 -- long as the 'Nonce' is not repeated.
-box :: PublicKey -> SecretKey -> Nonce
-       -> V.Vector Word8
-       -- ^ Message
-       -> V.Vector Word8
-       -- ^ Ciphertext
-box (PK pk) (SK sk) (Nonce nonce) msg =
+box :: IsEncoding a => PublicKey -> SecretKey -> Nonce -> a -> V.Vector Word8
+box (PK pk) (SK sk) (Nonce nonce) encmsg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
     constVectors [pk, sk, pad' msg, nonce] $ \[ppk, psk, pm, pn] ->
     c_box pc pm (fromIntegral len) pn ppk psk
   where len    = V.length msg + Bytes.boxZero
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
+        msg    = encode encmsg
 
 -- | Decrypts a message sent from the owner of the public key. They
 -- must have encrypted it using your secret key. Returns 'Nothing' if
 -- the keys and message do not match.
-boxOpen :: PublicKey -> SecretKey -> Nonce
-           -> V.Vector Word8
-           -- ^ Ciphertext
-           -> Maybe (V.Vector Word8)
-           -- ^ Message
-boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
+boxOpen :: (IsEncoding a, IsEncoding b)
+           => PublicKey -> SecretKey -> Nonce -> a -> Maybe b
+boxOpen (PK pk) (SK sk) (Nonce nonce) enccipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [pk, sk, pad' cipher, nonce] $ \[ppk, psk, pc, pn] ->
         c_box_open pm pc (fromIntegral len) pn ppk psk
-  in hush . handleErrno err $ unpad' vec
+  in decode <=< hush . handleErrno err $ unpad' vec
   where len    = V.length cipher + Bytes.boxBoxZero
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
+        cipher = encode enccipher
 
 -- | 'box' using a 'CombinedKey' and is thus faster.
-boxAfterNM :: CombinedKey -> Nonce
-              -> V.Vector Word8
-              -- ^ Message
-              -> V.Vector Word8
-              -- ^ Ciphertext
-boxAfterNM (CK ck) (Nonce nonce) msg =
+boxAfterNM :: IsEncoding a => CombinedKey -> Nonce -> a -> V.Vector Word8
+boxAfterNM (CK ck) (Nonce nonce) encmsg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
     constVectors [ck, pad' msg, nonce] $ \[pck, pm, pn] ->
     c_box_afternm pc pm (fromIntegral len) pn pck
   where len    = V.length msg + Bytes.boxZero
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
+        msg    = encode encmsg
 
 -- | 'boxOpen' using a 'CombinedKey' and is thus faster.
-boxOpenAfterNM :: CombinedKey -> Nonce
-           -> V.Vector Word8
-           -- ^ Ciphertext
-           -> Maybe (V.Vector Word8)
-           -- ^ Message
-boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
+boxOpenAfterNM :: (IsEncoding a, IsEncoding b)
+                  => CombinedKey -> Nonce -> a -> Maybe b
+boxOpenAfterNM (CK ck) (Nonce nonce) enccipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [ck, pad' cipher, nonce] $ \[pck, pc, pn] ->
         c_box_open_afternm pm pc (fromIntegral len) pn pck
-  in hush . handleErrno err $ unpad' vec
+  in decode <=< hush . handleErrno err $ unpad' vec
   where len    = V.length cipher + Bytes.boxBoxZero
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
+        cipher = encode enccipher
 
 
 -- | Should always return a 0.

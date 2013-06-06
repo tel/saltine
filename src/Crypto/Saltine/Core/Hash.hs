@@ -54,18 +54,17 @@ import Foreign.C
 import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as S8
 
 import Control.Applicative
 
 -- | Computes a cryptographically collision-resistant hash making
 -- @hash m == hash m' ==> m == m'@ highly likely even when under
 -- attack.
-hash :: V.Vector Word8
-        -- ^ Message
-        -> V.Vector Word8
-        -- ^ Hash
-hash m = snd . buildUnsafeCVector Bytes.hash $ \ph ->
+hash :: IsEncoding a => a -> V.Vector Word8
+hash encm = snd . buildUnsafeCVector Bytes.hash $ \ph ->
   constVectors [m] $ \[pm] -> c_hash ph pm (fromIntegral $ V.length m)
+  where m = encode encm
 
 -- | An opaque 'shorthash' cryptographic secret key.
 newtype ShorthashKey = ShK (V.Vector Word8) deriving (Eq, Ord)
@@ -78,19 +77,21 @@ instance IsEncoding ShorthashKey where
   encode (ShK v) = v
   {-# INLINE encode #-}
 
+instance Show ShorthashKey where
+  show k = "Hash.ShorthashKey {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
+
 -- | Randomly generates a new key for 'shorthash'.
 newShorthashKey :: IO ShorthashKey
 newShorthashKey = ShK <$> randomVector Bytes.shorthashKey
 
 -- | Computes a very short, fast keyed hash.
-shorthash :: ShorthashKey
-             -> V.Vector Word8
-             -- ^ Message
-             -> V.Vector Word8
-             -- ^ Hash
-shorthash (ShK k) m = snd . buildUnsafeCVector Bytes.shorthash $ \ph ->
+shorthash :: IsEncoding a => ShorthashKey -> a -> V.Vector Word8
+shorthash (ShK k) encm = snd . buildUnsafeCVector Bytes.shorthash $ \ph ->
   constVectors [k, m] $ \[pk, pm] ->
   c_shorthash ph pm (fromIntegral $ V.length m) pk
+  where m = encode encm
              
 foreign import ccall "crypto_hash"
   c_hash :: Ptr Word8

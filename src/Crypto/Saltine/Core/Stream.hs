@@ -55,12 +55,14 @@ module Crypto.Saltine.Core.Stream (
 
 import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Core.Hash (hash)
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as S8
 
 import Control.Applicative
 
@@ -77,6 +79,11 @@ instance IsEncoding Key where
   encode (Key v) = v
   {-# INLINE encode #-}
 
+instance Show Key where
+  show k = "Stream.Key {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
+
 -- | An opaque 'stream' nonce.
 newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
 
@@ -91,6 +98,8 @@ instance IsEncoding Nonce where
   {-# INLINE decode #-}
   encode (Nonce v) = v
   {-# INLINE encode #-}
+
+instance Show Nonce where show = ashexShow "Stream.Nonce"
 
 -- | Creates a random key of the correct size for 'stream' and 'xor'.
 newKey :: IO Key
@@ -119,16 +128,13 @@ stream (Key key) (Nonce nonce) n =
 -- for encryption and decryption, it is /possible for an attacker to/
 -- /manipulate the message in transit without detection/. USE AT YOUR
 -- OWN RISK.
-xor :: Key -> Nonce 
-       -> V.Vector Word8
-       -- ^ Message
-       -> V.Vector Word8
-       -- ^ Ciphertext
-xor (Key key) (Nonce nonce) msg =
+xor :: IsEncoding a => Key -> Nonce -> a -> V.Vector Word8
+xor (Key key) (Nonce nonce) encmsg =
   snd . buildUnsafeCVector len $ \pc ->
     constVectors [key, nonce, msg] $ \[pk, pn, pm] ->
     c_stream_xor pc pm (fromIntegral len) pn pk
   where len = V.length msg
+        msg = encode encmsg
 
 foreign import ccall "crypto_stream"
   c_stream :: Ptr Word8

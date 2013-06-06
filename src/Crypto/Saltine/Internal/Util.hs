@@ -8,7 +8,11 @@ import Data.Word
 import Data.Monoid
 import qualified Data.Vector.Storable as V
 import qualified Data.Vector.Storable.Mutable as VM
+import qualified Data.ByteString as S
+import qualified Data.ByteString.Char8 as S8
+import qualified Data.ByteString.Base16 as S16
 
+import Crypto.Saltine.Class
 import Data.STRef
 
 foreign import ccall "randombytes_buf"
@@ -31,6 +35,16 @@ nudgeVector v = V.modify go v
                       else VM.write mv i (succ val)
             else return ()
         len = V.length v
+
+-- | View an encodable thing as a hex string
+ashex :: IsEncoding a => a -> S.ByteString
+ashex a = case transcode a of
+  Just bs -> S16.encode bs
+  Nothing -> error "Crypto.Saltine.Util.ashex"
+
+-- | A default kind of Show instance for any 'IsEncoding' type
+ashexShow :: IsEncoding a => String -> a -> String
+ashexShow name a = name ++ "{ashex = \"" ++ S8.unpack (ashex a) ++ "\"}"
 
 -- | 0-pad a vector
 pad :: (VM.Storable a, Num a) => Int -> V.Vector a -> V.Vector a

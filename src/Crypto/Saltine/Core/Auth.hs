@@ -45,12 +45,14 @@ module Crypto.Saltine.Core.Auth (
 
 import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Core.Hash (hash)
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as S8
 
 import Control.Applicative
 
@@ -58,6 +60,11 @@ import Control.Applicative
 
 -- | An opaque 'auth' cryptographic key.
 newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+
+instance Show Key where
+  show k = "Auth.Key {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
 
 -- | An opaque 'auth' authenticator.
 newtype Authenticator = Au (V.Vector Word8) deriving (Eq, Ord)
@@ -78,6 +85,8 @@ instance IsEncoding Authenticator where
   encode (Au v) = v
   {-# INLINE encode #-}
 
+instance Show Authenticator where show = ashexShow "Auth.Authenticator"
+
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key
 newKey = Key <$> randomVector Bytes.authKey
@@ -86,26 +95,20 @@ newKey = Key <$> randomVector Bytes.authKey
 -- infeasible to forge these authenticators without the key, even if
 -- an attacker observes many authenticators and messages and has the
 -- ability to influence the messages sent.
-auth :: Key 
-        -> V.Vector Word8
-        -- ^ Message
-        -> Authenticator
-auth (Key key) msg =
+auth :: IsEncoding a => Key -> a -> Authenticator
+auth (Key key) encmsg =
   Au . snd . buildUnsafeCVector Bytes.auth $ \pa ->
     constVectors [key, msg] $ \[pk, pm] ->
     c_auth pa pm (fromIntegral $ V.length msg) pk
+  where msg = encode encmsg
 
 -- | Checks to see if an authenticator is a correct proof that a
 -- message was signed by some key.
-verify :: Key
-          -> Authenticator
-          -> V.Vector Word8
-          -- ^ Message
-          -> Bool
-          -- ^ Is this message authentic?
-verify (Key key) (Au a) msg =
+verify :: IsEncoding a => Key -> Authenticator -> a -> Bool
+verify (Key key) (Au a) encmsg =
   unsafeDidSucceed $ constVectors [key, msg, a] $ \[pk, pm, pa] ->
   return $ c_auth_verify pa pm (fromIntegral $ V.length msg) pk
+  where msg = encode encmsg
 
 foreign import ccall "crypto_auth"
   c_auth :: Ptr Word8

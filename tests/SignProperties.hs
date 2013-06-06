@@ -33,6 +33,7 @@ testSign = buildTest $ do
     testProperty "Rejects message with mismatched key"
     $ \(Message bs) -> let m = fromBS bs
                        in V.length m > 0
-                           ==> S.signOpen pk2 (S.sign sk1 m) == Nothing
+                           ==> S.signOpen pk2 (S.sign sk1 m)
+                           == (Nothing `asTypeOf` Just m)
 
     ]

@@ -80,6 +80,8 @@ instance IsEncoding GroupElement where
   encode (GE v) = v
   {-# INLINE encode #-}
 
+instance Show GroupElement where show = ashexShow "ScalarMult.GroupElement"
+
 instance IsEncoding Scalar where
   decode v = case V.length v == Bytes.multScalar of
     True -> Just (Sc v)
@@ -87,6 +89,8 @@ instance IsEncoding Scalar where
   {-# INLINE decode #-}
   encode (Sc v) = v
   {-# INLINE encode #-}
+
+instance Show Scalar where show = ashexShow "ScalarMult.Scalar"
 
 mult :: Scalar -> GroupElement -> GroupElement
 mult (Sc n) (GE p) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->

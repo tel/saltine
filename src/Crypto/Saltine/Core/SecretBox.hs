@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- Module      : Crypto.Saltine.Core.SecretBox
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -44,20 +45,28 @@ module Crypto.Saltine.Core.SecretBox (
   ) where
 
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash (hash)
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
 import Data.Word
+import qualified Data.ByteString.Char8 as S8
 import qualified Data.Vector.Storable as V
 
 import Control.Applicative
+import Control.Monad
 
 -- $types
 
 -- | An opaque 'secretbox' cryptographic key.
 newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+
+instance Show Key where
+  show k = "SecretBox.Key {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
 
 instance IsEncoding Key where
   decode v = case V.length v == Bytes.secretBoxKey of
@@ -69,6 +78,8 @@ instance IsEncoding Key where
 
 -- | An opaque 'secretbox' nonce.
 newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+
+instance Show Nonce where show = ashexShow "SecretBox.Nonce"
 
 instance IsEncoding Nonce where
   decode v = case V.length v == Bytes.secretBoxNonce of
@@ -92,34 +103,28 @@ newNonce = Nonce <$> randomVector Bytes.secretBoxNonce
 
 -- | Encrypts a message. It is infeasible for an attacker to decrypt
 -- the message so long as the 'Nonce' is never repeated.
-secretbox :: Key -> Nonce
-             -> V.Vector Word8
-             -- ^ Message
-             -> V.Vector Word8
-             -- ^ Ciphertext
-secretbox (Key key) (Nonce nonce) msg =
+secretbox :: IsEncoding a => Key -> Nonce -> a -> V.Vector Word8
+secretbox (Key key) (Nonce nonce) encmsg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
     constVectors [key, pad' msg, nonce] $ \[pk, pm, pn] ->
     c_secretbox pc pm (fromIntegral len) pn pk
   where len    = V.length msg + Bytes.secretBoxZero
         pad'   = pad Bytes.secretBoxZero
         unpad' = unpad Bytes.secretBoxBoxZero
+        msg    = encode encmsg
 
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
-secretboxOpen :: Key -> Nonce 
-                 -> V.Vector Word8
-                 -- ^ Ciphertext
-                 -> Maybe (V.Vector Word8)
-                 -- ^ Message
-secretboxOpen (Key key) (Nonce nonce) cipher =
+secretboxOpen :: (IsEncoding a, IsEncoding b) => Key -> Nonce -> a -> Maybe b
+secretboxOpen (Key key) (Nonce nonce) enccipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [key, pad' cipher, nonce] $ \[pk, pc, pn] ->
         c_secretbox_open pm pc (fromIntegral len) pn pk
-  in hush . handleErrno err $ unpad' vec
+  in decode <=< hush . handleErrno err $ unpad' vec
   where len    = V.length cipher + Bytes.secretBoxBoxZero
         pad'   = pad Bytes.secretBoxBoxZero
         unpad' = unpad Bytes.secretBoxZero
+        cipher = encode enccipher
 
 -- | The secretbox C API uses 0-padded C strings. Always returns 0.
 foreign import ccall "crypto_secretbox"

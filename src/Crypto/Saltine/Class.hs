@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 -- |
 -- Module      : Crypto.Saltine.Class
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -9,12 +10,14 @@
 -- 
 -- Saltine type classes
 module Crypto.Saltine.Class (
-  IsEncoding (..),
+  IsEncoding (..), transcode,
   IsNonce (..)
   ) where
 
 import Data.Profunctor
 import Data.Word
+import qualified Data.ByteString as S
+import qualified Data.Text as T
 import qualified Data.Vector.Storable as V
 import Control.Applicative
 
@@ -30,6 +33,18 @@ class IsEncoding a where
   encoded = prism' encode decode
   {-# INLINE encoded #-}
 
+instance IsEncoding (V.Vector Word8) where
+  encode = id
+  decode = Just
+
+instance IsEncoding (S.ByteString) where
+  encode = V.fromList . S.unpack
+  decode = Just . S.pack . V.toList
+
+-- | Convert between any two encoded forms via 'V.Vector Word8'.
+transcode :: (IsEncoding a, IsEncoding b) => a -> Maybe b
+transcode = decode . encode
+
 -- | A generic class for interacting with nonces.
 class IsNonce n where
   zero  :: n
@@ -43,7 +58,6 @@ class IsNonce n where
   -- implementation excepting that `succ` is partial.
 
 -- Copied over from Control.Lens
-
 prism' :: (Applicative f, Choice p) =>
           (a1 -> a) -> (a -> Maybe a2) -> p a2 (f a1) -> p a (f a)
 prism' bs sma = prism bs (\s -> maybe (Left s) Right (sma s))

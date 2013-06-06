@@ -10,10 +10,12 @@ import Crypto.Saltine
 main = do
   k <- newKey
   n <- newNonce
-  let ciphertext = secretbox k n "Hello world"
-  print $ secreboxOpen k n ciphertext
+  let ciphertext = secretbox k n (Message "Hello world!")
+  print (ashex ciphertext)
+  print (readMessage <$> secretboxOpen k n ciphertext)
 
--- Just "Hello world"
+-- "5d2abd978e01b2a38812e8c26815a5d3a7cb96fc95e35347a779ccca"
+-- Just "Hello world!"
 ```
 
 In

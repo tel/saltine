@@ -41,12 +41,14 @@ module Crypto.Saltine.Core.OneTimeAuth (
 
 import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Core.Hash (hash)
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as S8
 
 import Control.Applicative
 
@@ -66,6 +68,11 @@ instance IsEncoding Key where
   encode (Key v) = v
   {-# INLINE encode #-}
 
+instance Show Key where
+  show k = "OneTimeAuth.Key {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
+
 instance IsEncoding Authenticator where
   decode v = case V.length v == Bytes.onetime of
     True -> Just (Au v)
@@ -74,6 +81,8 @@ instance IsEncoding Authenticator where
   encode (Au v) = v
   {-# INLINE encode #-}
 
+instance Show Authenticator where show = ashexShow "OneTimeAuth.Authenticator"
+
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key
 newKey = Key <$> randomVector Bytes.onetimeKey
@@ -81,25 +90,19 @@ newKey = Key <$> randomVector Bytes.onetimeKey
 -- | Builds a keyed 'Authenticator' for a message. This
 -- 'Authenticator' is /impossible/ to forge so long as the 'Key' is
 -- never used twice.
-auth :: Key
-        -> V.Vector Word8
-        -- ^ Message
-        -> Authenticator
-auth (Key key) msg =
+auth :: IsEncoding a => Key -> a -> Authenticator
+auth (Key key) encmsg =
   Au . snd . buildUnsafeCVector Bytes.onetime $ \pa ->
     constVectors [key, msg] $ \[pk, pm] ->
     c_onetimeauth pa pm (fromIntegral $ V.length msg) pk
+  where msg = encode encmsg
 
 -- | Verifies that an 'Authenticator' matches a given message and key.
-verify :: Key
-          -> Authenticator
-          -> V.Vector Word8
-          -- ^ Message
-          -> Bool
-          -- ^ Is this message authentic?
-verify (Key key) (Au a) msg =
+verify :: IsEncoding a => Key -> Authenticator -> a -> Bool
+verify (Key key) (Au a) encmsg =
   unsafeDidSucceed $ constVectors [key, msg, a] $ \[pk, pm, pa] ->
   return $ c_onetimeauth_verify pa pm (fromIntegral $ V.length msg) pk
+  where msg = encode encmsg
 
 foreign import ccall "crypto_onetimeauth"
   c_onetimeauth :: Ptr Word8

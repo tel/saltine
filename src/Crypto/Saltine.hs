@@ -4,10 +4,16 @@
 
 module Crypto.Saltine (
   optimize,
-  module Crypto.Saltine.Core.SecretBox
+  ashex,
+  module Crypto.Saltine.Core.SecretBox,
+  module Crypto.Saltine.Types,
+  module Crypto.Saltine.Class
   ) where
 
 import Foreign.C
+import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Types
+import Crypto.Saltine.Class
 import Crypto.Saltine.Core.SecretBox
 
 -- | Runs Sodiums's optimizer. This has no semantic effect, but both

@@ -33,6 +33,7 @@ module Crypto.Saltine.Core.Sign (
 
 import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Core.Hash (hash)
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
@@ -42,6 +43,9 @@ import Foreign.Storable
 import System.IO.Unsafe
 import Data.Word
 import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as S8
+
+import Control.Monad
 
 -- $types
 
@@ -56,6 +60,11 @@ instance IsEncoding SecretKey where
   encode (SK v) = v
   {-# INLINE encode #-}
 
+instance Show SecretKey where
+  show k = "Sign.SecretKey {hashesTo = \""
+           ++ (take 10 $ S8.unpack $ ashex $ hash k)
+           ++ "...\"}"
+
 -- | An opaque 'box' cryptographic public key.
 newtype PublicKey = PK (V.Vector Word8) deriving (Eq, Ord)
 
@@ -66,6 +75,8 @@ instance IsEncoding PublicKey where
   {-# INLINE decode #-}
   encode (PK v) = v
   {-# INLINE encode #-}
+
+instance Show PublicKey where show = ashexShow "Sign.PublicKey"
 
 -- | A convenience type for keypairs
 type Keypair = (SecretKey, PublicKey)
@@ -83,12 +94,8 @@ newKeypair = do
 
 -- | Augments a message with a signature forming a \"signed
 -- message\".
-sign :: SecretKey
-        -> V.Vector Word8
-        -- ^ Message
-        -> V.Vector Word8
-        -- ^ Signed message
-sign (SK k) m = unsafePerformIO $ 
+sign :: IsEncoding a => SecretKey -> a -> V.Vector Word8
+sign (SK k) encm = unsafePerformIO $ 
   alloca $ \psmlen -> do
     (_err, sm) <- buildUnsafeCVector' (len + Bytes.sign) $ \psmbuf ->
       constVectors [k, m] $ \[pk, pm] ->
@@ -96,16 +103,13 @@ sign (SK k) m = unsafePerformIO $
     smlen <- peek psmlen
     return $ V.take (fromIntegral smlen) sm
   where len = V.length m
+        m   = encode encm
 
 -- | Checks a \"signed message\" returning 'Just' the original message
 -- iff the signature was generated using the 'SecretKey' corresponding
 -- to the given 'PublicKey'. Returns 'Nothing' otherwise.
-signOpen :: PublicKey
-            -> V.Vector Word8
-            -- ^ Signed message
-            -> Maybe (V.Vector Word8)
-            -- ^ Maybe the restored message
-signOpen (PK k) sm = unsafePerformIO $
+signOpen :: (IsEncoding a, IsEncoding b) => PublicKey -> a -> Maybe b
+signOpen (PK k) encsm = decode <=< unsafePerformIO $
   alloca $ \pmlen -> do
     (err, m) <- buildUnsafeCVector' smlen $ \pmbuf ->
       constVectors [k, sm] $ \[pk, psm] ->
@@ -115,7 +119,7 @@ signOpen (PK k) sm = unsafePerformIO $
       0 -> return $ Just $ V.take (fromIntegral mlen) m
       _ -> return $ Nothing
   where smlen = V.length sm
-
+        sm    = encode encsm
 
 foreign import ccall "crypto_sign_keypair"
   c_sign_keypair :: Ptr Word8
