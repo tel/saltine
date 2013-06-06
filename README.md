@@ -23,9 +23,9 @@ Bernstein, Lange, and Schwabe argue that high-level cryptographic
 libraries eliminate whole spaces of cryptographic disasters which are
 nigh inevitable whenever programmers use low-level crypto primitives.
 
-* [Security Stackexchange: Why Shouldn't We Roll Our Own?](http://security.stackexchange.com/questions/18197/why-shouldnt-we-roll-our-own)
+* [Security Stack Exchange: Why Shouldn't We Roll Our Own?](http://security.stackexchange.com/questions/18197/why-shouldnt-we-roll-our-own)
 * [Hacker News on "All the Crypto Code You've Ever Written is Probably Broken"](https://news.ycombinator.com/item?id=4779015)
-* [Stackoverflow: When can you trust yourself to implement cryptography based solutions?](http://stackoverflow.com/questions/1914257/when-can-you-trust-yourself-to-implement-cryptography-based-solutions)
+* [Stack Overflow: When can you trust yourself to implement cryptography based solutions?](http://stackoverflow.com/questions/1914257/when-can-you-trust-yourself-to-implement-cryptography-based-solutions)
 * [Coding Horror: Why isn't my encryption... encrypting?](http://www.codinghorror.com/blog/2009/05/why-isnt-my-encryption-encrypting.html)
 
 Crypto is complicated, so pre-rolled solutions are important
