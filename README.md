@@ -20,18 +20,23 @@ main = do
 In
 [*The Security Impact of a New Cryptographic Library*](http://cryptojedi.org/papers/coolnacl-20111201.pdf)
 Bernstein, Lange, and Schwabe argue that high-level cryptographic
-libraries are important for eliminating spaces of cryptographic
-disasters caused by improper implementation and combination of
-cryptographic primitives. In short, they claim cryptosystems often
-fail disasterously because of errors such as improper primitive
-configuration.
+libraries eliminate whole spaces of cryptographic disasters which are
+nigh inevitable whenever programmers use low-level crypto primitives.
+
+* [Security Stackexchange: Why Shouldn't We Roll Our Own?](http://security.stackexchange.com/questions/18197/why-shouldnt-we-roll-our-own)
+* [Hacker News on "All the Crypto Code You've Ever Written is Probably Broken"](https://news.ycombinator.com/item?id=4779015)
+* [Stackoverflow: When can you trust yourself to implement cryptography based solutions?](http://stackoverflow.com/questions/1914257/when-can-you-trust-yourself-to-implement-cryptography-based-solutions)
+* [Coding Horror: Why isn't my encryption... encrypting?](http://www.codinghorror.com/blog/2009/05/why-isnt-my-encryption-encrypting.html)
+
+Crypto is complicated, so pre-rolled solutions are important
+prevention mechanisms.
 
 [NaCl](http://nacl.cr.yp.to/) is Bernstein, Lange, and Schwabe's
 solution: a high-level, performant cryptography library with a no-fuss
 interface. [Saltine](http://github.com/tel/saltine) is a Haskell
 binding to NaCl (via
 [`libsodium`](https://github.com/jedisct1/libsodium)) which hopes to
-provide even more simplicity and safty to the usage of cryptography.
+provide even more simplicity and safety to the usage of cryptography.
 
 Note that it's still possible to shoot yourself in the foot pretty
 easily using Saltine. Nonces must always be unique. 
