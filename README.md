@@ -2,6 +2,19 @@
 
 A Haskell binding for @jedisct1's portable binding for djb's NaCl.
 
+``` haskell
+-- not implemented yet
+
+import Crypto.Saltine
+
+main = do
+  k <- newKey
+  n <- newNonce
+  let ciphertext = encrypt k n "Hello world"
+  print $ decrypt k n ciphertext
+
+```
+
 In
 [*The Security Impact of a New Cryptographic Library*](http://cryptojedi.org/papers/coolnacl-20111201.pdf)
 Bernstein, Lange, and Schwabe argue that high-level cryptographic
