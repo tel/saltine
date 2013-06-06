@@ -6,17 +6,17 @@ module OneTimeAuthProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Core.OneTimeAuth as O
+import Crypto.Saltine.Core.OneTimeAuth
 
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
 
 testOneTimeAuth :: Test
 testOneTimeAuth = buildTest $ do
-  k <- O.newKey
+  k <- newKey
   return $ testGroup "...Internal.Auth" [
 
     testProperty "Authenticates message"
-    $ \(Message bs) -> let m = fromBS bs in O.verify k m (O.auth k m) == True
+    $ \(Message bs) -> let m = fromBS bs in verify k (auth k m) m == True
 
     ]
