@@ -47,7 +47,9 @@ Keys are insecurely read from disk—they may be copied and then paged
 back to disk.
 
 When uncertain, use [`Crypto.Saltine.Core.SecretBox`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/SecretBox.hs) 
-and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/Box.hs)
+and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/Box.hs).
+If you can think of ways to use Haskell's type system to enforce 
+security invariants, please suggest them.
 
 Tested with `libsodium-4.1`.
 
