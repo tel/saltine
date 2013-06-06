@@ -103,7 +103,7 @@ foreign import ccall "crypto_sign"
             -- ^ Length of signed message
             -> Ptr Word8
             -- ^ Constant message buffer
-            -> CInt
+            -> CULLong
             -- ^ Length of message input buffer
             -> Ptr Word8
             -- ^ Constant secret key buffer
