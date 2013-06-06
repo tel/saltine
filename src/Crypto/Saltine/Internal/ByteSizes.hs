@@ -23,8 +23,11 @@ module Crypto.Saltine.Internal.ByteSizes (
   signPK,
   signSK,
   streamKey,
-  streamNonce
-
+  streamNonce,
+  hash,
+  shorthash,
+  shorthashKey
+  
   ) where
 
 import Foreign.C
@@ -36,6 +39,7 @@ boxBeforeNM, onetime, onetimeKey, scalarMult, scalarMultScalar :: Int
 secretBoxKey, secretBoxNonce, secretBoxZero, secretBoxBoxZero :: Int
 sign, signPK, signSK :: Int
 streamKey, streamNonce :: Int
+hash, shorthash, shorthashKey :: Int
 
 
 -- Authentication
@@ -82,13 +86,30 @@ secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes
 secretBoxBoxZero = fromIntegral c_crypto_secretbox_boxzerobytes
 
 -- Signatures
+-- | The maximum size of a signature prepended to a message to form a
+-- signed message.
 sign   = fromIntegral c_crypto_sign_bytes
+-- | The size of a public key for signing verification
 signPK = fromIntegral c_crypto_sign_publickeybytes
+-- | The size of a secret key for signing
 signSK = fromIntegral c_crypto_sign_secretkeybytes
 
 -- Streams
+-- | The size of a key for the cryptographic stream generation
 streamKey   = fromIntegral c_crypto_stream_keybytes
+-- | The size of a nonce for the cryptographic stream generation
 streamNonce = fromIntegral c_crypto_stream_noncebytes
+
+-- Hashes
+-- | The size of a hash resulting from
+-- 'Crypto.Saltine.Internal.Hash.hash'.
+hash         = fromIntegral c_crypto_hash_bytes
+-- | The size of a keyed hash resulting from
+-- 'Crypto.Saltine.Internal.Hash.shorthash'.
+shorthash    = fromIntegral c_crypto_shorthash_bytes
+-- | The size of a hashing key for the keyed hash function
+-- 'Crypto.Saltine.Internal.Hash.shorthash'.
+shorthashKey = fromIntegral c_crypto_shorthash_keybytes
 
 -- src/libsodium/crypto_auth/crypto_auth.c
 foreign import ccall "crypto_auth_bytes"
@@ -143,6 +164,7 @@ foreign import ccall "crypto_sign_secretkeybytes"
   c_crypto_sign_secretkeybytes :: CSize
 
 -- HARDCODED
+-- ---------
 
 -- | The size of a @crypto_stream@ or @crypto_stream_xor@
 -- key. HARDCODED to be @crypto_stream_xsalsa20@ for now until Sodium
@@ -156,11 +178,38 @@ c_crypto_stream_keybytes = 32
 c_crypto_stream_noncebytes :: CSize
 c_crypto_stream_noncebytes = 24
 
+-- | The size of a @crypto_hash@ output hash. HARDCODED to be
+-- @crypto_hash_sha512@ for now until Sodium exports the C constant.
+c_crypto_hash_bytes :: CSize
+c_crypto_hash_bytes = 64
+
+-- | The size of a @crypto_shorthash@ output hash. HARDCODED to be
+-- @crypto_shorthash_siphash24@ for now until Sodium exports the C
+-- constant.
+c_crypto_shorthash_bytes :: CSize
+c_crypto_shorthash_bytes = 8
+
+-- | The size of a @crypto_shorthash@ key. HARDCODED to be
+-- @crypto_shorthash_siphash24@ for now until Sodium exports the C
+-- constant.
+c_crypto_shorthash_keybytes :: CSize
+c_crypto_shorthash_keybytes = 16
+
+
 -- src/libsodium/crypto_stream/crypto_stream.c
 -- foreign import ccall "crypto_stream_keybytes"
 --   c_crypto_stream_keybytes :: CSize
 -- foreign import ccall "crypto_stream_noncebytes"
 --   c_crypto_stream_noncebytes :: CSize
+
+-- src/libsodium/crypto_shorthash/crypto_shorthash.c
+-- foreign import ccall "crypto_shorthash_bytes"
+--   c_crypto_shorthash_bytes :: CSize
+-- foreign import ccall "crypto_shorthash_keybytes"
+--   c_crypto_shorthash_keybytes :: CSize
+
+-- Others
+-- ------
 
 -- src/libsodium/crypto_auth/hmacsha256/auth_hmacsha256_api.c
 -- foreign import ccall "crypto_auth_hmacsha256_bytes"
@@ -277,12 +326,6 @@ c_crypto_stream_noncebytes = 24
 --   c_crypto_secretbox_xsalsa20poly1305_zerobytes :: CSize
 -- foreign import ccall "crypto_secretbox_xsalsa20poly1305_boxzerobytes"
 --   c_crypto_secretbox_xsalsa20poly1305_boxzerobytes :: CSize
-
--- src/libsodium/crypto_shorthash/crypto_shorthash.c
--- foreign import ccall "crypto_shorthash_bytes"
---   c_crypto_shorthash_bytes :: CSize
--- foreign import ccall "crypto_shorthash_keybytes"
---   c_crypto_shorthash_keybytes :: CSize
 
 -- foreign import ccall "crypto_shorthash_siphash24_bytes"
 --   c_crypto_shorthash_siphash24_bytes :: CSize
