@@ -65,11 +65,13 @@
 -- 
 -- This is version 2010.08.30 of the box.html web page.
 module Crypto.Saltine.Internal.Box (
+  SecretKey, PublicKey, Keypair, CombinedKey, Nonce,
   newKeypair, beforeNM, newNonce,
   box, boxOpen,
   boxAfterNM, boxOpenAfterNM  
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -78,44 +80,85 @@ import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
 
--- | Randomly generates a secret key and a corresponding public key as
--- @(secretKey, publicKey)@.
-newKeypair :: IO (V.Vector Word8, V.Vector Word8) 
+import Control.Applicative
+
+-- $types
+
+-- | An opaque 'box' cryptographic secret key.
+newtype SecretKey = SK (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding SecretKey where
+  decode v = case V.length v == Bytes.boxSK of
+    True -> Just (SK v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (SK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'box' cryptographic public key.
+newtype PublicKey = PK (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding PublicKey where
+  decode v = case V.length v == Bytes.boxPK of
+    True -> Just (PK v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (PK v) = v
+  {-# INLINE encode #-}
+
+-- | A convenience type for keypairs
+type Keypair = (SecretKey, PublicKey)
+
+-- | An opaque 'boxAfterNM' cryptographic combined key.
+newtype CombinedKey = CK (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding CombinedKey where
+  decode v = case V.length v == Bytes.boxBeforeNM of
+    True -> Just (CK v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (CK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'box' nonce.
+newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+-- TODO: Enum for Nonce
+
+instance IsEncoding Nonce where
+  decode v = case V.length v == Bytes.boxNonce of
+    True -> Just (Nonce v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
+
+-- | Randomly generates a secret key and a corresponding public key.
+newKeypair :: IO Keypair
 newKeypair = do
   -- This is a little bizarre and a likely source of errors.
   -- _err ought to always be 0.
   ((_err, sk), pk) <- buildUnsafeCVector' Bytes.boxPK $ \pkbuf ->
     buildUnsafeCVector' Bytes.boxSK $ \skbuf ->
     c_box_keypair pkbuf skbuf
-  return (sk, pk)
+  return (SK sk, PK pk)
 
-beforeNM :: V.Vector Word8
-            -- ^ Your secret key
-            -> V.Vector Word8
-            -- ^ Your correspondant's public key
-            -> V.Vector Word8
-            -- ^ The combined key
-beforeNM sk pk = snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ckbuf ->
+-- | Randomly generates a nonce for usage with 'box' and 'boxOpen'.
+newNonce :: IO Nonce
+newNonce = Nonce <$> randomVector Bytes.boxNonce
+
+beforeNM :: SecretKey -> PublicKey -> CombinedKey
+beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ckbuf ->
   constVectors [pk, sk] $ \[ppk, psk] ->
   c_box_beforenm ckbuf ppk psk
 
--- | Randomly generates a nonce for usage with 'box' and 'boxOpen'.
-newNonce :: IO (V.Vector Word8)
-newNonce = randomVector Bytes.boxNonce
-
 -- | Executes @crypto_box@ on the passed 'V.Vector's. THIS IS MEMORY
 -- UNSAFE unless the key and nonce are precisely the right sizes.
-box :: V.Vector Word8
-       -- ^ Public key
-       -> V.Vector Word8
-       -- ^ Secret key
-       -> V.Vector Word8
-       -- ^ Nonce
+box :: PublicKey -> SecretKey -> Nonce
        -> V.Vector Word8
        -- ^ Message
        -> V.Vector Word8
        -- ^ Ciphertext
-box pk sk nonce msg =
+box (PK pk) (SK sk) (Nonce nonce) msg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
     constVectors [pk, sk, pad' msg, nonce] $ \[ppk, psk, pm, pn] ->
     c_box pc pm (fromIntegral len) pn ppk psk
@@ -126,17 +169,12 @@ box pk sk nonce msg =
 -- | Executes @crypto_box_open@ on the passed 'V.Vector's. THIS
 -- IS MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-boxOpen :: V.Vector Word8
-           -- ^ Public key
-           -> V.Vector Word8
-           -- ^ Secert key
-           -> V.Vector Word8
-           -- ^ Nonce
+boxOpen :: PublicKey -> SecretKey -> Nonce
            -> V.Vector Word8
            -- ^ Ciphertext
            -> Maybe (V.Vector Word8)
            -- ^ Message
-boxOpen pk sk nonce cipher =
+boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [pk, sk, pad' cipher, nonce] $ \[ppk, psk, pc, pn] ->
         c_box_open pm pc (fromIntegral len) pn ppk psk
@@ -148,15 +186,12 @@ boxOpen pk sk nonce cipher =
 -- | Executes @crypto_box_afternm@ on the passed 'V.Vector's. THIS IS
 -- MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-boxAfterNM :: V.Vector Word8
-              -- ^ Public key
-              -> V.Vector Word8
-              -- ^ Nonce
+boxAfterNM :: CombinedKey -> Nonce
               -> V.Vector Word8
               -- ^ Message
               -> V.Vector Word8
               -- ^ Ciphertext
-boxAfterNM ck nonce msg =
+boxAfterNM (CK ck) (Nonce nonce) msg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
     constVectors [ck, pad' msg, nonce] $ \[pck, pm, pn] ->
     c_box_afternm pc pm (fromIntegral len) pn pck
@@ -168,15 +203,12 @@ boxAfterNM ck nonce msg =
 -- | Executes @crypto_box_afternm_open@ on the passed
 -- 'V.Vector's. THIS IS MEMORY UNSAFE unless the key and nonce are
 -- precisely the right sizes.
-boxOpenAfterNM :: V.Vector Word8
-           -- ^ Public key
-           -> V.Vector Word8
-           -- ^ Nonce
+boxOpenAfterNM :: CombinedKey -> Nonce
            -> V.Vector Word8
            -- ^ Ciphertext
            -> Maybe (V.Vector Word8)
            -- ^ Message
-boxOpenAfterNM ck nonce cipher =
+boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [ck, pad' cipher, nonce] $ \[pck, pc, pn] ->
         c_box_open_afternm pm pc (fromIntegral len) pn pck

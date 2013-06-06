@@ -38,10 +38,12 @@
 -- 
 -- This is version 2010.08.30 of the secretbox.html web page.
 module Crypto.Saltine.Internal.SecretBox (
+  Key, Nonce,
   secretbox, secretboxOpen,
   newKey, newNonce
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -50,18 +52,50 @@ import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
 
+import Control.Applicative
+
+-- $types
+
+-- | An opaque 'secretbox' cryptographic key.
+newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding Key where
+  decode v = case V.length v == Bytes.secretBoxKey of
+    True -> Just (Key v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'secretbox' nonce.
+newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+-- TODO: Enum for Nonce
+
+instance IsEncoding Nonce where
+  decode v = case V.length v == Bytes.secretBoxNonce of
+    True -> Just (Nonce v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
+
+-- | Creates a random key of the correct size for 'secretbox'.
+newKey :: IO Key
+newKey = Key <$> randomVector Bytes.secretBoxKey
+
+-- | Creates a random nonce of the correct size for 'secretbox'.
+newNonce :: IO Nonce
+newNonce = Nonce <$> randomVector Bytes.secretBoxNonce
+
 -- | Executes @crypto_secretbox@ on the passed 'V.Vector's. THIS IS
 -- MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-secretbox :: V.Vector Word8
-             -- ^ Key
-             -> V.Vector Word8
-             -- ^ Nonce
+secretbox :: Key -> Nonce
              -> V.Vector Word8
              -- ^ Message
              -> V.Vector Word8
              -- ^ Ciphertext
-secretbox key nonce msg =
+secretbox (Key key) (Nonce nonce) msg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
     constVectors [key, pad' msg, nonce] $ \[pk, pm, pn] ->
     c_secretbox pc pm (fromIntegral len) pn pk
@@ -72,15 +106,12 @@ secretbox key nonce msg =
 -- | Executes @crypto_secretbox_open@ on the passed 'V.Vector's. THIS
 -- IS MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-secretboxOpen :: V.Vector Word8
-                 -- ^ Key
-                 -> V.Vector Word8
-                 -- ^ Nonce
+secretboxOpen :: Key -> Nonce 
                  -> V.Vector Word8
                  -- ^ Ciphertext
                  -> Maybe (V.Vector Word8)
                  -- ^ Message
-secretboxOpen key nonce cipher =
+secretboxOpen (Key key) (Nonce nonce) cipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [key, pad' cipher, nonce] $ \[pk, pc, pn] ->
         c_secretbox_open pm pc (fromIntegral len) pn pk
@@ -88,15 +119,6 @@ secretboxOpen key nonce cipher =
   where len    = V.length cipher + Bytes.secretBoxBoxZero
         pad'   = pad Bytes.secretBoxBoxZero
         unpad' = unpad Bytes.secretBoxZero
-
--- | Creates a random nonce of the correct size for 'secretbox'.
-newNonce :: IO (V.Vector Word8)
-newNonce = randomVector Bytes.secretBoxNonce
-
--- | Creates a random key of the correct size for 'secretbox'.
-newKey :: IO (V.Vector Word8)
-newKey = randomVector Bytes.secretBoxKey
-
 
 -- | The secretbox C API uses 0-padded C strings. Always returns 0.
 foreign import ccall "crypto_secretbox"
