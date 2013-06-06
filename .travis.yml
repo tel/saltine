@@ -2,6 +2,7 @@ language: haskell
 before_install:
   - cabal update
 install:
+  - cabal install --only-dependencies $mode  
   - cabal configure -flib-Werror $mode
   - cabal build
 script:
