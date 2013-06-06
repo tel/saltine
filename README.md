@@ -1,6 +1,8 @@
-# Saltine
+# Saltine 0.0.0.1
 
-A Haskell binding for @jedisct1's portable binding for djb's NaCl.
+A Haskell binding for @jedisct1's portable binding for djb's
+NaCl. **This is an early release.** Please try it out, but don't just
+yet stake your life or job on it.
 
 ``` haskell
 import Crypto.Saltine
