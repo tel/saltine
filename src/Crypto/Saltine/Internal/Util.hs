@@ -29,7 +29,12 @@ handleErrno :: CInt -> (a -> Either String a)
 handleErrno err a = case err of
   0  -> Right a
   -1 -> Left "failed"
-  n  -> Left ("unexpected error code: " ++ show n)    
+  n  -> Left ("unexpected error code: " ++ show n)
+
+unsafeDidSucceed :: IO CInt -> Bool
+unsafeDidSucceed = go . unsafePerformIO
+  where go 0 = True
+        go _ = False
 
 -- | Convenience function for accessing constant C vectors
 constVectors :: VM.Storable a => [V.Vector a] -> ([Ptr a] -> IO b) -> IO b

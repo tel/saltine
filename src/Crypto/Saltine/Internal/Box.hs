@@ -2,14 +2,14 @@
 -- Module      : Crypto.Saltine.Internal.Box
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
---
+-- 
 -- Maintainer  : me@jspha.com
 -- Stability   : experimental
 -- Portability : non-portable
 -- 
--- Secret-key authenticated encryption:
+-- Public-key authenticated encryption:
 -- "Crypto.Saltine.Internal.Box"
---
+-- 
 -- The 'box' function encrypts and authenticates a message 'V.Vector'
 -- using the sender's secret key, the receiver's public key, and a
 -- nonce. The 'boxOpen' function verifies and decrypts a ciphertext
@@ -62,6 +62,8 @@
 -- (<http://nacl.cr.yp.to/valid.html>). This function is conjectured
 -- to meet the standard notions of privacy and third-party
 -- unforgeability.
+-- 
+-- This is version 2010.08.30 of the box.html web page.
 module Crypto.Saltine.Internal.Box (
   newKeypair, beforeNM, newNonce,
   box, boxOpen,

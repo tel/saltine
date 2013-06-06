@@ -2,14 +2,14 @@
 -- Module      : Crypto.Saltine.Internal.SecretBox
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
---
+-- 
 -- Maintainer  : me@jspha.com
 -- Stability   : experimental
 -- Portability : non-portable
 -- 
 -- Secret-key authenticated encryption:
 -- "Crypto.Saltine.Internal.SecretBox"
---
+-- 
 -- The 'secretbox' function encrypts and authenticates a message
 -- 'V.Vector' using a secret key and a nonce. The 'secretboxOpen'
 -- function verifies and decrypts a ciphertext 'V.Vector' using a secret
@@ -36,7 +36,7 @@
 -- (<http://nacl.cr.yp.to/valid.html>). This function is conjectured
 -- to meet the standard notions of privacy and authenticity.
 -- 
--- TODO: statically ensure that keys and nonces are the right size.
+-- This is version 2010.08.30 of the secretbox.html web page.
 module Crypto.Saltine.Internal.SecretBox (
   secretbox, secretboxOpen,
   newKey, newNonce

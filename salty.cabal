@@ -40,6 +40,9 @@ library
     Crypto.Saltine.Internal.ByteSizes
     Crypto.Saltine.Internal.SecretBox
     Crypto.Saltine.Internal.Box
+    Crypto.Saltine.Internal.Stream
+    Crypto.Saltine.Internal.Auth
+    Crypto.Saltine.Internal.OneTimeAuth
   other-modules:
     Crypto.Saltine.Internal.Util
   extra-libraries:    sodium

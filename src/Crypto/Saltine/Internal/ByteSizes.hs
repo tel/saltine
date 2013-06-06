@@ -21,7 +21,9 @@ module Crypto.Saltine.Internal.ByteSizes (
   secretBoxBoxZero,
   sign,
   signPK,
-  signSK
+  signSK,
+  streamKey,
+  streamNonce
 
   ) where
 
@@ -33,55 +35,60 @@ auth, authKey, boxPK, boxSK, boxNonce, boxZero, boxBoxZero, boxMac :: Int
 boxBeforeNM, onetime, onetimeKey, scalarMult, scalarMultScalar :: Int
 secretBoxKey, secretBoxNonce, secretBoxZero, secretBoxBoxZero :: Int
 sign, signPK, signSK :: Int
+streamKey, streamNonce :: Int
 
 
 -- Authentication
-auth    = fromIntegral c_crypto_auth_bytes    :: Int
-authKey = fromIntegral c_crypto_auth_keybytes :: Int
+auth    = fromIntegral c_crypto_auth_bytes
+authKey = fromIntegral c_crypto_auth_keybytes
 
 -- Box
 -- | Size of a @crypto_box@ public key
-boxPK       = fromIntegral c_crypto_box_publickeybytes :: Int
+boxPK       = fromIntegral c_crypto_box_publickeybytes
 -- | Size of a @crypto_box@ secret key
-boxSK       = fromIntegral c_crypto_box_secretkeybytes :: Int
+boxSK       = fromIntegral c_crypto_box_secretkeybytes
 -- | Size of a @crypto_box@ nonce
-boxNonce    = fromIntegral c_crypto_box_noncebytes     :: Int
+boxNonce    = fromIntegral c_crypto_box_noncebytes
 -- | Size of 0-padding prepended to messages before using @crypto_box@
 -- or after using @crypto_box_open@
-boxZero     = fromIntegral c_crypto_box_zerobytes      :: Int
+boxZero     = fromIntegral c_crypto_box_zerobytes
 -- | Size of 0-padding prepended to ciphertext before using
 -- @crypto_box_open@ or after using @crypto_box@.
-boxBoxZero  = fromIntegral c_crypto_box_boxzerobytes   :: Int
-boxMac      = fromIntegral c_crypto_box_macbytes       :: Int
+boxBoxZero  = fromIntegral c_crypto_box_boxzerobytes
+boxMac      = fromIntegral c_crypto_box_macbytes
 -- | Size of a @crypto_box_beforenm@-generated combined key
 boxBeforeNM =
-  fromIntegral c_crypto_box_beforenmbytes :: Int
+  fromIntegral c_crypto_box_beforenmbytes
 
 -- OneTimeAuth
-onetime    = fromIntegral c_crypto_onetimeauth_bytes    :: Int
-onetimeKey = fromIntegral c_crypto_onetimeauth_keybytes :: Int
+onetime    = fromIntegral c_crypto_onetimeauth_bytes
+onetimeKey = fromIntegral c_crypto_onetimeauth_keybytes
 
 -- ScalarMult
-scalarMult = fromIntegral c_crypto_scalarmult_bytes :: Int
+scalarMult = fromIntegral c_crypto_scalarmult_bytes
 scalarMultScalar =
-  fromIntegral c_crypto_scalarmult_scalarbytes :: Int
+  fromIntegral c_crypto_scalarmult_scalarbytes
 
 -- SecretBox
 -- | Size of a @crypto_secretbox@ secret key
-secretBoxKey     = fromIntegral c_crypto_secretbox_keybytes     :: Int
+secretBoxKey     = fromIntegral c_crypto_secretbox_keybytes
 -- | Size of a @crypto_secretbox@ nonce
-secretBoxNonce   = fromIntegral c_crypto_secretbox_noncebytes   :: Int
+secretBoxNonce   = fromIntegral c_crypto_secretbox_noncebytes
 -- | Size of 0-padding prepended to messages before using
 -- @crypto_secretbox@ or after using @crypto_secretbox_open@
-secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes    :: Int
+secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes
 -- | Size of 0-padding prepended to ciphertext before using
 -- @crypto_secretbox_open@ or after using @crypto_secretbox@
-secretBoxBoxZero = fromIntegral c_crypto_secretbox_boxzerobytes :: Int
+secretBoxBoxZero = fromIntegral c_crypto_secretbox_boxzerobytes
 
 -- Signatures
-sign   = fromIntegral c_crypto_sign_bytes          :: Int
-signPK = fromIntegral c_crypto_sign_publickeybytes :: Int
-signSK = fromIntegral c_crypto_sign_secretkeybytes :: Int
+sign   = fromIntegral c_crypto_sign_bytes
+signPK = fromIntegral c_crypto_sign_publickeybytes
+signSK = fromIntegral c_crypto_sign_secretkeybytes
+
+-- Streams
+streamKey   = fromIntegral c_crypto_stream_keybytes
+streamNonce = fromIntegral c_crypto_stream_noncebytes
 
 -- src/libsodium/crypto_auth/crypto_auth.c
 foreign import ccall "crypto_auth_bytes"
@@ -134,6 +141,26 @@ foreign import ccall "crypto_sign_publickeybytes"
   c_crypto_sign_publickeybytes :: CSize
 foreign import ccall "crypto_sign_secretkeybytes"
   c_crypto_sign_secretkeybytes :: CSize
+
+-- HARDCODED
+
+-- | The size of a @crypto_stream@ or @crypto_stream_xor@
+-- key. HARDCODED to be @crypto_stream_xsalsa20@ for now until Sodium
+-- exports the C constant.
+c_crypto_stream_keybytes :: CSize
+c_crypto_stream_keybytes = 32
+
+-- | The size of a @crypto_stream@ or @crypto_stream_xor@
+-- nonce. HARDCODED to be @crypto_stream_xsalsa20@ for now until
+-- Sodium exports the C constant.
+c_crypto_stream_noncebytes :: CSize
+c_crypto_stream_noncebytes = 24
+
+-- src/libsodium/crypto_stream/crypto_stream.c
+-- foreign import ccall "crypto_stream_keybytes"
+--   c_crypto_stream_keybytes :: CSize
+-- foreign import ccall "crypto_stream_noncebytes"
+--   c_crypto_stream_noncebytes :: CSize
 
 -- src/libsodium/crypto_auth/hmacsha256/auth_hmacsha256_api.c
 -- foreign import ccall "crypto_auth_hmacsha256_bytes"
@@ -257,7 +284,6 @@ foreign import ccall "crypto_sign_secretkeybytes"
 -- foreign import ccall "crypto_shorthash_keybytes"
 --   c_crypto_shorthash_keybytes :: CSize
 
--- src/libsodium/crypto_shorthash/siphash24/shorthash_siphash24_api.c
 -- foreign import ccall "crypto_shorthash_siphash24_bytes"
 --   c_crypto_shorthash_siphash24_bytes :: CSize
 
@@ -292,12 +318,6 @@ foreign import ccall "crypto_sign_secretkeybytes"
 --   c_crypto_stream_aes256estream_noncebytes :: CSize
 -- foreign import ccall "crypto_stream_aes256estream_beforenmbytes"
 --   c_crypto_stream_aes256estream_beforenmbytes :: CSize
-
--- src/libsodium/crypto_stream/crypto_stream.c
--- foreign import ccall "crypto_stream_keybytes"
---   c_crypto_stream_keybytes :: CSize
--- foreign import ccall "crypto_stream_noncebytes"
---   c_crypto_stream_noncebytes :: CSize
 
 -- src/libsodium/crypto_stream/salsa2012/stream_salsa2012_api.c
 -- foreign import ccall "crypto_stream_salsa2012_keybytes"
