@@ -26,10 +26,12 @@
 -- This is current information as of 2013 June 6.
 
 module Crypto.Saltine.Internal.Sign (
+  SecretKey, PublicKey, Keypair,
   newKeypair,
   sign, signOpen
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -41,26 +43,52 @@ import System.IO.Unsafe
 import Data.Word
 import qualified Data.Vector.Storable as V
 
+-- $types
+
+-- | An opaque 'box' cryptographic secret key.
+newtype SecretKey = SK (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding SecretKey where
+  decode v = case V.length v == Bytes.signSK of
+    True -> Just (SK v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (SK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'box' cryptographic public key.
+newtype PublicKey = PK (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding PublicKey where
+  decode v = case V.length v == Bytes.signPK of
+    True -> Just (PK v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (PK v) = v
+  {-# INLINE encode #-}
+
+-- | A convenience type for keypairs
+type Keypair = (SecretKey, PublicKey)
+
 -- | Creates a random key of the correct size for 'sign' and
 -- 'signOpen' of form @(secretKey, publicKey)@.
-newKeypair :: IO (V.Vector Word8, V.Vector Word8)
+newKeypair :: IO Keypair
 newKeypair = do
   -- This is a little bizarre and a likely source of errors.
   -- _err ought to always be 0.
   ((_err, sk), pk) <- buildUnsafeCVector' Bytes.signPK $ \pkbuf ->
     buildUnsafeCVector' Bytes.signSK $ \skbuf ->
     c_sign_keypair pkbuf skbuf
-  return (sk, pk)
+  return (SK sk, PK pk)
 
 -- | Executes @crypto_sign@ on the passed 'V.Vector's. THIS IS MEMORY
 -- UNSAFE unless the key is precisely the right size.
-sign :: V.Vector Word8
-        -- ^ Secret key
+sign :: SecretKey
         -> V.Vector Word8
         -- ^ Message
         -> V.Vector Word8
         -- ^ Signed message
-sign k m = unsafePerformIO $ 
+sign (SK k) m = unsafePerformIO $ 
   alloca $ \psmlen -> do
     (_err, sm) <- buildUnsafeCVector' (len + Bytes.sign) $ \psmbuf ->
       constVectors [k, m] $ \[pk, pm] ->
@@ -73,13 +101,12 @@ sign k m = unsafePerformIO $
 -- the original, unsigned message if verification succeeds and
 -- 'Nothing' otherwise. THIS IS MEMORY UNSAFE unless the key is
 -- precisely the right size.
-signOpen :: V.Vector Word8
-            -- ^ Public key
+signOpen :: PublicKey
             -> V.Vector Word8
             -- ^ Signed message
             -> Maybe (V.Vector Word8)
             -- ^ Maybe the restored message
-signOpen k sm = unsafePerformIO $
+signOpen (PK k) sm = unsafePerformIO $
   alloca $ \pmlen -> do
     (err, m) <- buildUnsafeCVector' smlen $ \pmbuf ->
       constVectors [k, sm] $ \[pk, psm] ->
