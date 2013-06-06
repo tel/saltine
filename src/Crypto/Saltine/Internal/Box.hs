@@ -143,7 +143,7 @@ boxOpen pk sk nonce cipher =
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
 
--- | Executes @crypto_box_afternm on the passed 'V.Vector's. THIS IS
+-- | Executes @crypto_box_afternm@ on the passed 'V.Vector's. THIS IS
 -- MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
 boxAfterNM :: V.Vector Word8

@@ -40,12 +40,20 @@ auth    = fromIntegral c_crypto_auth_bytes    :: Int
 authKey = fromIntegral c_crypto_auth_keybytes :: Int
 
 -- Box
+-- | Size of a @crypto_box@ public key
 boxPK       = fromIntegral c_crypto_box_publickeybytes :: Int
+-- | Size of a @crypto_box@ secret key
 boxSK       = fromIntegral c_crypto_box_secretkeybytes :: Int
+-- | Size of a @crypto_box@ nonce
 boxNonce    = fromIntegral c_crypto_box_noncebytes     :: Int
+-- | Size of 0-padding prepended to messages before using @crypto_box@
+-- or after using @crypto_box_open@
 boxZero     = fromIntegral c_crypto_box_zerobytes      :: Int
+-- | Size of 0-padding prepended to ciphertext before using
+-- @crypto_box_open@ or after using @crypto_box@.
 boxBoxZero  = fromIntegral c_crypto_box_boxzerobytes   :: Int
 boxMac      = fromIntegral c_crypto_box_macbytes       :: Int
+-- | Size of a @crypto_box_beforenm@-generated combined key
 boxBeforeNM =
   fromIntegral c_crypto_box_beforenmbytes :: Int
 
@@ -59,9 +67,15 @@ scalarMultScalar =
   fromIntegral c_crypto_scalarmult_scalarbytes :: Int
 
 -- SecretBox
+-- | Size of a @crypto_secretbox@ secret key
 secretBoxKey     = fromIntegral c_crypto_secretbox_keybytes     :: Int
+-- | Size of a @crypto_secretbox@ nonce
 secretBoxNonce   = fromIntegral c_crypto_secretbox_noncebytes   :: Int
+-- | Size of 0-padding prepended to messages before using
+-- @crypto_secretbox@ or after using @crypto_secretbox_open@
 secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes    :: Int
+-- | Size of 0-padding prepended to ciphertext before using
+-- @crypto_secretbox_open@ or after using @crypto_secretbox@
 secretBoxBoxZero = fromIntegral c_crypto_secretbox_boxzerobytes :: Int
 
 -- Signatures
