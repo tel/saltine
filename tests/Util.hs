@@ -20,6 +20,6 @@ newtype Message = Message S.ByteString
 
 instance Arbitrary Message where
   arbitrary = Message . S.intercalate (S8.pack " ") <$> listOf (oneof [
-    return "word",
-    return "other word"
+    return (S8.pack "word"),
+    return (S8.pack "other word")
     ])
