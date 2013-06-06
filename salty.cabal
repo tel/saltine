@@ -43,6 +43,7 @@ library
     Crypto.Saltine.Internal.Stream
     Crypto.Saltine.Internal.Auth
     Crypto.Saltine.Internal.OneTimeAuth
+    Crypto.Saltine.Internal.Sign
   other-modules:
     Crypto.Saltine.Internal.Util
   extra-libraries:    sodium

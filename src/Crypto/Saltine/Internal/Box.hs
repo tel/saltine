@@ -201,7 +201,7 @@ foreign import ccall "crypto_box"
            -- ^ Cipher 0-padded output buffer
            -> Ptr Word8
            -- ^ Constant 0-padded message input buffer
-           -> CInt
+           -> CULLong
            -- ^ Length of message input buffer (incl. 0s)
            -> Ptr Word8
            -- ^ Constant nonce buffer
@@ -218,7 +218,7 @@ foreign import ccall "crypto_box_open"
                 -- ^ Message 0-padded output buffer
                 -> Ptr Word8
                 -- ^ Constant 0-padded ciphertext input buffer
-                -> CInt
+                -> CULLong
                 -- ^ Length of message input buffer (incl. 0s)
                 -> Ptr Word8
                 -- ^ Constant nonce buffer
@@ -246,7 +246,7 @@ foreign import ccall "crypto_box_afternm"
                    -- ^ Cipher 0-padded output buffer
                    -> Ptr Word8
                    -- ^ Constant 0-padded message input buffer
-                   -> CInt
+                   -> CULLong
                    -- ^ Length of message input buffer (incl. 0s)
                    -> Ptr Word8
                    -- ^ Constant nonce buffer
@@ -261,7 +261,7 @@ foreign import ccall "crypto_box_open_afternm"
                         -- ^ Message 0-padded output buffer
                         -> Ptr Word8
                         -- ^ Constant 0-padded ciphertext input buffer
-                        -> CInt
+                        -> CULLong
                         -- ^ Length of message input buffer (incl. 0s)
                         -> Ptr Word8
                         -- ^ Constant nonce buffer

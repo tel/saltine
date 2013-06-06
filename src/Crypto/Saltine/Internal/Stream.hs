@@ -102,7 +102,7 @@ xor key nonce msg =
 foreign import ccall "crypto_stream"
   c_stream :: Ptr Word8
               -- ^ Stream output buffer
-              -> CInt
+              -> CULLong
               -- ^ Length of stream to generate
               -> Ptr Word8
               -- ^ Constant nonce buffer
@@ -116,7 +116,7 @@ foreign import ccall "crypto_stream_xor"
                   -- ^ Ciphertext output buffer
                   -> Ptr Word8
                   -- ^ Constant message buffer
-                  -> CInt
+                  -> CULLong
                   -- ^ Length of message buffer
                   -> Ptr Word8
                   -- ^ Constant nonce buffer

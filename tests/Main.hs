@@ -7,6 +7,7 @@ import BoxProperties (testBox)
 import StreamProperties (testStream)
 import AuthProperties (testAuth)
 import OneTimeAuthProperties (testOneTimeAuth)
+import SignProperties (testSign)
 
 import Test.Framework
 
@@ -16,5 +17,6 @@ main = defaultMain [
   testSecretBox,
   testStream,
   testAuth,
-  testOneTimeAuth
+  testOneTimeAuth,
+  testSign
   ]

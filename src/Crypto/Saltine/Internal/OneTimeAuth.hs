@@ -85,7 +85,7 @@ foreign import ccall "crypto_onetimeauth"
                    -- ^ Authenticator output buffer
                    -> Ptr Word8
                    -- ^ Constant message buffer
-                   -> CInt
+                   -> CULLong
                    -- ^ Length of message buffer
                    -> Ptr Word8
                    -- ^ Constant key buffer
@@ -99,7 +99,7 @@ foreign import ccall "crypto_onetimeauth_verify"
                           -- ^ Constant authenticator buffer
                           -> Ptr Word8
                           -- ^ Constant message buffer
-                          -> CInt
+                          -> CULLong
                           -- ^ Length of message buffer
                           -> Ptr Word8
                           -- ^ Constant key buffer

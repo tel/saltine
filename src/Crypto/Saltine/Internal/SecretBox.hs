@@ -104,7 +104,7 @@ foreign import ccall "crypto_secretbox"
                  -- ^ Cipher 0-padded output buffer
                  -> Ptr Word8
                  -- ^ Constant 0-padded message input buffer
-                 -> CInt
+                 -> CULLong
                  -- ^ Length of message input buffer (incl. 0s)
                  -> Ptr Word8
                  -- ^ Constant nonce buffer
@@ -119,7 +119,7 @@ foreign import ccall "crypto_secretbox_open"
                       -- ^ Message 0-padded output buffer
                       -> Ptr Word8
                       -- ^ Constant 0-padded message input buffer
-                      -> CInt
+                      -> CULLong
                       -- ^ Length of message input buffer (incl. 0s)
                       -> Ptr Word8
                       -- ^ Constant nonce buffer
