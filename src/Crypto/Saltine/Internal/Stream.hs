@@ -49,6 +49,7 @@
 
 module Crypto.Saltine.Internal.Stream where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -57,27 +58,49 @@ import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
 
--- | Creates a random nonce of the correct size for 'stream' and
--- 'xor'.
-newNonce :: IO (V.Vector Word8)
-newNonce = randomVector Bytes.streamNonce
+import Control.Applicative
+
+-- $types
+
+-- | An opaque 'stream' cryptographic key.
+newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding Key where
+  decode v = case V.length v == Bytes.streamKey of
+    True -> Just (Key v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'stream' nonce.
+newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+-- TODO: Enum for Nonce
+
+instance IsEncoding Nonce where
+  decode v = case V.length v == Bytes.streamNonce of
+    True -> Just (Nonce v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
 
 -- | Creates a random key of the correct size for 'stream' and 'xor'.
-newKey :: IO (V.Vector Word8)
-newKey = randomVector Bytes.streamKey
+newKey :: IO Key
+newKey = Key <$> randomVector Bytes.streamKey
+
+-- | Creates a random nonce of the correct size for 'stream' and
+-- 'xor'.
+newNonce :: IO Nonce
+newNonce = Nonce <$> randomVector Bytes.streamNonce
 
 -- | Executes @crypto_stream@ on the passed 'V.Vector's. THIS IS
 -- MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-stream :: V.Vector Word8
-          -- ^ Key
-          -> V.Vector Word8
-          -- ^ Nonce
-          -> Int
-          -- ^ Length of vector to generate
+stream :: Key -> Nonce -> Int
           -> V.Vector Word8
           -- ^ Cryptographic stream
-stream key nonce n =
+stream (Key key) (Nonce nonce) n =
   snd . buildUnsafeCVector n $ \ps ->
     constVectors [key, nonce] $ \[pk, pn] ->
     c_stream ps (fromIntegral n) pn pk
@@ -85,15 +108,12 @@ stream key nonce n =
 -- | Executes @crypto_stream_xor@ on the passed 'V.Vector's. THIS IS
 -- MEMORY UNSAFE unless the key and nonce are precisely the right
 -- sizes.
-xor :: V.Vector Word8
-       -- ^ Key
-       -> V.Vector Word8
-       -- ^ Nonce
+xor :: Key -> Nonce 
        -> V.Vector Word8
        -- ^ Message
        -> V.Vector Word8
        -- ^ Ciphertext
-xor key nonce msg =
+xor (Key key) (Nonce nonce) msg =
   snd . buildUnsafeCVector len $ \pc ->
     constVectors [key, nonce, msg] $ \[pk, pn, pm] ->
     c_stream_xor pc pm (fromIntegral len) pn pk

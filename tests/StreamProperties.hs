@@ -14,9 +14,6 @@ import Test.Framework.Providers.QuickCheck2
 import Test.Framework
 import Test.QuickCheck
 
--- Length of output stream
--- Involutivity of xor
-
 testStream :: Test
 testStream = buildTest $ do
   k <- S.newKey
