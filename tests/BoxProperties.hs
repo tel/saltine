@@ -13,6 +13,9 @@ import qualified Data.Vector.Storable as V
 
 import Control.Applicative
 
+import Test.Framework.Providers.QuickCheck2
+import Test.Framework
+
 import Test.QuickCheck.Property
 import Test.QuickCheck.Monadic
 
@@ -113,19 +116,50 @@ rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n (Message bs) =
     dec = toBS <$> B.boxOpenAfterNM ck_2for1 n (V.reverse enc)
   in Nothing == dec
 
-testBox :: IO ()
-testBox = do
+testBox :: Test
+testBox = buildTest $ do
   (sk1, pk1) <- B.newKeypair
   (sk2, pk2) <- B.newKeypair
   let ck_1for2 = B.beforeNM sk1 pk2
       ck_2for1 = B.beforeNM sk2 pk1
   n1 <- B.newNonce
   n2 <- B.newNonce
-  qc (rightInverseProp (sk1, pk1) (sk2, pk2) n1)
-  qc (rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n1)
-  qc (rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n1)
-  qc (rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n1)
-  qc (cannotDecryptNonceProp (sk1, pk1) (sk2, pk2) n1 n2)
-  qc beforeNMCreateSecretKeyProp
-  qc (rightInverseAfterNMProp ck_1for2 ck_2for1 n1)
-  qc (rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n1)
+  return $ testGroup "...Internal.Box" [
+
+    testGroup "Can decrypt ciphertext using..." [
+       
+       testProperty "... public key/secret key"
+       $ rightInverseProp (sk1, pk1) (sk2, pk2) n1 ,
+       
+       testProperty "... combined key"
+       $ rightInverseAfterNMProp ck_1for2 ck_2for1 n1
+       
+       ],
+
+    testGroup "Fail to verify ciphertext when..." [
+      
+      testProperty "... not using proper secret key"
+      $ rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n1,
+      
+      testProperty "... not actually sent to you"
+      $ rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n1,
+      
+      testProperty "... ciphertext has been perturbed"
+      $ rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n1,
+      
+      testProperty "... using the wrong nonce"
+      $ cannotDecryptNonceProp (sk1, pk1) (sk2, pk2) n1 n2,
+      
+      testProperty "... using the wrong combined key"
+      $ rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n1
+      
+      ],
+
+    testGroup "(properties)" [
+
+      testProperty "beforeNM is anti-symmetric" beforeNMCreateSecretKeyProp
+      
+      ]
+    ]
+    
+       

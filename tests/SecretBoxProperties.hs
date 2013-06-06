@@ -13,7 +13,8 @@ import qualified Data.Vector.Storable as V
 
 import Control.Applicative
 
-
+import Test.Framework.Providers.QuickCheck2
+import Test.Framework
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: V.Vector Word8 -> V.Vector Word8 -> Message -> Bool
@@ -37,13 +38,28 @@ cannotDecryptNonceProp
 cannotDecryptNonceProp k n1 n2 (Message bs) =
   Nothing == (toBS <$> SB.secretboxOpen k n2 (SB.secretbox k n1 (fromBS bs)))
 
-testSecretBox :: IO ()
-testSecretBox = do
+testSecretBox :: Test
+testSecretBox = buildTest $ do
   k1 <- SB.newKey
   k2 <- SB.newKey
   n1 <- SB.newNonce
   n2 <- SB.newNonce
-  qc (rightInverseProp k1 n1)
-  qc (rightInverseFailureProp k1 n1)
-  qc (cannotDecryptKeyProp   k1 k2 n1)
-  qc (cannotDecryptNonceProp k1 n1 n2)
+
+  return $ testGroup "...Internal.SecretBox" [
+
+    testProperty "Can decrypt ciphertext"
+    $ rightInverseProp k1 n1,
+
+    testGroup "Cannot decrypt ciphertext when..." [
+
+      testProperty "... ciphertext is perturbed"
+      $ rightInverseFailureProp k1 n1,
+
+      testProperty "... using the wrong key"
+      $ cannotDecryptKeyProp   k1 k2 n1,
+
+      testProperty "... using the wrong nonce"
+      $ cannotDecryptNonceProp k1 n1 n2
+      
+      ]
+    ]

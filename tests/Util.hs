@@ -10,9 +10,6 @@ import qualified Data.Vector.Storable as V
 
 import Control.Applicative
 
-qc :: Testable a => a -> IO ()
-qc = quickCheck
-
 fromBS :: S.ByteString -> V.Vector Word8
 fromBS = V.fromList . S.unpack
 
