@@ -62,3 +62,4 @@ instead of `libsodium`.
   `randombytes_close`, `crypto_sign_keypair`, and
   `crypto_box_keypair`.
 * Benchmarks (does `-O2` or `-funbox-strict-fields` help?)
+* Split off `IsEncoding` package
