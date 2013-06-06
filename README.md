@@ -53,3 +53,8 @@ instead of `libsodium`.
 * Nonce tests
 * Encode/Decode tests
 * Extract unit tests from "[Cryptography in NaCl](http://cr.yp.to/highspeed/naclcrypto-20090310.pdf)"
+* Consider thread safety for random generation functions,
+  `randombytes_random`, `randombytes_uniform`, `randombytes_buf`,
+  `randombytes_close`, `crypto_sign_keypair`, and
+  `crypto_box_keypair`.
+*
