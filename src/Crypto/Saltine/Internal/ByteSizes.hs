@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module Crypto.Salty.ByteSizes (
+module Crypto.Saltine.Internal.ByteSizes (
 
   auth,
   authKey,
