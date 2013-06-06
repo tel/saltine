@@ -4,7 +4,7 @@
 
 module Crypto.Saltine (
   optimize,
-  module Crypto.Saltine.Internal.SecretBox
+  module Crypto.Saltine.Core.SecretBox
   ) where
 
 import Foreign.C
@@ -12,7 +12,7 @@ import Foreign.C
 import Data.Data
 import Control.Exception
 
-import Crypto.Saltine.Internal.SecretBox
+import Crypto.Saltine.Core.SecretBox
 
 {- Notes:
 

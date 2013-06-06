@@ -52,14 +52,14 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Foreign.Marshal.Alloc
-import Foreign.Storable
-import System.IO.Unsafe
 import Data.Word
 import qualified Data.Vector.Storable as V
 
 import Control.Applicative
 
+-- | Computes a cryptographically collision-resistant hash making
+-- @hash m == hash m' ==> m == m'@ highly likely even when under
+-- attack.
 hash :: V.Vector Word8
         -- ^ Message
         -> V.Vector Word8
@@ -78,9 +78,11 @@ instance IsEncoding ShorthashKey where
   encode (ShK v) = v
   {-# INLINE encode #-}
 
+-- | Randomly generates a new key for 'shorthash'.
 newShorthashKey :: IO ShorthashKey
 newShorthashKey = ShK <$> randomVector Bytes.shorthashKey
 
+-- | Computes a very short, fast keyed hash.
 shorthash :: ShorthashKey
              -> V.Vector Word8
              -- ^ Message

@@ -81,8 +81,8 @@ newKeypair = do
     c_sign_keypair pkbuf skbuf
   return (SK sk, PK pk)
 
--- | Executes @crypto_sign@ on the passed 'V.Vector's. THIS IS MEMORY
--- UNSAFE unless the key is precisely the right size.
+-- | Augments a message with a signature forming a \"signed
+-- message\".
 sign :: SecretKey
         -> V.Vector Word8
         -- ^ Message
@@ -97,10 +97,9 @@ sign (SK k) m = unsafePerformIO $
     return $ V.take (fromIntegral smlen) sm
   where len = V.length m
 
--- | Executes @crypto_sign@ on the passed 'V.Vector's returning 'Just'
--- the original, unsigned message if verification succeeds and
--- 'Nothing' otherwise. THIS IS MEMORY UNSAFE unless the key is
--- precisely the right size.
+-- | Checks a \"signed message\" returning 'Just' the original message
+-- iff the signature was generated using the 'SecretKey' corresponding
+-- to the given 'PublicKey'. Returns 'Nothing' otherwise.
 signOpen :: PublicKey
             -> V.Vector Word8
             -- ^ Signed message

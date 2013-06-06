@@ -79,7 +79,10 @@ instance IsEncoding Key where
 
 -- | An opaque 'stream' nonce.
 newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
--- TODO: Enum for Nonce
+
+instance IsNonce Nonce where
+  zero = Nonce (V.replicate Bytes.streamNonce 0)
+  nudge (Nonce n) = Nonce (nudgeVector n)
 
 instance IsEncoding Nonce where
   decode v = case V.length v == Bytes.streamNonce of
@@ -98,9 +101,9 @@ newKey = Key <$> randomVector Bytes.streamKey
 newNonce :: IO Nonce
 newNonce = Nonce <$> randomVector Bytes.streamNonce
 
--- | Executes @crypto_stream@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | Generates a cryptographic random stream indexed by the 'Key' and
+-- 'Nonce'. These streams are indistinguishable from random noise so
+-- long as the 'Nonce' is not used more than once.
 stream :: Key -> Nonce -> Int
           -> V.Vector Word8
           -- ^ Cryptographic stream
@@ -109,9 +112,13 @@ stream (Key key) (Nonce nonce) n =
     constVectors [key, nonce] $ \[pk, pn] ->
     c_stream ps (fromIntegral n) pn pk
 
--- | Executes @crypto_stream_xor@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | Computes the exclusive-or between a message and a cryptographic
+-- random stream indexed by the 'Key' and the 'Nonce'. This renders
+-- the output indistinguishable from random noise so long as the
+-- 'Nonce' is not used more than once. /Note:/ while this can be used
+-- for encryption and decryption, it is /possible for an attacker to/
+-- /manipulate the message in transit without detection/. USE AT YOUR
+-- OWN RISK.
 xor :: Key -> Nonce 
        -> V.Vector Word8
        -- ^ Message

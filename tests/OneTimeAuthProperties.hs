@@ -6,7 +6,7 @@ module OneTimeAuthProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Internal.OneTimeAuth as O
+import qualified Crypto.Saltine.Core.OneTimeAuth as O
 
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework

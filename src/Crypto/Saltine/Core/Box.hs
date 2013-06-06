@@ -122,7 +122,6 @@ instance IsEncoding CombinedKey where
 
 -- | An opaque 'box' nonce.
 newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
--- TODO: Enum for Nonce
 
 instance IsEncoding Nonce where
   decode v = case V.length v == Bytes.boxNonce of
@@ -131,6 +130,10 @@ instance IsEncoding Nonce where
   {-# INLINE decode #-}
   encode (Nonce v) = v
   {-# INLINE encode #-}
+
+instance IsNonce Nonce where
+  zero = Nonce (V.replicate Bytes.boxNonce 0)
+  nudge (Nonce n) = Nonce (nudgeVector n)
 
 -- | Randomly generates a secret key and a corresponding public key.
 newKeypair :: IO Keypair
@@ -146,13 +149,18 @@ newKeypair = do
 newNonce :: IO Nonce
 newNonce = Nonce <$> randomVector Bytes.boxNonce
 
+-- | Build a 'CombinedKey' for sending from 'SecretKey' to
+-- 'PublicKey'. This is a precomputation step which can accelerate
+-- later encryption calls.
 beforeNM :: SecretKey -> PublicKey -> CombinedKey
 beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ckbuf ->
   constVectors [pk, sk] $ \[ppk, psk] ->
   c_box_beforenm ckbuf ppk psk
 
--- | Executes @crypto_box@ on the passed 'V.Vector's. THIS IS MEMORY
--- UNSAFE unless the key and nonce are precisely the right sizes.
+-- | Encrypts a message for sending to the owner of the public
+-- key. They must have your public key in order to decrypt the
+-- message. It is infeasible for an attacker to decrypt the message so
+-- long as the 'Nonce' is not repeated.
 box :: PublicKey -> SecretKey -> Nonce
        -> V.Vector Word8
        -- ^ Message
@@ -166,9 +174,9 @@ box (PK pk) (SK sk) (Nonce nonce) msg =
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
 
--- | Executes @crypto_box_open@ on the passed 'V.Vector's. THIS
--- IS MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | Decrypts a message sent from the owner of the public key. They
+-- must have encrypted it using your secret key. Returns 'Nothing' if
+-- the keys and message do not match.
 boxOpen :: PublicKey -> SecretKey -> Nonce
            -> V.Vector Word8
            -- ^ Ciphertext
@@ -183,9 +191,7 @@ boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
 
--- | Executes @crypto_box_afternm@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | 'box' using a 'CombinedKey' and is thus faster.
 boxAfterNM :: CombinedKey -> Nonce
               -> V.Vector Word8
               -- ^ Message
@@ -199,10 +205,7 @@ boxAfterNM (CK ck) (Nonce nonce) msg =
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
 
-
--- | Executes @crypto_box_afternm_open@ on the passed
--- 'V.Vector's. THIS IS MEMORY UNSAFE unless the key and nonce are
--- precisely the right sizes.
+-- | 'boxOpen' using a 'CombinedKey' and is thus faster.
 boxOpenAfterNM :: CombinedKey -> Nonce
            -> V.Vector Word8
            -- ^ Ciphertext

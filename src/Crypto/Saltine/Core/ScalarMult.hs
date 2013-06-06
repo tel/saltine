@@ -51,35 +51,50 @@
 -- 
 -- This is version 2010.08.30 of the scalarmult.html web page.
 module Crypto.Saltine.Core.ScalarMult (
+  Scalar, GroupElement,
   mult, multBase
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Foreign.Marshal.Alloc
-import Foreign.Storable
-import System.IO.Unsafe
 import Data.Word
 import qualified Data.Vector.Storable as V
 
-mult :: V.Vector Word8
-        -- ^ Integer string
-        -> V.Vector Word8
-        -- ^ Group element string
-        -> V.Vector Word8
-        -- ^ Resultant group element string
-mult n p = snd . buildUnsafeCVector Bytes.mult $ \pq ->
+-- $types
+
+-- | A group element.
+newtype GroupElement = GE (V.Vector Word8) deriving (Eq)
+
+-- | A scalar integer.
+newtype Scalar = Sc (V.Vector Word8) deriving (Eq)
+
+instance IsEncoding GroupElement where
+  decode v = case V.length v == Bytes.mult of
+    True -> Just (GE v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (GE v) = v
+  {-# INLINE encode #-}
+
+instance IsEncoding Scalar where
+  decode v = case V.length v == Bytes.multScalar of
+    True -> Just (Sc v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Sc v) = v
+  {-# INLINE encode #-}
+
+mult :: Scalar -> GroupElement -> GroupElement
+mult (Sc n) (GE p) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->
   constVectors [n, p] $ \[pn, pp] ->
   c_scalarmult pq pn pp
 
-multBase :: V.Vector Word8
-            -- ^ Integer string
-            -> V.Vector Word8
-            -- ^ Group element string
-multBase n = snd . buildUnsafeCVector Bytes.mult $ \pq ->
+multBase :: Scalar -> GroupElement
+multBase (Sc n) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->
   constVectors [n] $ \[pn] ->
   c_scalarmult_base pq pn
 

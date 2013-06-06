@@ -1,5 +1,3 @@
-
-
 module Crypto.Saltine.Internal.Util where
 
 import Foreign.C
@@ -11,8 +9,28 @@ import Data.Monoid
 import qualified Data.Vector.Storable as V
 import qualified Data.Vector.Storable.Mutable as VM
 
+import Data.STRef
+
 foreign import ccall "randombytes_buf"
   c_randombytes_buf :: Ptr Word8 -> CInt -> IO ()
+
+-- | Increments a 'V.Vector' with 0 as the least-significant index.
+nudgeVector :: V.Vector Word8 -> V.Vector Word8
+nudgeVector v = V.modify go v
+  where go mv = do
+          iref <- newSTRef 0
+          loop iref mv
+        loop iref mv = do
+          i <- readSTRef iref
+          if i < len
+            then do val <- VM.read mv i
+                    if val == maxBound
+                       then do VM.write mv i minBound
+                               modifySTRef iref succ
+                               loop iref mv
+                      else VM.write mv i (succ val)
+            else return ()
+        len = V.length v
 
 -- | 0-pad a vector
 pad :: (VM.Storable a, Num a) => Int -> V.Vector a -> V.Vector a

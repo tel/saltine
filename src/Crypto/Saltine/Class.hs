@@ -9,7 +9,8 @@
 -- 
 -- Saltine type classes
 module Crypto.Saltine.Class (
-  IsEncoding (..)
+  IsEncoding (..),
+  IsNonce (..)
   ) where
 
 import Data.Profunctor
@@ -29,6 +30,17 @@ class IsEncoding a where
   encoded = prism' encode decode
   {-# INLINE encoded #-}
 
+-- | A generic class for interacting with nonces.
+class IsNonce n where
+  zero  :: n
+  -- ^ Some privileged nonce value.
+  nudge :: n -> n
+  -- ^ Some perturbation on nonces such that @n /= nudge n@ with high
+  -- probability. Since nonces are finite, repeats may happen in
+  -- particularly small cases, but no nonces in Saltine are so
+  -- small. This is not guaranteed to be difficult to predict---if a
+  -- nonce had an `Enum` instance `succ` would be a good
+  -- implementation excepting that `succ` is partial.
 
 -- Copied over from Control.Lens
 

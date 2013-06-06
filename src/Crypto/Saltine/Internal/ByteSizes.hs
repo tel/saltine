@@ -1,5 +1,22 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-
+-- |
+-- Module      : Crypto.Saltine.Core.ScalarMult
+-- Copyright   : (c) Joseph Abrahamson 2013
+-- License     : MIT
+-- 
+-- Maintainer  : me@jspha.com
+-- Stability   : experimental
+-- Portability : non-portable
+-- 
+-- Various sizes
+-- 
+-- While technically these sizes are hidden behind opaque newtype
+-- wrappers, they can be useful for computation and sizing and are
+-- thus exposed.
+-- 
+-- As of @libsodium-4.1@ some of these sizes are not exported and thus
+-- are hardcoded here. This limitation should be removed in later
+-- versions of @libsodium@.
 module Crypto.Saltine.Internal.ByteSizes (
 
   auth,
@@ -45,7 +62,9 @@ hash, shorthash, shorthashKey :: Int
 
 
 -- Authentication
+-- | Size of a @crypto_auth@ authenticator.
 auth    = fromIntegral c_crypto_auth_bytes
+-- | Size of a @crypto_auth@ authenticator key. 
 authKey = fromIntegral c_crypto_auth_keybytes
 
 -- Box
@@ -67,11 +86,16 @@ boxBeforeNM =
   fromIntegral c_crypto_box_beforenmbytes
 
 -- OneTimeAuth
+-- | Size of a @crypto_onetimeauth@ authenticator.
 onetime    = fromIntegral c_crypto_onetimeauth_bytes
+-- | Size of a @crypto_onetimeauth@ authenticator key.
 onetimeKey = fromIntegral c_crypto_onetimeauth_keybytes
 
 -- ScalarMult
+-- | Size of a group element string representation for
+-- @crypto_scalarmult@.
 mult = fromIntegral c_crypto_scalarmult_bytes
+-- | Size of a integer string representation for @crypto_scalarmult@.
 multScalar = fromIntegral c_crypto_scalarmult_scalarbytes
 
 -- SecretBox

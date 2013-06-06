@@ -33,12 +33,13 @@
 -- unforgeability after a single message.
 -- 
 -- This is version 2010.08.30 of the onetimeauth.html web page.
-
 module Crypto.Saltine.Core.OneTimeAuth (
+  Key, Authenticator,
   newKey,
   auth, verify
   ) where
 
+import Crypto.Saltine.Class
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
@@ -47,36 +48,56 @@ import Foreign.Ptr
 import Data.Word
 import qualified Data.Vector.Storable as V
 
--- | Creates a random key of the correct size for 'auth' and 'verify'.
-newKey :: IO (V.Vector Word8)
-newKey = randomVector Bytes.onetimeKey
+import Control.Applicative
 
--- | Executes @crypto_onetimeauth@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
-auth :: V.Vector Word8
-        -- ^ Key
+-- $types
+
+-- | An opaque 'auth' cryptographic key.
+newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+
+-- | An opaque 'auth' authenticator.
+newtype Authenticator = Au (V.Vector Word8) deriving (Eq, Ord)
+
+instance IsEncoding Key where
+  decode v = case V.length v == Bytes.onetimeKey of
+    True -> Just (Key v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+instance IsEncoding Authenticator where
+  decode v = case V.length v == Bytes.onetime of
+    True -> Just (Au v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Au v) = v
+  {-# INLINE encode #-}
+
+-- | Creates a random key of the correct size for 'auth' and 'verify'.
+newKey :: IO Key
+newKey = Key <$> randomVector Bytes.onetimeKey
+
+-- | Builds a keyed 'Authenticator' for a message. This
+-- 'Authenticator' is /impossible/ to forge so long as the 'Key' is
+-- never used twice.
+auth :: Key
         -> V.Vector Word8
         -- ^ Message
-        -> V.Vector Word8
-        -- ^ Authenticator
-auth key msg =
-  snd . buildUnsafeCVector Bytes.onetime $ \pa ->
+        -> Authenticator
+auth (Key key) msg =
+  Au . snd . buildUnsafeCVector Bytes.onetime $ \pa ->
     constVectors [key, msg] $ \[pk, pm] ->
     c_onetimeauth pa pm (fromIntegral $ V.length msg) pk
 
--- | Executes @crypto_auth_verify@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
-verify :: V.Vector Word8
-          -- ^ Key
+-- | Verifies that an 'Authenticator' matches a given message and key.
+verify :: Key
+          -> Authenticator
           -> V.Vector Word8
           -- ^ Message
-          -> V.Vector Word8
-          -- ^ Authenticator
           -> Bool
           -- ^ Is this message authentic?
-verify key msg a =
+verify (Key key) (Au a) msg =
   unsafeDidSucceed $ constVectors [key, msg, a] $ \[pk, pm, pa] ->
   return $ c_onetimeauth_verify pa pm (fromIntegral $ V.length msg) pk
 

@@ -69,7 +69,6 @@ instance IsEncoding Key where
 
 -- | An opaque 'secretbox' nonce.
 newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
--- TODO: Enum for Nonce
 
 instance IsEncoding Nonce where
   decode v = case V.length v == Bytes.secretBoxNonce of
@@ -79,6 +78,10 @@ instance IsEncoding Nonce where
   encode (Nonce v) = v
   {-# INLINE encode #-}
 
+instance IsNonce Nonce where
+  zero = Nonce (V.replicate Bytes.secretBoxNonce 0)
+  nudge (Nonce n) = Nonce (nudgeVector n)
+
 -- | Creates a random key of the correct size for 'secretbox'.
 newKey :: IO Key
 newKey = Key <$> randomVector Bytes.secretBoxKey
@@ -87,9 +90,8 @@ newKey = Key <$> randomVector Bytes.secretBoxKey
 newNonce :: IO Nonce
 newNonce = Nonce <$> randomVector Bytes.secretBoxNonce
 
--- | Executes @crypto_secretbox@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | Encrypts a message. It is infeasible for an attacker to decrypt
+-- the message so long as the 'Nonce' is never repeated.
 secretbox :: Key -> Nonce
              -> V.Vector Word8
              -- ^ Message
@@ -103,9 +105,8 @@ secretbox (Key key) (Nonce nonce) msg =
         pad'   = pad Bytes.secretBoxZero
         unpad' = unpad Bytes.secretBoxBoxZero
 
--- | Executes @crypto_secretbox_open@ on the passed 'V.Vector's. THIS
--- IS MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | Decrypts a message. Returns 'Nothing' if the keys and message do
+-- not match.
 secretboxOpen :: Key -> Nonce 
                  -> V.Vector Word8
                  -- ^ Ciphertext

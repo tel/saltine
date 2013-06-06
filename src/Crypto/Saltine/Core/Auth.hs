@@ -38,7 +38,7 @@
 -- 
 -- This is version 2010.08.30 of the auth.html web page.
 module Crypto.Saltine.Core.Auth (
-  Key,
+  Key, Authenticator,
   newKey,
   auth, verify
   ) where
@@ -59,6 +59,9 @@ import Control.Applicative
 -- | An opaque 'auth' cryptographic key.
 newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
 
+-- | An opaque 'auth' authenticator.
+newtype Authenticator = Au (V.Vector Word8) deriving (Eq, Ord)
+
 instance IsEncoding Key where
   decode v = case V.length v == Bytes.authKey of
     True -> Just (Key v)
@@ -67,35 +70,40 @@ instance IsEncoding Key where
   encode (Key v) = v
   {-# INLINE encode #-}
 
+instance IsEncoding Authenticator where
+  decode v = case V.length v == Bytes.auth of
+    True -> Just (Au v)
+    False -> Nothing
+  {-# INLINE decode #-}
+  encode (Au v) = v
+  {-# INLINE encode #-}
+
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key
 newKey = Key <$> randomVector Bytes.authKey
 
--- | Executes @crypto_auth@ on the passed 'V.Vector's. THIS IS MEMORY
--- UNSAFE unless the key and nonce are precisely the right sizes.
+-- | Computes an keyed authenticator 'V.Vector' from a message. It is
+-- infeasible to forge these authenticators without the key, even if
+-- an attacker observes many authenticators and messages and has the
+-- ability to influence the messages sent.
 auth :: Key 
-        -- ^ Key
         -> V.Vector Word8
         -- ^ Message
-        -> V.Vector Word8
-        -- ^ Authenticator
+        -> Authenticator
 auth (Key key) msg =
-  snd . buildUnsafeCVector Bytes.auth $ \pa ->
+  Au . snd . buildUnsafeCVector Bytes.auth $ \pa ->
     constVectors [key, msg] $ \[pk, pm] ->
     c_auth pa pm (fromIntegral $ V.length msg) pk
 
--- | Executes @crypto_auth_verify@ on the passed 'V.Vector's. THIS IS
--- MEMORY UNSAFE unless the key and nonce are precisely the right
--- sizes.
+-- | Checks to see if an authenticator is a correct proof that a
+-- message was signed by some key.
 verify :: Key
-          -- ^ Key
+          -> Authenticator
           -> V.Vector Word8
           -- ^ Message
-          -> V.Vector Word8
-          -- ^ Authenticator
           -> Bool
           -- ^ Is this message authentic?
-verify (Key key) msg a =
+verify (Key key) (Au a) msg =
   unsafeDidSucceed $ constVectors [key, msg, a] $ \[pk, pm, pa] ->
   return $ c_auth_verify pa pm (fromIntegral $ V.length msg) pk
 
