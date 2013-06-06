@@ -39,12 +39,15 @@ binding to NaCl (via
 provide even more simplicity and safety to the usage of cryptography.
 
 Note that it's still possible to shoot yourself in the foot pretty
-easily using Saltine. Nonces must always be unique. 
+easily using Saltine. Nonces must always be unique which must be managed 
+by the library user.
 [`Crypto.Saltine.Core.Stream`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/Stream.hs)
 produces messages which can beundetectably tampered with in-flight. 
 Keys are insecurely read from disk—they may be copied and then paged 
-back to disk. Use Saltine carefully.
+back to disk.
 
+When uncertain, use [`Crypto.Saltine.Core.SecretBox`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/SecretBox.hs) 
+and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/Box.hs)
 
 Tested with `libsodium-4.1`.
 
