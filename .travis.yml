@@ -15,4 +15,4 @@ install:
 script:
   - cabal test --show-details=always
 notifications:
-  email: false
+  email: true
