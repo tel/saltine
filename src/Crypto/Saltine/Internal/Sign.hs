@@ -25,7 +25,10 @@
 --
 -- This is current information as of 2013 June 6.
 
-module Crypto.Saltine.Internal.Sign where
+module Crypto.Saltine.Internal.Sign (
+  newKeypair,
+  sign, signOpen
+  ) where
 
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes

@@ -13,8 +13,8 @@ module Crypto.Saltine.Internal.ByteSizes (
   boxBeforeNM,
   onetime,
   onetimeKey,
-  scalarMult,
-  scalarMultScalar,
+  mult,
+  multScalar,
   secretBoxKey,
   secretBoxNonce,
   secretBoxZero,
@@ -34,8 +34,10 @@ import Foreign.C
 
 -- Constants for
 
-auth, authKey, boxPK, boxSK, boxNonce, boxZero, boxBoxZero, boxMac :: Int
-boxBeforeNM, onetime, onetimeKey, scalarMult, scalarMultScalar :: Int
+auth, authKey :: Int
+boxPK, boxSK, boxNonce, boxZero, boxBoxZero, boxMac, boxBeforeNM :: Int
+onetime, onetimeKey :: Int
+mult, multScalar :: Int
 secretBoxKey, secretBoxNonce, secretBoxZero, secretBoxBoxZero :: Int
 sign, signPK, signSK :: Int
 streamKey, streamNonce :: Int
@@ -69,9 +71,8 @@ onetime    = fromIntegral c_crypto_onetimeauth_bytes
 onetimeKey = fromIntegral c_crypto_onetimeauth_keybytes
 
 -- ScalarMult
-scalarMult = fromIntegral c_crypto_scalarmult_bytes
-scalarMultScalar =
-  fromIntegral c_crypto_scalarmult_scalarbytes
+mult = fromIntegral c_crypto_scalarmult_bytes
+multScalar = fromIntegral c_crypto_scalarmult_scalarbytes
 
 -- SecretBox
 -- | Size of a @crypto_secretbox@ secret key

@@ -40,7 +40,10 @@
 -- 
 -- This is version 2010.08.30 of the hash.html web page. Information
 -- about SipHash has been added.
-module Crypto.Saltine.Internal.Hash where
+module Crypto.Saltine.Internal.Hash (
+  hash,
+  shorthash, newShorthashKey
+  ) where
 
 import Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
