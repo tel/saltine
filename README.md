@@ -69,3 +69,4 @@ instead of `libsodium`.
 * How in the world should `ScalarMult` be packaged?
   * Built-in hashed DH exchange? Based on `pipes`?
 * Benchmarking
+* "Lens of Saltine"
