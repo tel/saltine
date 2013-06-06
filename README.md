@@ -37,6 +37,11 @@ Tested with `libsodium-4.1`.
 
 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
 
+Inspired by @thoughtpolice's
+[`salt`](http://github.com/thoughtpolice/salt) library. `salt` also
+binds to NaCl, but uses a Haskell managed version of djb's code
+instead of `libsodium`.
+
 # Todos
 
 * Tests for Hash
