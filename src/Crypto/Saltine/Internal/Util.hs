@@ -38,7 +38,8 @@ unsafeDidSucceed = go . unsafePerformIO
 
 -- | Convenience function for accessing constant C vectors
 constVectors :: VM.Storable a => [V.Vector a] -> ([Ptr a] -> IO b) -> IO b
-constVectors = runContT . mapM (ContT . V.unsafeWith)
+-- Manual unfold of: @constVectors = runContT . mapM (ContT . V.unsafeWith)@
+constVectors = foldr (\v kk -> \k -> (V.unsafeWith v) (\a -> kk (\as -> k (a:as)))) ($ [])
 
 -- | Slightly safer cousin to 'buildUnsafeCVector' that remains in the
 -- 'IO' monad.
