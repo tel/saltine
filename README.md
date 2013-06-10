@@ -1,4 +1,4 @@
-# Saltine 0.0.0.1
+# Saltine 0.0.0.1 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
 
 A Haskell binding for @jedisct1's portable binding for djb's
 NaCl. **This is an early release.** Please try it out, but don't just
@@ -52,8 +52,6 @@ If you can think of ways to use Haskell's type system to enforce
 security invariants, please suggest them.
 
 Tested with [`libsodium-4.1`](http://download.dnscrypt.org/libsodium/releases/).
-
-[![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
 
 Inspired by @thoughtpolice's
 [`salt`](http://github.com/thoughtpolice/salt) library. `salt` also
