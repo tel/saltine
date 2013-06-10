@@ -59,26 +59,3 @@ Inspired by @thoughtpolice's
 [`salt`](http://github.com/thoughtpolice/salt) library. `salt` also
 binds to NaCl, but uses a Haskell managed version of djb's code
 instead of `libsodium`.
-
-# Todos
-
-* Tests for Hash
-* Tests for ScalarMult
-* Nonce tests
-* Encode/Decode tests
-* Extract unit tests from "[Cryptography in NaCl](http://cr.yp.to/highspeed/naclcrypto-20090310.pdf)"
-* Consider thread safety for random generation functions,
-  `randombytes_random`, `randombytes_uniform`, `randombytes_buf`,
-  `randombytes_close`, `crypto_sign_keypair`, and
-  `crypto_box_keypair`.
-* Benchmarks (does `-O2` or `-funbox-strict-fields` help?)
-
-# Backlog
-
-* `Message` type for easy `Vector` encoding (see
-  [`message`](https://github.com/tel/saltine/tree/message) branch)
-* Ideas for how to isolate key generation `IO` from general use, noncing strategies
-* How in the world should `ScalarMult` be packaged?
-  * Built-in hashed DH exchange? Based on `pipes`?
-* Benchmarking
-* "Lens of Saltine"
