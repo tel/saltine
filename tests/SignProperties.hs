@@ -6,9 +6,7 @@ module SignProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Core.Sign as S
-
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
 
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
@@ -16,23 +14,18 @@ import Test.QuickCheck
 
 testSign :: Test
 testSign = buildTest $ do
-  (sk1,  pk1) <- S.newKeypair
-  (_sk2, pk2) <- S.newKeypair
+  (sk1,  pk1) <- newKeypair
+  (_sk2, pk2) <- newKeypair
 
   return $ testGroup "...Internal.Sign" [
 
     testProperty "Verifies signed message"
-    $ \(Message bs) -> let m = fromBS bs
-                       in S.signOpen pk1 (S.sign sk1 m) == Just m,
+    $ \(Message bs) -> signOpen pk1 (sign sk1 bs) == Just bs,
 
     testProperty "Signed message longer than message"
-    $ \(Message bs) -> let m  = fromBS bs
-                           sm = S.sign sk1 m
-                       in V.length sm >= V.length m,
+    $ \(Message bs) -> S.length (sign sk1 bs) >= S.length bs,
 
     testProperty "Rejects message with mismatched key"
-    $ \(Message bs) -> let m = fromBS bs
-                       in V.length m > 0
-                           ==> S.signOpen pk2 (S.sign sk1 m) == Nothing
+    $ \(Message bs) -> (not $ S.null bs) ==> signOpen pk2 (sign sk1 bs) == Nothing
 
     ]

@@ -8,7 +8,7 @@ import Util
 
 import Crypto.Saltine.Core.Box
 
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
 
 import Control.Applicative
 
@@ -21,44 +21,29 @@ import Test.QuickCheck.Monadic
 -- | Ciphertext can be decrypted
 rightInverseProp :: Keypair -> Keypair -> Nonce -> Message -> Bool
 rightInverseProp (sk1, pk1) (sk2, pk2) n (Message bs) =
-  let
-    -- person 1 sends encrypting for person 2
-    enc = box pk2 sk1 n $ fromBS bs
-    -- person 2 receives decrypting for person 1
-    dec = toBS <$> boxOpen pk1 sk2 n enc
-  in Just bs == dec
+  Just bs == boxOpen pk1 sk2 n (box pk2 sk1 n bs)
 
 -- | Cannot decrypt without the corrent secret key
 rightInverseFailureProp1 :: Keypair -> Keypair -> Nonce -> Message -> Bool
 rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n (Message bs) =
-  let
-    -- person 1 sends encrypting for person 2
-    enc = box pk2 sk1 n $ fromBS bs
-    -- person 2 receives decrypting for nobody
-    dec = toBS <$> boxOpen pk1 (perturb sk2) n enc
-  in Nothing == dec
+  Nothing == boxOpen pk1 (perturb sk2) n (box pk2 sk1 n bs)
 
 -- | Cannot decrypt when not sent to you
 rightInverseFailureProp2 :: Keypair -> Keypair -> Nonce -> Message -> Bool
 rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n (Message bs) =
-  let
-    -- person 1 sends encrypting for person 2
-    enc = box (perturb pk2) sk1 n $ fromBS bs
-    -- person 2 receives decrypting for nobody
-    dec = toBS <$> boxOpen pk1 sk2 n enc
-  in Nothing == dec
+  Nothing == boxOpen pk1 sk2 n (box (perturb pk2) sk1 n bs)
 
 -- | Ciphertext cannot be decrypted (verification failure) if the
 -- ciphertext is perturbed
 rightInverseFailureProp3 :: Keypair -> Keypair -> Nonce -> Message -> Bool
 rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n (Message bs) =
-  Nothing == (toBS <$> boxOpen pk1 sk2 n (V.reverse $ box pk2 sk1 n (fromBS bs)))
+  Nothing == boxOpen pk1 sk2 n (S.reverse $ box pk2 sk1 n bs)
 
 -- | Ciphertext cannot be decrypted with a different nonce
 cannotDecryptNonceProp
   :: Keypair -> Keypair -> Nonce -> Nonce -> Message -> Bool
 cannotDecryptNonceProp (sk1, pk1) (sk2, pk2) n1 n2 (Message bs) =
-  Nothing == (toBS <$> boxOpen pk1 sk2 n2 (box pk2 sk1 n1 (fromBS bs)))
+  Nothing == boxOpen pk1 sk2 n2 (box pk2 sk1 n1 bs)
 
 -- | BeforeNM creates identical secret keys when called in an
 -- anti-symmetric fashion.
@@ -74,23 +59,13 @@ beforeNMCreateSecretKeyProp = monadicIO . (assert =<<) . run $ do
 rightInverseAfterNMProp
   :: CombinedKey -> CombinedKey -> Nonce -> Message -> Bool
 rightInverseAfterNMProp ck_1for2 ck_2for1 n (Message bs) =
-  let
-    -- person 1 sends encrypting for person 2
-    enc = boxAfterNM ck_1for2 n $ fromBS bs
-    -- person 2 receives decrypting for person 1
-    dec = toBS <$> boxOpenAfterNM ck_2for1 n enc
-  in Just bs == dec
+  Just bs == boxOpenAfterNM ck_2for1 n (boxAfterNM ck_1for2 n bs)
 
 -- | Perturbed ciphertext cannot be decrypted using combined keys
 rightInverseFailureAfterNMProp1
   :: CombinedKey -> CombinedKey -> Nonce -> Message -> Bool
 rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n (Message bs) =
-  let
-    -- person 1 sends encrypting for person 2
-    enc = boxAfterNM ck_1for2 n $ fromBS bs
-    -- person 2 receives decrypting for person 1
-    dec = toBS <$> boxOpenAfterNM ck_2for1 n (V.reverse enc)
-  in Nothing == dec
+  Nothing == boxOpenAfterNM ck_2for1 n (S.reverse $ boxAfterNM ck_1for2 n bs)
 
 testBox :: Test
 testBox = buildTest $ do

@@ -17,6 +17,6 @@ testOneTimeAuth = buildTest $ do
   return $ testGroup "...Internal.Auth" [
 
     testProperty "Authenticates message"
-    $ \(Message bs) -> let m = fromBS bs in verify k (auth k m) m == True
+    $ \(Message bs) -> verify k (auth k bs) bs == True
 
     ]

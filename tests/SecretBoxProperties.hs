@@ -8,7 +8,7 @@ import Util
 
 import Crypto.Saltine.Core.SecretBox
 
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
 
 import Control.Applicative
 
@@ -18,22 +18,22 @@ import Test.Framework
 -- | Ciphertext can be decrypted
 rightInverseProp :: Key -> Nonce -> Message -> Bool
 rightInverseProp k n (Message bs) =
-  Just bs == (toBS <$> secretboxOpen k n (secretbox k n (fromBS bs)))
+  Just bs == secretboxOpen k n (secretbox k n bs)
 
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed
 rightInverseFailureProp :: Key -> Nonce -> Message -> Bool
 rightInverseFailureProp k n (Message bs) =
-  Nothing == (toBS <$> secretboxOpen k n (V.reverse $ secretbox k n (fromBS bs)))
+  Nothing == secretboxOpen k n (S.reverse $ secretbox k n bs)
 
 -- | Ciphertext cannot be decrypted with a different key
 cannotDecryptKeyProp :: Key -> Key -> Nonce -> Message -> Bool
 cannotDecryptKeyProp k1 k2 n (Message bs) =
-  Nothing == (toBS <$> secretboxOpen k2 n (secretbox k1 n (fromBS bs)))
+  Nothing == secretboxOpen k2 n (secretbox k1 n bs)
 
 -- | Ciphertext cannot be decrypted with a different nonce
 cannotDecryptNonceProp :: Key -> Nonce -> Nonce -> Message -> Bool
 cannotDecryptNonceProp k n1 n2 (Message bs) =
-  Nothing == (toBS <$> secretboxOpen k n2 (secretbox k n1 (fromBS bs)))
+  Nothing == secretboxOpen k n2 (secretbox k n1 bs)
 
 testSecretBox :: Test
 testSecretBox = buildTest $ do

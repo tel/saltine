@@ -6,9 +6,7 @@ module StreamProperties (
 
 import Util
 
-import qualified Crypto.Saltine.Core.Stream as S
-
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
 
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
@@ -16,20 +14,20 @@ import Test.QuickCheck
 
 testStream :: Test
 testStream = buildTest $ do
-  k <- S.newKey
-  n <- S.newNonce
+  k <- newKey
+  n <- newNonce
   return $ testGroup "...Internal.Stream" [
 
     testProperty "Stream is apropriately sized"
     $ \len -> (len > 0 && len < 200)
-              ==> V.length (S.stream k n len) == len,
+              ==> S.length (stream k n len) == len,
 
     testProperty "xor munges input"
-    $ \(Message bs) -> not (V.null $ fromBS bs)
-                       ==> toBS (S.xor k n $ fromBS bs) /= bs,
+    $ \(Message bs) -> not (S.null bs)
+                       ==> xor k n bs /= bs,
 
     testProperty "xor is involutive"
-    $ \(Message bs) -> toBS (S.xor k n $ S.xor k n $ fromBS bs) == bs
+    $ \(Message bs) -> xor k n $ xor k n bs == bs
     
     ]
     
