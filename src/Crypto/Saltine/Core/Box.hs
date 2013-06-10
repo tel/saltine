@@ -10,12 +10,12 @@
 -- Public-key authenticated encryption:
 -- "Crypto.Saltine.Core.Box"
 -- 
--- The 'box' function encrypts and authenticates a message 'V.Vector'
--- using the sender's secret key, the receiver's public key, and a
--- nonce. The 'boxOpen' function verifies and decrypts a ciphertext
--- 'V.Vector' using the receiver's secret key, the sender's public
--- key, and a nonce. If the ciphertext fails verification, 'boxOpen'
--- returns 'Nothing'.
+-- The 'box' function encrypts and authenticates a message
+-- 'ByteString' using the sender's secret key, the receiver's public
+-- key, and a nonce. The 'boxOpen' function verifies and decrypts a
+-- ciphertext 'ByteString' using the receiver's secret key, the
+-- sender's public key, and a nonce. If the ciphertext fails
+-- verification, 'boxOpen' returns 'Nothing'.
 -- 
 -- The "Crypto.Saltine.Core.Box" module is designed to meet the
 -- standard notions of privacy and third-party unforgeability for a
@@ -77,18 +77,18 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 import Control.Applicative
 
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK (V.Vector Word8) deriving (Eq, Ord)
+newtype SecretKey = SK ByteString deriving (Eq, Ord)
 
 instance IsEncoding SecretKey where
-  decode v = case V.length v == Bytes.boxSK of
+  decode v = case S.length v == Bytes.boxSK of
     True -> Just (SK v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -96,10 +96,10 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK (V.Vector Word8) deriving (Eq, Ord)
+newtype PublicKey = PK ByteString deriving (Eq, Ord)
 
 instance IsEncoding PublicKey where
-  decode v = case V.length v == Bytes.boxPK of
+  decode v = case S.length v == Bytes.boxPK of
     True -> Just (PK v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -110,10 +110,10 @@ instance IsEncoding PublicKey where
 type Keypair = (SecretKey, PublicKey)
 
 -- | An opaque 'boxAfterNM' cryptographic combined key.
-newtype CombinedKey = CK (V.Vector Word8) deriving (Eq, Ord)
+newtype CombinedKey = CK ByteString deriving (Eq, Ord)
 
 instance IsEncoding CombinedKey where
-  decode v = case V.length v == Bytes.boxBeforeNM of
+  decode v = case S.length v == Bytes.boxBeforeNM of
     True -> Just (CK v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -121,10 +121,10 @@ instance IsEncoding CombinedKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' nonce.
-newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord)
 
 instance IsEncoding Nonce where
-  decode v = case V.length v == Bytes.boxNonce of
+  decode v = case S.length v == Bytes.boxNonce of
     True -> Just (Nonce v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -132,8 +132,8 @@ instance IsEncoding Nonce where
   {-# INLINE encode #-}
 
 instance IsNonce Nonce where
-  zero = Nonce (V.replicate Bytes.boxNonce 0)
-  nudge (Nonce n) = Nonce (nudgeVector n)
+  zero = Nonce (S.replicate Bytes.boxNonce 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
 
 -- | Randomly generates a secret key and a corresponding public key.
 newKeypair :: IO Keypair
@@ -154,7 +154,7 @@ newNonce = Nonce <$> randomVector Bytes.boxNonce
 -- later encryption calls.
 beforeNM :: SecretKey -> PublicKey -> CombinedKey
 beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ckbuf ->
-  constVectors [pk, sk] $ \[ppk, psk] ->
+  constVectors [pk, sk] $ \[(ppk, _), (psk, _)] ->
   c_box_beforenm ckbuf ppk psk
 
 -- | Encrypts a message for sending to the owner of the public
@@ -162,15 +162,16 @@ beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ck
 -- message. It is infeasible for an attacker to decrypt the message so
 -- long as the 'Nonce' is not repeated.
 box :: PublicKey -> SecretKey -> Nonce
-       -> V.Vector Word8
+       -> ByteString
        -- ^ Message
-       -> V.Vector Word8
+       -> ByteString
        -- ^ Ciphertext
 box (PK pk) (SK sk) (Nonce nonce) msg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
-    constVectors [pk, sk, pad' msg, nonce] $ \[ppk, psk, pm, pn] ->
-    c_box pc pm (fromIntegral len) pn ppk psk
-  where len    = V.length msg + Bytes.boxZero
+    constVectors [pk, sk, pad' msg, nonce] $ \
+      [(ppk, _), (psk, _), (pm, _), (pn, _)] ->
+      c_box pc pm (fromIntegral len) pn ppk psk
+  where len    = S.length msg + Bytes.boxZero
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
 
@@ -178,129 +179,132 @@ box (PK pk) (SK sk) (Nonce nonce) msg =
 -- must have encrypted it using your secret key. Returns 'Nothing' if
 -- the keys and message do not match.
 boxOpen :: PublicKey -> SecretKey -> Nonce
-           -> V.Vector Word8
+           -> ByteString
            -- ^ Ciphertext
-           -> Maybe (V.Vector Word8)
+           -> Maybe ByteString
            -- ^ Message
 boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [pk, sk, pad' cipher, nonce] $ \[ppk, psk, pc, pn] ->
-        c_box_open pm pc (fromIntegral len) pn ppk psk
+        constVectors [pk, sk, pad' cipher, nonce] $ \
+          [(ppk, _), (psk, _), (pc, _), (pn, _)] ->
+          c_box_open pm pc (fromIntegral len) pn ppk psk
   in hush . handleErrno err $ unpad' vec
-  where len    = V.length cipher + Bytes.boxBoxZero
+  where len    = S.length cipher + Bytes.boxBoxZero
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
 
 -- | 'box' using a 'CombinedKey' and is thus faster.
 boxAfterNM :: CombinedKey -> Nonce
-              -> V.Vector Word8
+              -> ByteString
               -- ^ Message
-              -> V.Vector Word8
+              -> ByteString
               -- ^ Ciphertext
 boxAfterNM (CK ck) (Nonce nonce) msg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
-    constVectors [ck, pad' msg, nonce] $ \[pck, pm, pn] ->
-    c_box_afternm pc pm (fromIntegral len) pn pck
-  where len    = V.length msg + Bytes.boxZero
+    constVectors [ck, pad' msg, nonce] $ \
+      [(pck, _), (pm, _), (pn, _)] ->
+      c_box_afternm pc pm (fromIntegral len) pn pck
+  where len    = S.length msg + Bytes.boxZero
         pad'   = pad Bytes.boxZero
         unpad' = unpad Bytes.boxBoxZero
 
 -- | 'boxOpen' using a 'CombinedKey' and is thus faster.
 boxOpenAfterNM :: CombinedKey -> Nonce
-           -> V.Vector Word8
+           -> ByteString
            -- ^ Ciphertext
-           -> Maybe (V.Vector Word8)
+           -> Maybe ByteString
            -- ^ Message
 boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [ck, pad' cipher, nonce] $ \[pck, pc, pn] ->
-        c_box_open_afternm pm pc (fromIntegral len) pn pck
+        constVectors [ck, pad' cipher, nonce] $ \
+          [(pck, _), (pc, _), (pn, _)] ->
+          c_box_open_afternm pm pc (fromIntegral len) pn pck
   in hush . handleErrno err $ unpad' vec
-  where len    = V.length cipher + Bytes.boxBoxZero
+  where len    = S.length cipher + Bytes.boxBoxZero
         pad'   = pad Bytes.boxBoxZero
         unpad' = unpad Bytes.boxZero
 
 
 -- | Should always return a 0.
 foreign import ccall "crypto_box_keypair"
-  c_box_keypair :: Ptr Word8
+  c_box_keypair :: Ptr CChar
                    -- ^ Public key
-                   -> Ptr Word8
+                   -> Ptr CChar
                    -- ^ Secret key
                    -> IO CInt
                    -- ^ Always 0
 
 -- | The secretbox C API uses 0-padded C strings.
 foreign import ccall "crypto_box"
-  c_box :: Ptr Word8
+  c_box :: Ptr CChar
            -- ^ Cipher 0-padded output buffer
-           -> Ptr Word8
+           -> Ptr CChar
            -- ^ Constant 0-padded message input buffer
            -> CULLong
            -- ^ Length of message input buffer (incl. 0s)
-           -> Ptr Word8
+           -> Ptr CChar
            -- ^ Constant nonce buffer
-           -> Ptr Word8
+           -> Ptr CChar
            -- ^ Constant public key buffer
-           -> Ptr Word8
+           -> Ptr CChar
            -- ^ Constant secret key buffer
            -> IO CInt
            -- ^ Always 0
 
 -- | The secretbox C API uses 0-padded C strings.
 foreign import ccall "crypto_box_open"
-  c_box_open :: Ptr Word8
+  c_box_open :: Ptr CChar
                 -- ^ Message 0-padded output buffer
-                -> Ptr Word8
+                -> Ptr CChar
                 -- ^ Constant 0-padded ciphertext input buffer
                 -> CULLong
                 -- ^ Length of message input buffer (incl. 0s)
-                -> Ptr Word8
+                -> Ptr CChar
                 -- ^ Constant nonce buffer
-                -> Ptr Word8
+                -> Ptr CChar
                 -- ^ Constant public key buffer
-                -> Ptr Word8
+                -> Ptr CChar
                 -- ^ Constant secret key buffer
                 -> IO CInt
                 -- ^ 0 for success, -1 for failure to verify
 
 -- | Single target key precompilation.
 foreign import ccall "crypto_box_beforenm"
-  c_box_beforenm :: Ptr Word8
+  c_box_beforenm :: Ptr CChar
                     -- ^ Combined key output buffer
-                    -> Ptr Word8
+                    -> Ptr CChar
                     -- ^ Constant public key buffer
-                    -> Ptr Word8
+                    -> Ptr CChar
                     -- ^ Constant secret key buffer
                     -> IO CInt
                     -- ^ Always 0
 
 -- | Precompiled key crypto box. Uses 0-padded C strings.
 foreign import ccall "crypto_box_afternm"
-  c_box_afternm :: Ptr Word8
+  c_box_afternm :: Ptr CChar
                    -- ^ Cipher 0-padded output buffer
-                   -> Ptr Word8
+                   -> Ptr CChar
                    -- ^ Constant 0-padded message input buffer
                    -> CULLong
                    -- ^ Length of message input buffer (incl. 0s)
-                   -> Ptr Word8
+                   -> Ptr CChar
                    -- ^ Constant nonce buffer
-                   -> Ptr Word8
+                   -> Ptr CChar
                    -- ^ Constant combined key buffer
                    -> IO CInt
                    -- ^ Always 0
 
 -- | The secretbox C API uses 0-padded C strings.
 foreign import ccall "crypto_box_open_afternm"
-  c_box_open_afternm :: Ptr Word8
+  c_box_open_afternm :: Ptr CChar
                         -- ^ Message 0-padded output buffer
-                        -> Ptr Word8
+                        -> Ptr CChar
                         -- ^ Constant 0-padded ciphertext input buffer
                         -> CULLong
                         -- ^ Length of message input buffer (incl. 0s)
-                        -> Ptr Word8
+                        -> Ptr CChar
                         -- ^ Constant nonce buffer
-                        -> Ptr Word8
+                        -> Ptr CChar
                         -- ^ Constant combined key buffer
                         -> IO CInt
                         -- ^ 0 for success, -1 for failure to verify

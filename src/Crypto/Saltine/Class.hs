@@ -14,8 +14,8 @@ module Crypto.Saltine.Class (
   ) where
 
 import Data.Profunctor
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 import Control.Applicative
 
 -- | Class for all keys and nonces in Saltine which have a
@@ -23,10 +23,10 @@ import Control.Applicative
 -- type @Prism' (V.Vector Word8) a@ compatible with "Control.Lens" and
 -- is automatically deduced.
 class IsEncoding a where
-  encode  :: a -> V.Vector Word8
-  decode  :: V.Vector Word8 -> Maybe a
+  encode  :: a -> ByteString
+  decode  :: ByteString -> Maybe a
   encoded :: (Choice p, Applicative f)
-             => p a (f a) -> p (V.Vector Word8) (f (V.Vector Word8))
+             => p a (f a) -> p ByteString (f ByteString)
   encoded = prism' encode decode
   {-# INLINE encoded #-}
 

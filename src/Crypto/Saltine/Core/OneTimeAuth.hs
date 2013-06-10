@@ -10,7 +10,7 @@
 -- Secret-key single-message authentication:
 -- "Crypto.Saltine.Core.OneTimeAuth"
 -- 
--- The 'auth' function authenticates a message 'V.Vector' using a
+-- The 'auth' function authenticates a message 'ByteString' using a
 -- secret key The function returns an authenticator. The 'verify'
 -- function checks if it's passed a correct authenticator of a message
 -- under the given secret key.
@@ -45,21 +45,21 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 import Control.Applicative
 
 -- $types
 
 -- | An opaque 'auth' cryptographic key.
-newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+newtype Key = Key ByteString deriving (Eq, Ord)
 
 -- | An opaque 'auth' authenticator.
-newtype Authenticator = Au (V.Vector Word8) deriving (Eq, Ord)
+newtype Authenticator = Au ByteString deriving (Eq, Ord)
 
 instance IsEncoding Key where
-  decode v = case V.length v == Bytes.onetimeKey of
+  decode v = case S.length v == Bytes.onetimeKey of
     True -> Just (Key v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -67,7 +67,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 instance IsEncoding Authenticator where
-  decode v = case V.length v == Bytes.onetime of
+  decode v = case S.length v == Bytes.onetime of
     True -> Just (Au v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -82,33 +82,34 @@ newKey = Key <$> randomVector Bytes.onetimeKey
 -- 'Authenticator' is /impossible/ to forge so long as the 'Key' is
 -- never used twice.
 auth :: Key
-        -> V.Vector Word8
+        -> ByteString
         -- ^ Message
         -> Authenticator
 auth (Key key) msg =
   Au . snd . buildUnsafeCVector Bytes.onetime $ \pa ->
-    constVectors [key, msg] $ \[pk, pm] ->
-    c_onetimeauth pa pm (fromIntegral $ V.length msg) pk
+    constVectors [key, msg] $ \[(pk, _), (pm, _)] ->
+    c_onetimeauth pa pm (fromIntegral $ S.length msg) pk
 
 -- | Verifies that an 'Authenticator' matches a given message and key.
 verify :: Key
           -> Authenticator
-          -> V.Vector Word8
+          -> ByteString
           -- ^ Message
           -> Bool
           -- ^ Is this message authentic?
 verify (Key key) (Au a) msg =
-  unsafeDidSucceed $ constVectors [key, msg, a] $ \[pk, pm, pa] ->
-  return $ c_onetimeauth_verify pa pm (fromIntegral $ V.length msg) pk
+  unsafeDidSucceed $ constVectors [key, msg, a] $ \
+    [(pk, _), (pm, _), (pa, _)] ->
+    return $ c_onetimeauth_verify pa pm (fromIntegral $ S.length msg) pk
 
 foreign import ccall "crypto_onetimeauth"
-  c_onetimeauth :: Ptr Word8
+  c_onetimeauth :: Ptr CChar
                    -- ^ Authenticator output buffer
-                   -> Ptr Word8
+                   -> Ptr CChar
                    -- ^ Constant message buffer
                    -> CULLong
                    -- ^ Length of message buffer
-                   -> Ptr Word8
+                   -> Ptr CChar
                    -- ^ Constant key buffer
                    -> IO CInt
                    -- ^ Always 0
@@ -116,13 +117,13 @@ foreign import ccall "crypto_onetimeauth"
 -- | We don't even include this in the IO monad since all of the
 -- buffers are constant.
 foreign import ccall "crypto_onetimeauth_verify"
-  c_onetimeauth_verify :: Ptr Word8
+  c_onetimeauth_verify :: Ptr CChar
                           -- ^ Constant authenticator buffer
-                          -> Ptr Word8
+                          -> Ptr CChar
                           -- ^ Constant message buffer
                           -> CULLong
                           -- ^ Length of message buffer
-                          -> Ptr Word8
+                          -> Ptr CChar
                           -- ^ Constant key buffer
                           -> CInt
                           -- ^ Success if 0, failure if -1

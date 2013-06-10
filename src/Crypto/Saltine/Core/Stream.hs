@@ -10,9 +10,9 @@
 -- Secret-key encryption:
 -- "Crypto.Saltine.Core.Stream"
 -- 
--- The 'stream' function produces a sized stream 'V.Vector' as a
+-- The 'stream' function produces a sized stream 'ByteString' as a
 -- function of a secret key and a nonce. The 'xor' function encrypts a
--- message 'V.Vector' using a secret key and a nonce.  The 'xor'
+-- message 'ByteString' using a secret key and a nonce.  The 'xor'
 -- function guarantees that the ciphertext has the same length as the
 -- plaintext, and is the @plaintext `xor` stream k n@. Consequently
 -- 'xor' can also be used to decrypt.
@@ -59,18 +59,18 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 import Control.Applicative
 
 -- $types
 
 -- | An opaque 'stream' cryptographic key.
-newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+newtype Key = Key ByteString deriving (Eq, Ord)
 
 instance IsEncoding Key where
-  decode v = case V.length v == Bytes.streamKey of
+  decode v = case S.length v == Bytes.streamKey of
     True -> Just (Key v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -78,14 +78,14 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'stream' nonce.
-newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord)
 
 instance IsNonce Nonce where
-  zero = Nonce (V.replicate Bytes.streamNonce 0)
-  nudge (Nonce n) = Nonce (nudgeVector n)
+  zero = Nonce (S.replicate Bytes.streamNonce 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
 
 instance IsEncoding Nonce where
-  decode v = case V.length v == Bytes.streamNonce of
+  decode v = case S.length v == Bytes.streamNonce of
     True -> Just (Nonce v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -105,11 +105,11 @@ newNonce = Nonce <$> randomVector Bytes.streamNonce
 -- 'Nonce'. These streams are indistinguishable from random noise so
 -- long as the 'Nonce' is not used more than once.
 stream :: Key -> Nonce -> Int
-          -> V.Vector Word8
+          -> ByteString
           -- ^ Cryptographic stream
 stream (Key key) (Nonce nonce) n =
   snd . buildUnsafeCVector n $ \ps ->
-    constVectors [key, nonce] $ \[pk, pn] ->
+    constVectors [key, nonce] $ \[(pk, _), (pn, _)] ->
     c_stream ps (fromIntegral n) pn pk
 
 -- | Computes the exclusive-or between a message and a cryptographic
@@ -120,38 +120,38 @@ stream (Key key) (Nonce nonce) n =
 -- /manipulate the message in transit without detection/. USE AT YOUR
 -- OWN RISK.
 xor :: Key -> Nonce 
-       -> V.Vector Word8
+       -> ByteString
        -- ^ Message
-       -> V.Vector Word8
+       -> ByteString
        -- ^ Ciphertext
 xor (Key key) (Nonce nonce) msg =
   snd . buildUnsafeCVector len $ \pc ->
-    constVectors [key, nonce, msg] $ \[pk, pn, pm] ->
+    constVectors [key, nonce, msg] $ \[(pk, _), (pn, _), (pm, _)] ->
     c_stream_xor pc pm (fromIntegral len) pn pk
-  where len = V.length msg
+  where len = S.length msg
 
 foreign import ccall "crypto_stream"
-  c_stream :: Ptr Word8
+  c_stream :: Ptr CChar
               -- ^ Stream output buffer
               -> CULLong
               -- ^ Length of stream to generate
-              -> Ptr Word8
+              -> Ptr CChar
               -- ^ Constant nonce buffer
-              -> Ptr Word8
+              -> Ptr CChar
               -- ^ Constant key buffer
               -> IO CInt
               -- ^ Always 0
 
 foreign import ccall "crypto_stream_xor"
-  c_stream_xor :: Ptr Word8
+  c_stream_xor :: Ptr CChar
                   -- ^ Ciphertext output buffer
-                  -> Ptr Word8
+                  -> Ptr CChar
                   -- ^ Constant message buffer
                   -> CULLong
                   -- ^ Length of message buffer
-                  -> Ptr Word8
+                  -> Ptr CChar
                   -- ^ Constant nonce buffer
-                  -> Ptr Word8
+                  -> Ptr CChar
                   -- ^ Constant key buffer
                   -> IO CInt
                   -- ^ Always 0

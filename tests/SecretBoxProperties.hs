@@ -10,8 +10,6 @@ import Crypto.Saltine.Core.SecretBox
 
 import qualified Data.ByteString as S
 
-import Control.Applicative
-
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
 

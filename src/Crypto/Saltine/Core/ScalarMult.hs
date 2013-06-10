@@ -61,19 +61,19 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 -- $types
 
 -- | A group element.
-newtype GroupElement = GE (V.Vector Word8) deriving (Eq)
+newtype GroupElement = GE ByteString deriving (Eq)
 
 -- | A scalar integer.
-newtype Scalar = Sc (V.Vector Word8) deriving (Eq)
+newtype Scalar = Sc ByteString deriving (Eq)
 
 instance IsEncoding GroupElement where
-  decode v = case V.length v == Bytes.mult of
+  decode v = case S.length v == Bytes.mult of
     True -> Just (GE v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -81,7 +81,7 @@ instance IsEncoding GroupElement where
   {-# INLINE encode #-}
 
 instance IsEncoding Scalar where
-  decode v = case V.length v == Bytes.multScalar of
+  decode v = case S.length v == Bytes.multScalar of
     True -> Just (Sc v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -90,28 +90,28 @@ instance IsEncoding Scalar where
 
 mult :: Scalar -> GroupElement -> GroupElement
 mult (Sc n) (GE p) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->
-  constVectors [n, p] $ \[pn, pp] ->
+  constVectors [n, p] $ \[(pn, _), (pp, _)] ->
   c_scalarmult pq pn pp
 
 multBase :: Scalar -> GroupElement
 multBase (Sc n) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->
-  constVectors [n] $ \[pn] ->
+  constVectors [n] $ \[(pn, _)] ->
   c_scalarmult_base pq pn
 
 foreign import ccall "crypto_scalarmult"
-  c_scalarmult :: Ptr Word8
+  c_scalarmult :: Ptr CChar
                   -- ^ Output group element buffer
-                  -> Ptr Word8
+                  -> Ptr CChar
                   -- ^ Input integer buffer
-                  -> Ptr Word8
+                  -> Ptr CChar
                   -- ^ Input group element buffer
                   -> IO CInt
                   -- ^ Always 0
 
 foreign import ccall "crypto_scalarmult"
-  c_scalarmult_base :: Ptr Word8
+  c_scalarmult_base :: Ptr CChar
                        -- ^ Output group element buffer
-                       -> Ptr Word8
+                       -> Ptr CChar
                        -- ^ Input integer buffer
                        -> IO CInt
                        -- ^ Always 0

@@ -11,9 +11,9 @@
 -- "Crypto.Saltine.Core.SecretBox"
 -- 
 -- The 'secretbox' function encrypts and authenticates a message
--- 'V.Vector' using a secret key and a nonce. The 'secretboxOpen'
--- function verifies and decrypts a ciphertext 'V.Vector' using a secret
--- key and a nonce. If the ciphertext fails validation,
+-- 'ByteString' using a secret key and a nonce. The 'secretboxOpen'
+-- function verifies and decrypts a ciphertext 'ByteString' using a
+-- secret key and a nonce. If the ciphertext fails validation,
 -- 'secretboxOpen' returns 'Nothing'.
 -- 
 -- The "Crypto.Saltine.Core.SecretBox" module is designed to meet
@@ -49,18 +49,18 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 import Control.Applicative
 
 -- $types
 
 -- | An opaque 'secretbox' cryptographic key.
-newtype Key = Key (V.Vector Word8) deriving (Eq, Ord)
+newtype Key = Key ByteString deriving (Eq, Ord)
 
 instance IsEncoding Key where
-  decode v = case V.length v == Bytes.secretBoxKey of
+  decode v = case S.length v == Bytes.secretBoxKey of
     True -> Just (Key v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -68,10 +68,10 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'secretbox' nonce.
-newtype Nonce = Nonce (V.Vector Word8) deriving (Eq, Ord)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord)
 
 instance IsEncoding Nonce where
-  decode v = case V.length v == Bytes.secretBoxNonce of
+  decode v = case S.length v == Bytes.secretBoxNonce of
     True -> Just (Nonce v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -79,8 +79,8 @@ instance IsEncoding Nonce where
   {-# INLINE encode #-}
 
 instance IsNonce Nonce where
-  zero = Nonce (V.replicate Bytes.secretBoxNonce 0)
-  nudge (Nonce n) = Nonce (nudgeVector n)
+  zero = Nonce (S.replicate Bytes.secretBoxNonce 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
 
 -- | Creates a random key of the correct size for 'secretbox'.
 newKey :: IO Key
@@ -93,59 +93,61 @@ newNonce = Nonce <$> randomVector Bytes.secretBoxNonce
 -- | Encrypts a message. It is infeasible for an attacker to decrypt
 -- the message so long as the 'Nonce' is never repeated.
 secretbox :: Key -> Nonce
-             -> V.Vector Word8
+             -> ByteString
              -- ^ Message
-             -> V.Vector Word8
+             -> ByteString
              -- ^ Ciphertext
 secretbox (Key key) (Nonce nonce) msg =
   unpad' . snd . buildUnsafeCVector len $ \pc ->
-    constVectors [key, pad' msg, nonce] $ \[pk, pm, pn] ->
-    c_secretbox pc pm (fromIntegral len) pn pk
-  where len    = V.length msg + Bytes.secretBoxZero
+    constVectors [key, pad' msg, nonce] $ \
+      [(pk, _), (pm, _), (pn, _)] ->
+      c_secretbox pc pm (fromIntegral len) pn pk
+  where len    = S.length msg + Bytes.secretBoxZero
         pad'   = pad Bytes.secretBoxZero
         unpad' = unpad Bytes.secretBoxBoxZero
 
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
 secretboxOpen :: Key -> Nonce 
-                 -> V.Vector Word8
+                 -> ByteString
                  -- ^ Ciphertext
-                 -> Maybe (V.Vector Word8)
+                 -> Maybe ByteString
                  -- ^ Message
 secretboxOpen (Key key) (Nonce nonce) cipher =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [key, pad' cipher, nonce] $ \[pk, pc, pn] ->
-        c_secretbox_open pm pc (fromIntegral len) pn pk
+        constVectors [key, pad' cipher, nonce] $ \
+          [(pk, _), (pc, _), (pn, _)] ->
+          c_secretbox_open pm pc (fromIntegral len) pn pk
   in hush . handleErrno err $ unpad' vec
-  where len    = V.length cipher + Bytes.secretBoxBoxZero
+  where len    = S.length cipher + Bytes.secretBoxBoxZero
         pad'   = pad Bytes.secretBoxBoxZero
         unpad' = unpad Bytes.secretBoxZero
 
 -- | The secretbox C API uses 0-padded C strings. Always returns 0.
 foreign import ccall "crypto_secretbox"
-  c_secretbox :: Ptr Word8
+  c_secretbox :: Ptr CChar
                  -- ^ Cipher 0-padded output buffer
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Constant 0-padded message input buffer
                  -> CULLong
                  -- ^ Length of message input buffer (incl. 0s)
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Constant nonce buffer
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Constant key buffer
                  -> IO CInt
 
 -- | The secretbox C API uses 0-padded C strings. Returns 0 if
 -- successful or -1 if verification failed.
 foreign import ccall "crypto_secretbox_open"
-  c_secretbox_open :: Ptr Word8
+  c_secretbox_open :: Ptr CChar
                       -- ^ Message 0-padded output buffer
-                      -> Ptr Word8
+                      -> Ptr CChar
                       -- ^ Constant 0-padded message input buffer
                       -> CULLong
                       -- ^ Length of message input buffer (incl. 0s)
-                      -> Ptr Word8
+                      -> Ptr CChar
                       -- ^ Constant nonce buffer
-                      -> Ptr Word8
+                      -> Ptr CChar
                       -- ^ Constant key buffer
                       -> IO CInt

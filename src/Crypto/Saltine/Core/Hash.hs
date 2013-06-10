@@ -9,9 +9,9 @@
 -- 
 -- Hashing: "Crypto.Saltine.Core.Hash"
 -- 
--- The 'hash' function hashes a message 'V.Vector' and returns a
+-- The 'hash' function hashes a message 'ByteString' and returns a
 -- hash. Hashes are always of length 'Bytes.hash'. The 'shorthash'
--- function hashes a message 'V.Vector' with respect to a secret key
+-- function hashes a message 'ByteString' with respect to a secret key
 -- and returns a very short hash. Short hashes are always of length
 -- 'Bytes.shorthash'.
 -- 
@@ -52,26 +52,26 @@ import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import Foreign.C
 import Foreign.Ptr
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 import Control.Applicative
 
 -- | Computes a cryptographically collision-resistant hash making
 -- @hash m == hash m' ==> m == m'@ highly likely even when under
 -- attack.
-hash :: V.Vector Word8
+hash :: ByteString
         -- ^ Message
-        -> V.Vector Word8
+        -> ByteString
         -- ^ Hash
 hash m = snd . buildUnsafeCVector Bytes.hash $ \ph ->
-  constVectors [m] $ \[pm] -> c_hash ph pm (fromIntegral $ V.length m)
+  constVectors [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
 
 -- | An opaque 'shorthash' cryptographic secret key.
-newtype ShorthashKey = ShK (V.Vector Word8) deriving (Eq, Ord)
+newtype ShorthashKey = ShK ByteString deriving (Eq, Ord)
 
 instance IsEncoding ShorthashKey where
-  decode v = case V.length v == Bytes.shorthashKey of
+  decode v = case S.length v == Bytes.shorthashKey of
     True -> Just (ShK v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -84,18 +84,18 @@ newShorthashKey = ShK <$> randomVector Bytes.shorthashKey
 
 -- | Computes a very short, fast keyed hash.
 shorthash :: ShorthashKey
-             -> V.Vector Word8
+             -> ByteString
              -- ^ Message
-             -> V.Vector Word8
+             -> ByteString
              -- ^ Hash
 shorthash (ShK k) m = snd . buildUnsafeCVector Bytes.shorthash $ \ph ->
-  constVectors [k, m] $ \[pk, pm] ->
-  c_shorthash ph pm (fromIntegral $ V.length m) pk
+  constVectors [k, m] $ \[(pk, _), (pm, _)] ->
+  c_shorthash ph pm (fromIntegral $ S.length m) pk
              
 foreign import ccall "crypto_hash"
-  c_hash :: Ptr Word8
+  c_hash :: Ptr CChar
             -- ^ Output hash buffer
-            -> Ptr Word8
+            -> Ptr CChar
             -- ^ Constant message buffer
             -> CULLong
             -- ^ Constant message buffer length
@@ -103,13 +103,13 @@ foreign import ccall "crypto_hash"
             -- ^ Always 0
 
 foreign import ccall "crypto_shorthash"
-  c_shorthash :: Ptr Word8
+  c_shorthash :: Ptr CChar
                  -- ^ Output hash buffer
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Constant message buffer
                  -> CULLong
                  -- ^ Message buffer length
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Constant Key buffer
                  -> IO CInt
                  -- ^ Always 0

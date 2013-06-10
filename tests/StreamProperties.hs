@@ -6,6 +6,8 @@ module StreamProperties (
 
 import Util
 
+import Crypto.Saltine.Core.Stream
+
 import qualified Data.ByteString as S
 
 import Test.Framework.Providers.QuickCheck2
@@ -27,7 +29,7 @@ testStream = buildTest $ do
                        ==> xor k n bs /= bs,
 
     testProperty "xor is involutive"
-    $ \(Message bs) -> xor k n $ xor k n bs == bs
+    $ \(Message bs) -> xor k n (xor k n bs) == bs
     
     ]
     

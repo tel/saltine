@@ -2,43 +2,46 @@ module Crypto.Saltine.Internal.Util where
 
 import Foreign.C
 import Foreign.Ptr
-import Foreign.ForeignPtr
 import System.IO.Unsafe
-import Data.Word
+
 import Data.Monoid
-import qualified Data.Vector.Storable as V
-import qualified Data.Vector.Storable.Mutable as VM
+import qualified Data.ByteString as S
+import Data.ByteString (ByteString)
+import Data.ByteString.Unsafe
 
-import Data.STRef
+-- | @snd . cycleSucc@ computes the 'succ' of a 'Bounded', 'Eq' 'Enum'
+-- with wraparound. The @fst . cycleSuc@ is whether the wraparound
+-- occurred (i.e. @fst . cycleSucc == (== maxBound)@).
+cycleSucc :: (Bounded a, Enum a, Eq a) => a -> (Bool, a)
+cycleSucc a = (top, if top then minBound else succ a)
+  where top = a == maxBound
 
-foreign import ccall "randombytes_buf"
-  c_randombytes_buf :: Ptr Word8 -> CInt -> IO ()
+-- | Treats a 'ByteString' as a little endian bitstring and increments
+-- it.
+nudgeBS :: ByteString -> ByteString
+nudgeBS i = fst $ S.unfoldrN (S.length i) go (True, i) where
+  go (toSucc, bs) =
+    do (hd, tl) <- S.uncons bs
+       let (top, hd') = cycleSucc hd
+       if toSucc
+         then return (hd', (top, tl))
+         else return (hd, (top && toSucc, tl))
 
--- | Increments a 'V.Vector' with 0 as the least-significant index.
-nudgeVector :: V.Vector Word8 -> V.Vector Word8
-nudgeVector v = V.modify go v
-  where go mv = do
-          iref <- newSTRef 0
-          loop iref mv
-        loop iref mv = do
-          i <- readSTRef iref
-          if i < len
-            then do val <- VM.read mv i
-                    if val == maxBound
-                       then do VM.write mv i minBound
-                               modifySTRef iref succ
-                               loop iref mv
-                      else VM.write mv i (succ val)
-            else return ()
-        len = V.length v
+-- | Computes the orbit of a endomorphism... in a very brute force
+-- manner. Exists just for the below property.
+-- 
+-- prop> length . orbit nudgeBS . S.pack . replicate 0 == (256^)
+orbit :: Eq a => (a -> a) -> a -> [a]
+orbit f a0 = orbit' (f a0) where
+  orbit' a = if a == a0 then [a0] else a : orbit' (f a)
 
--- | 0-pad a vector
-pad :: (VM.Storable a, Num a) => Int -> V.Vector a -> V.Vector a
-pad n = mappend (V.replicate n 0)
+-- | 0-pad a 'ByteString'
+pad :: Int -> ByteString -> ByteString
+pad n = mappend (S.replicate n 0)
 
--- | Remove a 0-padding from a vector
-unpad :: VM.Storable a => Int -> V.Vector a -> V.Vector a
-unpad = V.drop
+-- | Remove a 0-padding from a 'ByteString'
+unpad :: Int -> ByteString -> ByteString
+unpad = S.drop
 
 -- | Converts a C-convention errno to an Either
 handleErrno :: CInt -> (a -> Either String a)
@@ -53,33 +56,35 @@ unsafeDidSucceed = go . unsafePerformIO
         go _ = False
 
 -- | Convenience function for accessing constant C vectors
-constVectors :: VM.Storable a => [V.Vector a] -> ([Ptr a] -> IO b) -> IO b
 -- Manual unfold of: @constVectors = runContT . mapM (ContT . V.unsafeWith)@
-constVectors = foldr (\v kk -> \k -> (V.unsafeWith v) (\a -> kk (\as -> k (a:as)))) ($ [])
+constVectors :: [ByteString] -> ([CStringLen] -> IO b) -> IO b
+constVectors =
+  foldr (\v kk -> \k -> (unsafeUseAsCStringLen v) (\a -> kk (\as -> k (a:as)))) ($ [])
 
 -- | Slightly safer cousin to 'buildUnsafeCVector' that remains in the
 -- 'IO' monad.
-buildUnsafeCVector' :: VM.Storable a => Int -> (Ptr a -> IO b) -> IO (b, V.Vector a)
+buildUnsafeCVector' :: Int -> (Ptr CChar -> IO b) -> IO (b, ByteString)
 buildUnsafeCVector' n k = do
-  buf <- mallocForeignPtrArray n
-  b <- withForeignPtr buf k
-  vec <- V.unsafeFreeze (VM.unsafeFromForeignPtr buf 0 n)
-  return (b, vec)
+  let bs = S.replicate n 0
+  out <- unsafeUseAsCString bs k
+  return (out, bs)
 
 -- | Extremely unsafe function, use with utmost care! Builds a new
 -- Vector using a ccall which is given access to the raw underlying
 -- pointer. Overwrites are UNCHECKED and 'unsafePerformIO' is used so
--- it's difficult to predict the timing of the 'Vector' creation.
-buildUnsafeCVector :: VM.Storable a => Int -> (Ptr a -> IO b) -> (b, V.Vector a)
+-- it's difficult to predict the timing of the 'ByteString' creation.
+buildUnsafeCVector :: Int -> (Ptr CChar -> IO b) -> (b, ByteString)
 buildUnsafeCVector n = unsafePerformIO . buildUnsafeCVector' n
 
--- | Build a sized random 'V.Vector' using Sodium's bindings to
+-- | Build a sized random 'ByteString' using Sodium's bindings to
 -- @/dev/urandom@.
-randomVector :: Int -> IO (V.Vector Word8)
-randomVector n = do
-  (_, vec) <- buildUnsafeCVector' n (`c_randombytes_buf` fromIntegral n)
-  return vec
+randomVector :: Int -> IO ByteString
+randomVector n =
+  fmap snd $ buildUnsafeCVector' n (`c_randombytes_buf` fromIntegral n)
 
 -- | To prevent a dependency on package 'errors'
 hush :: Either s a -> Maybe a
 hush = either (const Nothing) Just
+
+foreign import ccall "randombytes_buf"
+  c_randombytes_buf :: Ptr CChar -> CInt -> IO ()

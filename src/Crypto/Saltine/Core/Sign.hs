@@ -11,10 +11,10 @@
 -- 
 -- The 'newKeypair' function randomly generates a secret key and a
 -- corresponding public key. The 'sign' function signs a message
--- 'V.Vector' using the signer's secret key and returns the resulting
--- signed message. The 'signOpen' function verifies the signature in a
--- signed message using the signer's public key then returns the
--- message without its signature.
+-- 'ByteString' using the signer's secret key and returns the
+-- resulting signed message. The 'signOpen' function verifies the
+-- signature in a signed message using the signer's public key then
+-- returns the message without its signature.
 -- 
 -- "Crypto.Saltine.Core.Sign" is an EdDSA signature using
 -- elliptic-curve Curve25519 (see: <http://ed25519.cr.yp.to/>). See
@@ -40,16 +40,16 @@ import Foreign.Ptr
 import Foreign.Marshal.Alloc
 import Foreign.Storable
 import System.IO.Unsafe
-import Data.Word
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString as S
+import           Data.ByteString (ByteString)
 
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK (V.Vector Word8) deriving (Eq, Ord)
+newtype SecretKey = SK ByteString deriving (Eq, Ord)
 
 instance IsEncoding SecretKey where
-  decode v = case V.length v == Bytes.signSK of
+  decode v = case S.length v == Bytes.signSK of
     True -> Just (SK v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -57,10 +57,10 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK (V.Vector Word8) deriving (Eq, Ord)
+newtype PublicKey = PK ByteString deriving (Eq, Ord)
 
 instance IsEncoding PublicKey where
-  decode v = case V.length v == Bytes.signPK of
+  decode v = case S.length v == Bytes.signPK of
     True -> Just (PK v)
     False -> Nothing
   {-# INLINE decode #-}
@@ -84,71 +84,71 @@ newKeypair = do
 -- | Augments a message with a signature forming a \"signed
 -- message\".
 sign :: SecretKey
-        -> V.Vector Word8
+        -> ByteString
         -- ^ Message
-        -> V.Vector Word8
+        -> ByteString
         -- ^ Signed message
 sign (SK k) m = unsafePerformIO $ 
   alloca $ \psmlen -> do
     (_err, sm) <- buildUnsafeCVector' (len + Bytes.sign) $ \psmbuf ->
-      constVectors [k, m] $ \[pk, pm] ->
+      constVectors [k, m] $ \[(pk, _), (pm, _)] ->
       c_sign psmbuf psmlen pm (fromIntegral len) pk
     smlen <- peek psmlen
-    return $ V.take (fromIntegral smlen) sm
-  where len = V.length m
+    return $ S.take (fromIntegral smlen) sm
+  where len = S.length m
 
 -- | Checks a \"signed message\" returning 'Just' the original message
 -- iff the signature was generated using the 'SecretKey' corresponding
 -- to the given 'PublicKey'. Returns 'Nothing' otherwise.
 signOpen :: PublicKey
-            -> V.Vector Word8
+            -> ByteString
             -- ^ Signed message
-            -> Maybe (V.Vector Word8)
+            -> Maybe ByteString
             -- ^ Maybe the restored message
 signOpen (PK k) sm = unsafePerformIO $
   alloca $ \pmlen -> do
     (err, m) <- buildUnsafeCVector' smlen $ \pmbuf ->
-      constVectors [k, sm] $ \[pk, psm] ->
+      constVectors [k, sm] $ \[(pk, _), (psm, _)] ->
       c_sign_open pmbuf pmlen psm (fromIntegral smlen) pk
     mlen <- peek pmlen
     case err of
-      0 -> return $ Just $ V.take (fromIntegral mlen) m
+      0 -> return $ Just $ S.take (fromIntegral mlen) m
       _ -> return $ Nothing
-  where smlen = V.length sm
+  where smlen = S.length sm
 
 
 foreign import ccall "crypto_sign_keypair"
-  c_sign_keypair :: Ptr Word8
+  c_sign_keypair :: Ptr CChar
                     -- ^ Public key output buffer
-                    -> Ptr Word8
+                    -> Ptr CChar
                     -- ^ Secret key output buffer
                     -> IO CInt
                     -- ^ Always 0
 
 foreign import ccall "crypto_sign"
-  c_sign :: Ptr Word8
+  c_sign :: Ptr CChar
             -- ^ Signed message output buffer
             -> Ptr CULLong
             -- ^ Length of signed message
-            -> Ptr Word8
+            -> Ptr CChar
             -- ^ Constant message buffer
             -> CULLong
             -- ^ Length of message input buffer
-            -> Ptr Word8
+            -> Ptr CChar
             -- ^ Constant secret key buffer
             -> IO CInt
             -- ^ Always 0
 
 foreign import ccall "crypto_sign_open"
-  c_sign_open :: Ptr Word8
+  c_sign_open :: Ptr CChar
                  -- ^ Message output buffer
                  -> Ptr CULLong
                  -- ^ Length of message
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Constant signed message buffer
                  -> CULLong
                  -- ^ Length of signed message buffer
-                 -> Ptr Word8
+                 -> Ptr CChar
                  -- ^ Public key buffer
                  -> IO CInt
                  -- ^ 0 if signature is verifiable, -1 otherwise
