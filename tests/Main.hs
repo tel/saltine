@@ -8,6 +8,7 @@ import StreamProperties (testStream)
 import AuthProperties (testAuth)
 import OneTimeAuthProperties (testOneTimeAuth)
 import SignProperties (testSign)
+import ScalarMultProperties (testScalarMult)
 
 import Test.Framework
 
@@ -18,5 +19,6 @@ main = defaultMain [
   testStream,
   testAuth,
   testOneTimeAuth,
-  testSign
+  testSign,
+  testScalarMult
   ]
