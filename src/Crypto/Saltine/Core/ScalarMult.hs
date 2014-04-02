@@ -108,7 +108,7 @@ foreign import ccall "crypto_scalarmult"
                   -> IO CInt
                   -- ^ Always 0
 
-foreign import ccall "crypto_scalarmult"
+foreign import ccall "crypto_scalarmult_base"
   c_scalarmult_base :: Ptr CChar
                        -- ^ Output group element buffer
                        -> Ptr CChar
