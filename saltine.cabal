@@ -1,5 +1,5 @@
 name:                saltine
-version:             0.0.0.2
+version:             0.0.0.3
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
