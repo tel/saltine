@@ -27,7 +27,7 @@ copyright:           Copyright (c) Joseph Abrahamson 2013
 category:            Cryptography
 build-type:          Simple
 cabal-version:       >=1.10
-tested-with:         GHC==7.6.3, GHC==7.8.4
+tested-with:         GHC==7.6.3, GHC==7.8.4, GHC==7.10.1
 
 source-repository head
   type: git
