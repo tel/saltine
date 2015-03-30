@@ -18,7 +18,7 @@ before_install:
 
 install:
   - travis_retry cabal update
-  - cabal install --only-dependencies --enable-tests --enable-benchmarks
+  - travis_retry cabal install --only-dependencies --enable-tests --enable-benchmarks
 
 script:
   - cabal configure --enable-tests --enable-benchmarks -v2
