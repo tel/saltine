@@ -7,17 +7,21 @@
 -- Stability   : experimental
 -- Portability : non-portable
 -- 
--- Public-key authenticated encryption:
+-- Public-key cryptography abstraction:
 -- "Crypto.Saltine.Core.Box"
--- 
--- The 'box' function encrypts and authenticates a message
+--
+-- This module consists of functions dealing with two public-key
+-- cryptography concepts in libsodium.
+--
+-- The first one is an authenticated encryption scheme. In this
+-- scheme, the 'box' function encrypts and authenticates a message
 -- 'ByteString' using the sender's secret key, the receiver's public
 -- key, and a nonce. The 'boxOpen' function verifies and decrypts a
 -- ciphertext 'ByteString' using the receiver's secret key, the
 -- sender's public key, and a nonce. If the ciphertext fails
 -- verification, 'boxOpen' returns 'Nothing'.
 -- 
--- The "Crypto.Saltine.Core.Box" module is designed to meet the
+-- The set of box functions is designed to meet the
 -- standard notions of privacy and third-party unforgeability for a
 -- public-key authenticated-encryption scheme using nonces. For formal
 -- definitions see, e.g., Jee Hea An, "Authenticated encryption in the
@@ -39,6 +43,15 @@
 -- the sets overlap. For example, a sender can use the same nonce for
 -- two different messages if the messages are sent to two different
 -- public keys.
+--
+-- The second concept is sealed boxes, which provide encryption and
+-- preservation of integrity, but not authentication. Technically,
+-- the sender of a message generates a keypair, uses the regular
+-- box mechanism, attaches the public key to the message and then
+-- immediately destroys the private key. This is useful, e.g. when
+-- the receiver cannot know the sender's public key in advance and
+-- hence cannot use the regular box functions, or when you want to
+-- send messages anonymously.
 -- 
 -- The "Crypto.Saltine.Core.Box" module is not meant to provide
 -- non-repudiation. On the contrary: the crypto_box function
@@ -68,7 +81,8 @@ module Crypto.Saltine.Core.Box (
   SecretKey, PublicKey, Keypair, CombinedKey, Nonce,
   newKeypair, beforeNM, newNonce,
   box, boxOpen,
-  boxAfterNM, boxOpenAfterNM  
+  boxAfterNM, boxOpenAfterNM,
+  boxSeal, boxSealOpen
   ) where
 
 import Crypto.Saltine.Class
@@ -225,6 +239,36 @@ boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
         unpad' = unpad Bytes.boxZero
 
 
+-- | Encrypts a message for sending to the owner of the public
+-- key. The message is unauthenticated, but permits integrity checking.
+boxSeal :: PublicKey -> ByteString -> ByteString
+boxSeal (PK pk) msg =
+  snd . buildUnsafeCVector strlen $ \pc ->
+    constVectors [pk, msg] $ \
+      [(ppk, _), (pm, _)] ->
+      c_box_seal pc pm (fromIntegral len) ppk
+  where strlen    = S.length msg + Bytes.sealedBox
+        len       = S.length msg
+
+-- | Decrypts a sealed box message. The message must have been
+-- encrypted using the receiver's public key.
+-- Returns 'Nothing' if keys and message do not match or integrity
+-- is violated.
+boxSealOpen :: PublicKey -> SecretKey
+            -> ByteString
+            -- ^ Ciphertext
+            -> Maybe ByteString
+            -- ^ Message
+boxSealOpen (PK pk) (SK sk) cipher =
+  let (err, vec) = buildUnsafeCVector strlen $ \pm ->
+        constVectors [pk, sk, cipher] $ \
+          [(ppk, _), (psk, _), (pc, _)] ->
+          c_box_seal_open pm pc (fromIntegral len) ppk psk
+  in hush . handleErrno err $ vec
+  where strlen    = S.length cipher - Bytes.sealedBox
+        len       = S.length cipher
+
+
 -- | Should always return a 0.
 foreign import ccall "crypto_box_keypair"
   c_box_keypair :: Ptr CChar
@@ -308,3 +352,32 @@ foreign import ccall "crypto_box_open_afternm"
                         -- ^ Constant combined key buffer
                         -> IO CInt
                         -- ^ 0 for success, -1 for failure to verify
+
+
+-- | The sealedbox C API uses C strings.
+foreign import ccall "crypto_box_seal"
+  c_box_seal :: Ptr CChar
+             -- ^ Cipher output buffer
+             -> Ptr CChar
+             -- ^ Constant message input buffer
+             -> CULLong
+             -- ^ Length of message input buffer
+             -> Ptr CChar
+             -- ^ Constant public key buffer
+             -> IO CInt
+             -- ^ Always 0
+
+-- | The sealedbox C API uses C strings.
+foreign import ccall "crypto_box_seal_open"
+  c_box_seal_open :: Ptr CChar
+                  -- ^ Message output buffer
+                  -> Ptr CChar
+                  -- ^ Constant ciphertext input buffer
+                  -> CULLong
+                  -- ^ Length of message input buffer
+                  -> Ptr CChar
+                  -- ^ Constant public key buffer
+                  -> Ptr CChar
+                  -- ^ Constant secret key buffer
+                  -> IO CInt
+                  -- ^ 0 for success, -1 for failure to decrypt

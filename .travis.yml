@@ -1,12 +1,12 @@
 env:
-  - CABALVER=1.16 GHCVER=7.6.3 SODIUMVER=1.0.2
-  - CABALVER=1.18 GHCVER=7.8.4 SODIUMVER=1.0.2
-  - CABALVER=1.22 GHCVER=7.10.1 SODIUMVER=1.0.2
+  - CABALVER=1.16 GHCVER=7.6.3 SODIUMVER=1.0.3
+  - CABALVER=1.18 GHCVER=7.8.4 SODIUMVER=1.0.3
+  - CABALVER=1.22 GHCVER=7.10.1 SODIUMVER=1.0.3
 
 matrix:
   fast_finish: true
   allow_failures:
-  - env: CABALVER=1.16 GHCVER=7.6.3 SODIUMVER=1.0.2
+  - env: CABALVER=1.16 GHCVER=7.6.3 SODIUMVER=1.0.3
 
 before_install:
   - curl -# -L https://github.com/jedisct1/libsodium/releases/download/$SODIUMVER/libsodium-$SODIUMVER.tar.gz | tar xzf -

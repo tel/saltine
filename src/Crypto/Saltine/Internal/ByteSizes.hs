@@ -28,6 +28,7 @@ module Crypto.Saltine.Internal.ByteSizes (
   boxBoxZero,
   boxMac,
   boxBeforeNM,
+  sealedBox,
   onetime,
   onetimeKey,
   mult,
@@ -52,7 +53,8 @@ import Foreign.C
 -- Constants for
 
 auth, authKey :: Int
-boxPK, boxSK, boxNonce, boxZero, boxBoxZero, boxMac, boxBeforeNM :: Int
+boxPK, boxSK, boxNonce, boxZero, boxBoxZero :: Int
+boxMac, boxBeforeNM, sealedBox :: Int
 onetime, onetimeKey :: Int
 mult, multScalar :: Int
 secretBoxKey, secretBoxNonce, secretBoxZero, secretBoxBoxZero :: Int
@@ -84,6 +86,11 @@ boxMac      = fromIntegral c_crypto_box_macbytes
 -- | Size of a @crypto_box_beforenm@-generated combined key
 boxBeforeNM =
   fromIntegral c_crypto_box_beforenmbytes
+
+-- SealedBox
+-- | Amount by which ciphertext is longer than plaintext
+-- in sealed boxes
+sealedBox = fromIntegral c_crypto_box_sealbytes
 
 -- OneTimeAuth
 -- | Size of a @crypto_onetimeauth@ authenticator.
@@ -157,6 +164,10 @@ foreign import ccall "crypto_box_boxzerobytes"
   c_crypto_box_boxzerobytes :: CSize
 foreign import ccall "crypto_box_macbytes"
   c_crypto_box_macbytes :: CSize
+
+-- src/libsodium/crypto_box_seal.c
+foreign import ccall "crypto_box_sealbytes"
+  c_crypto_box_sealbytes :: CSize
                            
 -- src/libsodium/crypto_onetimeauth/crypto_onetimeauth.c
 foreign import ccall "crypto_onetimeauth_bytes"
