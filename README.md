@@ -1,4 +1,4 @@
-# Saltine 0.0.0.1 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
+# Saltine 0.0.0.4 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
 
 A Haskell binding for @jedisct1's portable binding for djb's
 NaCl. **This is an early release.** Please try it out, but don't just
@@ -6,15 +6,15 @@ yet stake your life or job on it.
 
 ``` haskell
 import Crypto.Saltine
-import qualified Data.Vector.Storable as V
+import qualified Data.ByteString.Char8 as BSC8
 
 main = do
   k <- newKey
   n <- newNonce
-  let ciphertext = secretbox k n (V.fromList [1,2,3,4,5])
-  print $ secreboxOpen k n ciphertext
+  let ciphertext = secretbox k n (BSC8.pack "foobar")
+  print $ secretboxOpen k n ciphertext
 
--- Just (fromList [1,2,3,4,5])
+-- Just "foobar"
 ```
 
 In
