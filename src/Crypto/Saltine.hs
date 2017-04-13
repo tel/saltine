@@ -1,6 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies             #-}
 
 module Crypto.Saltine (
   optimize,

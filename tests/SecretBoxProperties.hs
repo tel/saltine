@@ -4,14 +4,12 @@ module SecretBoxProperties (
   testSecretBox
   ) where
 
-import Util
+import           Util
+import           Crypto.Saltine.Core.SecretBox
 
-import Crypto.Saltine.Core.SecretBox
-
-import qualified Data.ByteString as S
-
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework
+import qualified Data.ByteString                      as S
+import           Test.Framework.Providers.QuickCheck2
+import           Test.Framework
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: Key -> Nonce -> Message -> Bool
@@ -55,6 +53,6 @@ testSecretBox = buildTest $ do
 
       testProperty "... using the wrong nonce"
       $ cannotDecryptNonceProp k1 n1 n2
-      
+
       ]
     ]

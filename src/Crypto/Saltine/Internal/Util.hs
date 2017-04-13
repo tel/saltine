@@ -1,13 +1,12 @@
 module Crypto.Saltine.Internal.Util where
 
-import Foreign.C
-import Foreign.Ptr
-import System.IO.Unsafe
+import           Foreign.C
+import           Foreign.Ptr
+import           System.IO.Unsafe
 
-import Data.Monoid
-import qualified Data.ByteString as S
-import Data.ByteString (ByteString)
-import Data.ByteString.Unsafe
+import qualified Data.ByteString        as S
+import           Data.ByteString          (ByteString)
+import           Data.ByteString.Unsafe
 
 -- | @snd . cycleSucc@ computes the 'succ' of a 'Bounded', 'Eq' 'Enum'
 -- with wraparound. The @fst . cycleSuc@ is whether the wraparound
@@ -20,16 +19,17 @@ cycleSucc a = (top, if top then minBound else succ a)
 -- it.
 nudgeBS :: ByteString -> ByteString
 nudgeBS i = fst $ S.unfoldrN (S.length i) go (True, i) where
-  go (toSucc, bs) =
-    do (hd, tl) <- S.uncons bs
-       let (top, hd') = cycleSucc hd
-       if toSucc
-         then return (hd', (top, tl))
-         else return (hd, (top && toSucc, tl))
+  go (toSucc, bs) = do
+    (hd, tl)      <- S.uncons bs
+    let (top, hd') = cycleSucc hd
+
+    if   toSucc
+    then return (hd', (top, tl))
+    else return (hd, (top && toSucc, tl))
 
 -- | Computes the orbit of a endomorphism... in a very brute force
 -- manner. Exists just for the below property.
--- 
+--
 -- prop> length . orbit nudgeBS . S.pack . replicate 0 == (256^)
 orbit :: Eq a => (a -> a) -> a -> [a]
 orbit f a0 = orbit' (f a0) where
@@ -66,7 +66,7 @@ constVectors =
 buildUnsafeCVector' :: Int -> (Ptr CChar -> IO b) -> IO (b, ByteString)
 buildUnsafeCVector' n k = do
   let bs = S.replicate n 0
-  out <- unsafeUseAsCString bs k
+  out   <- unsafeUseAsCString bs k
   return (out, bs)
 
 -- | Extremely unsafe function, use with utmost care! Builds a new
@@ -80,7 +80,7 @@ buildUnsafeCVector n = unsafePerformIO . buildUnsafeCVector' n
 -- @/dev/urandom@.
 randomVector :: Int -> IO ByteString
 randomVector n =
-  fmap snd $ buildUnsafeCVector' n (`c_randombytes_buf` fromIntegral n)
+  snd <$> buildUnsafeCVector' n (`c_randombytes_buf` fromIntegral n)
 
 -- | To prevent a dependency on package 'errors'
 hush :: Either s a -> Maybe a

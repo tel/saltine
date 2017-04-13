@@ -5,7 +5,6 @@ module AuthProperties (
   ) where
 
 import Util
-
 import Crypto.Saltine.Core.Auth
 
 import Test.Framework.Providers.QuickCheck2
@@ -17,6 +16,6 @@ testAuth = buildTest $ do
   return $ testGroup "...Internal.Auth" [
 
     testProperty "Authenticates message"
-    $ \(Message bs) -> verify k (auth k bs) bs  == True
+    $ \(Message bs) -> verify k (auth k bs) bs == True
 
     ]

@@ -4,15 +4,13 @@ module StreamProperties (
   testStream
   ) where
 
-import Util
+import           Util
+import           Crypto.Saltine.Core.Stream
 
-import Crypto.Saltine.Core.Stream
-
-import qualified Data.ByteString as S
-
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework
-import Test.QuickCheck
+import qualified Data.ByteString                      as S
+import           Test.Framework.Providers.QuickCheck2
+import           Test.Framework
+import           Test.QuickCheck
 
 testStream :: Test
 testStream = buildTest $ do
@@ -30,7 +28,5 @@ testStream = buildTest $ do
 
     testProperty "xor is involutive"
     $ \(Message bs) -> xor k n (xor k n bs) == bs
-    
+
     ]
-    
-       

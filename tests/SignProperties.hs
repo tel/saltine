@@ -4,15 +4,13 @@ module SignProperties (
   testSign
   ) where
 
-import Util
+import           Util
+import           Crypto.Saltine.Core.Sign
 
-import Crypto.Saltine.Core.Sign
-
-import qualified Data.ByteString as S
-
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework
-import Test.QuickCheck
+import qualified Data.ByteString                      as S
+import           Test.Framework.Providers.QuickCheck2
+import           Test.Framework
+import           Test.QuickCheck
 
 testSign :: Test
 testSign = buildTest $ do
@@ -28,6 +26,6 @@ testSign = buildTest $ do
     $ \(Message bs) -> S.length (sign sk1 bs) >= S.length bs,
 
     testProperty "Rejects message with mismatched key"
-    $ \(Message bs) -> (not $ S.null bs) ==> signOpen pk2 (sign sk1 bs) == Nothing
+    $ \(Message bs) -> not (S.null bs) ==> signOpen pk2 (sign sk1 bs) == Nothing
 
     ]

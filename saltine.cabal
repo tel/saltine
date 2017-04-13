@@ -36,48 +36,48 @@ source-repository head
 library
   hs-source-dirs:     src
   exposed-modules:
-    Crypto.Saltine
-    Crypto.Saltine.Internal.ByteSizes
-    Crypto.Saltine.Core.SecretBox
-    Crypto.Saltine.Core.Box
-    Crypto.Saltine.Core.Stream
-    Crypto.Saltine.Core.Auth
-    Crypto.Saltine.Core.OneTimeAuth
-    Crypto.Saltine.Core.Sign
-    Crypto.Saltine.Core.Hash
-    Crypto.Saltine.Core.ScalarMult
-    Crypto.Saltine.Class
+                  Crypto.Saltine
+                  Crypto.Saltine.Internal.ByteSizes
+                  Crypto.Saltine.Core.SecretBox
+                  Crypto.Saltine.Core.Box
+                  Crypto.Saltine.Core.Stream
+                  Crypto.Saltine.Core.Auth
+                  Crypto.Saltine.Core.OneTimeAuth
+                  Crypto.Saltine.Core.Sign
+                  Crypto.Saltine.Core.Hash
+                  Crypto.Saltine.Core.ScalarMult
+                  Crypto.Saltine.Class
   other-modules:
-    Crypto.Saltine.Internal.Util
+                Crypto.Saltine.Internal.Util
   extra-libraries:    sodium
   cc-options:         -Wall
   ghc-options:        -Wall -funbox-strict-fields
   default-language:   Haskell2010
   build-depends:
-    base >= 4.5 && < 5,
-    bytestring,
-    profunctors
+                base >= 4.5 && < 5
+              , bytestring
+              , profunctors
 
 test-suite tests
   type:    exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
-    AuthProperties
-    BoxProperties
-    OneTimeAuthProperties
-    ScalarMultProperties
-    SecretBoxProperties
-    SignProperties
-    StreamProperties
-    Util
+                AuthProperties
+                BoxProperties
+                OneTimeAuthProperties
+                ScalarMultProperties
+                SecretBoxProperties
+                SignProperties
+                StreamProperties
+                Util
   ghc-options: -Wall -threaded -O0 -rtsopts
   hs-source-dirs: tests
   default-language: Haskell2010
   build-depends:
-    base >= 4.5 && < 5,
-    saltine,
-    bytestring,
-    vector,
-    QuickCheck,
-    test-framework-quickcheck2,
-    test-framework
+                base >= 4.5 && < 5
+              , saltine
+              , bytestring
+              , vector
+              , QuickCheck
+              , test-framework-quickcheck2
+              , test-framework

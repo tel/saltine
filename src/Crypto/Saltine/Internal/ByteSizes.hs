@@ -3,17 +3,17 @@
 -- Module      : Crypto.Saltine.Core.ScalarMult
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
--- 
+--
 -- Maintainer  : me@jspha.com
 -- Stability   : experimental
 -- Portability : non-portable
--- 
+--
 -- Various sizes
--- 
+--
 -- While technically these sizes are hidden behind opaque newtype
 -- wrappers, they can be useful for computation and sizing and are
 -- thus exposed.
--- 
+--
 -- As of @libsodium-4.1@ some of these sizes are not exported and thus
 -- are hardcoded here. This limitation should be removed in later
 -- versions of @libsodium@.
@@ -45,7 +45,6 @@ module Crypto.Saltine.Internal.ByteSizes (
   hash,
   shorthash,
   shorthashKey
-  
   ) where
 
 import Foreign.C
@@ -66,7 +65,7 @@ hash, shorthash, shorthashKey :: Int
 -- Authentication
 -- | Size of a @crypto_auth@ authenticator.
 auth    = fromIntegral c_crypto_auth_bytes
--- | Size of a @crypto_auth@ authenticator key. 
+-- | Size of a @crypto_auth@ authenticator key.
 authKey = fromIntegral c_crypto_auth_keybytes
 
 -- Box
@@ -168,7 +167,7 @@ foreign import ccall "crypto_box_macbytes"
 -- src/libsodium/crypto_box_seal.c
 foreign import ccall "crypto_box_sealbytes"
   c_crypto_box_sealbytes :: CSize
-                           
+
 -- src/libsodium/crypto_onetimeauth/crypto_onetimeauth.c
 foreign import ccall "crypto_onetimeauth_bytes"
   c_crypto_onetimeauth_bytes :: CSize

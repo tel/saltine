@@ -2,21 +2,19 @@
 -- Module      : Crypto.Saltine.Class
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
--- 
+--
 -- Maintainer  : me@jspha.com
 -- Stability   : experimental
 -- Portability : non-portable
--- 
+--
 -- Saltine type classes
 module Crypto.Saltine.Class (
   IsEncoding (..),
   IsNonce (..)
   ) where
 
-import Data.Profunctor
-import qualified Data.ByteString as S
-import           Data.ByteString (ByteString)
-import Control.Applicative
+import           Data.Profunctor
+import           Data.ByteString     (ByteString)
 
 -- | Class for all keys and nonces in Saltine which have a
 -- representation as 'V.Vector' of 'Word8'. 'encoded' is a 'Prism' of

@@ -4,16 +4,14 @@ module ScalarMultProperties (
   testScalarMult
   ) where
 
-import Util
+import           Util
+import           Crypto.Saltine.Class
+import           Crypto.Saltine.Core.ScalarMult
 
-import Crypto.Saltine.Class
-import Crypto.Saltine.Core.ScalarMult
-
-import qualified Data.ByteString as S
-import Data.Maybe (fromJust)
-
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework
+import qualified Data.ByteString                      as S
+import           Data.Maybe                             (fromJust)
+import           Test.Framework.Providers.QuickCheck2
+import           Test.Framework
 
 -- Test vectors extracted from "Cryptography in NaCl",
 -- http://cr.yp.to/highspeed/naclcrypto-20090310.pdf
@@ -47,7 +45,7 @@ sharedsk = fromJust . decode $ S.pack
     ,0x76,0xf0,0x9b,0x3c,0x1e,0x16,0x17,0x42]
 
 testScalarMult :: Test
-testScalarMult = buildTest $ do
+testScalarMult = buildTest $
   return $ testGroup "...Internal.ScalarMult" [
 
     testProperty "mult a (multBase a) /= multBase a"

@@ -4,17 +4,12 @@ module SealedBoxProperties (
   testSealedBox
 ) where
 
-import Util
+import           Util
+import           Crypto.Saltine.Core.Box
 
-import Crypto.Saltine.Core.Box
-
-import qualified Data.ByteString as S
-
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework
-
-import Test.QuickCheck.Property
-import Test.QuickCheck.Monadic
+import qualified Data.ByteString                      as S
+import           Test.Framework.Providers.QuickCheck2
+import           Test.Framework
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: Keypair -> Message -> Bool

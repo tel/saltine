@@ -2,14 +2,14 @@
 
 module Main where
 
-import SecretBoxProperties (testSecretBox)
-import BoxProperties (testBox)
-import SealedBoxProperties (testSealedBox)
-import StreamProperties (testStream)
-import AuthProperties (testAuth)
+import SecretBoxProperties   (testSecretBox)
+import BoxProperties         (testBox)
+import SealedBoxProperties   (testSealedBox)
+import StreamProperties      (testStream)
+import AuthProperties        (testAuth)
 import OneTimeAuthProperties (testOneTimeAuth)
-import SignProperties (testSign)
-import ScalarMultProperties (testScalarMult)
+import SignProperties        (testSign)
+import ScalarMultProperties  (testScalarMult)
 
 import Test.Framework
 
