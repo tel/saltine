@@ -4,9 +4,11 @@ import           Foreign.C
 import           Foreign.Ptr
 import           System.IO.Unsafe
 
+import           Control.Applicative
 import qualified Data.ByteString        as S
 import           Data.ByteString          (ByteString)
 import           Data.ByteString.Unsafe
+import           Data.Monoid
 
 -- | @snd . cycleSucc@ computes the 'succ' of a 'Bounded', 'Eq' 'Enum'
 -- with wraparound. The @fst . cycleSuc@ is whether the wraparound

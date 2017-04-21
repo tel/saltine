@@ -50,6 +50,7 @@ import           Crypto.Saltine.Class
 import           Crypto.Saltine.Internal.Util
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
+import           Control.Applicative
 import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString as S
