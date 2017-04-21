@@ -13,6 +13,7 @@ module Crypto.Saltine.Class (
   IsNonce (..)
   ) where
 
+import           Control.Applicative
 import           Data.Profunctor
 import           Data.ByteString     (ByteString)
 

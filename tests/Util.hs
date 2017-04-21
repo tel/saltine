@@ -2,6 +2,7 @@ module Util where
 
 import           Crypto.Saltine.Class
 
+import           Control.Applicative
 import           Control.Monad           (replicateM)
 import qualified Data.ByteString       as S
 import qualified Data.ByteString.Char8 as S8
