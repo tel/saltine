@@ -10,7 +10,7 @@ import           Crypto.Saltine.Core.Box
 import qualified Data.ByteString                      as S
 import           Test.Framework.Providers.QuickCheck2
 import           Test.Framework
-import           Test.QuickCheck.Property (ioProperty)
+import           Test.QuickCheck.Property               (ioProperty)
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: Keypair -> Message -> IO Bool
@@ -41,7 +41,7 @@ rightInverseFailureProp3 (sk1, pk1) (Message bs) = do
 rightInverseFailureProp4 :: Keypair -> Message -> IO Bool
 rightInverseFailureProp4 (sk1, pk1) (Message bs) = do
   enc <- boxSeal pk1 bs
-  return (Nothing == boxSealOpen pk1 sk1 (S.reverse $ enc))
+  return (Nothing == boxSealOpen pk1 sk1 (S.reverse enc))
 
 testSealedBox :: Test
 testSealedBox = buildTest $ do

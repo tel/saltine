@@ -5,10 +5,11 @@ NaCl. **This is an early release.** Please try it out, but don't just
 yet stake your life or job on it.
 
 ``` haskell
-import Crypto.Saltine
+import           Crypto.Saltine
 import qualified Data.ByteString.Char8 as BSC8
 
 main = do
+  optimize
   k <- newKey
   n <- newNonce
   let ciphertext = secretbox k n (BSC8.pack "foobar")
@@ -51,7 +52,7 @@ and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/C
 If you can think of ways to use Haskell's type system to enforce 
 security invariants, please suggest them.
 
-Tested with [`libsodium-1.0.3`](http://download.dnscrypt.org/libsodium/releases/), [`libsodium-1.0.6`](http://download.dnscrypt.org/libsodium/releases/) and [`libsodium-1.0.8`](http://download.dnscrypt.org/libsodium/releases/).
+Tested with [`libsodium-1.0.11`](http://download.dnscrypt.org/libsodium/releases/).
 
 Inspired by @thoughtpolice's
 [`salt`](http://github.com/thoughtpolice/salt) library. `salt` also

@@ -9,11 +9,9 @@ module Crypto.Saltine (
 import Foreign.C
 import Crypto.Saltine.Core.SecretBox
 
--- | Runs Sodiums's optimizer. This has no semantic effect, but both
--- may boost the speed of Sodium after running it. It is recommended
--- in production environments. It is, however, NOT thread-safe so no
--- other Sodium functions should be called until it successfully
--- returns.
+-- | Runs Sodiums's initialization routine. This should be called before
+-- using any other function. It is thread-safe since libsodium 1.0.11,
+-- but not before.
 optimize :: IO ()
 optimize = do
   err <- c_sodiumInit

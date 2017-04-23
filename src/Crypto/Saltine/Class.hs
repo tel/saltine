@@ -18,8 +18,8 @@ import           Data.Profunctor
 import           Data.ByteString     (ByteString)
 
 -- | Class for all keys and nonces in Saltine which have a
--- representation as 'V.Vector' of 'Word8'. 'encoded' is a 'Prism' of
--- type @Prism' (V.Vector Word8) a@ compatible with "Control.Lens" and
+-- representation as ByteString. 'encoded' is a 'Prism' of
+-- type @Prism' ByteString a@ compatible with "Control.Lens" and
 -- is automatically deduced.
 class IsEncoding a where
   encode  :: a -> ByteString

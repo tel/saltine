@@ -4,7 +4,7 @@ synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings
 description:
 
   /NaCl/ (pronounced \"salt\") is a new easy-to-use high-speed software
-  library for network communica tion, encryption, decryption,
+  library for network communication, encryption, decryption,
   signatures, etc. NaCl's goal is to provide all of the core
   operations needed to build higher-level cryptographic tools.
   .
@@ -21,13 +21,13 @@ description:
 license:             MIT
 license-file:        LICENSE
 author:              Joseph Abrahamson
-maintainer:          Joseph Abrahamson <me@jspha.com>
+maintainer:          Max Amanshauser <max@lambdalifting.org>
 bug-reports:         http://github.com/tel/saltine/issues
 copyright:           Copyright (c) Joseph Abrahamson 2013
 category:            Cryptography
 build-type:          Simple
 cabal-version:       >=1.10
-tested-with:         GHC==7.6.3, GHC==7.8.4, GHC==7.10.1
+tested-with:         GHC==7.8.4, GHC==7.10.3, GHC==8.0.2
 
 source-repository head
   type: git
