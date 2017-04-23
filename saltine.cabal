@@ -77,7 +77,6 @@ test-suite tests
                 base >= 4.5 && < 5
               , saltine
               , bytestring
-              , vector
               , QuickCheck
               , test-framework-quickcheck2
               , test-framework
