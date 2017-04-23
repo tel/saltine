@@ -242,8 +242,7 @@ boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
 -- | Encrypts a message for sending to the owner of the public
 -- key. The message is unauthenticated, but permits integrity checking.
 boxSeal :: PublicKey -> ByteString -> IO ByteString
-boxSeal (PK pk) msg = return $
-  snd . buildUnsafeCVector strlen $ \pc ->
+boxSeal (PK pk) msg = fmap snd . buildUnsafeCVector' strlen $ \pc ->
     constVectors [pk, msg] $ \
       [(ppk, _), (pm, _)] ->
         c_box_seal pc pm (fromIntegral len) ppk
