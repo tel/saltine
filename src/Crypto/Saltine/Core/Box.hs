@@ -190,7 +190,7 @@ box (PK pk) (SK sk) (Nonce nonce) msg =
         unpad' = unpad Bytes.boxBoxZero
 
 -- | Decrypts a message sent from the owner of the public key. They
--- must have encrypted it using your secret key. Returns 'Nothing' if
+-- must have encrypted it using your public key. Returns 'Nothing' if
 -- the keys and message do not match.
 boxOpen :: PublicKey -> SecretKey -> Nonce
         -> ByteString
