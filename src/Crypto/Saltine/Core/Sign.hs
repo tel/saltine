@@ -28,7 +28,8 @@
 module Crypto.Saltine.Core.Sign (
   SecretKey, PublicKey, Keypair,
   newKeypair,
-  sign, signOpen
+  sign, signOpen,
+  signDetached, signVerifyDetached
   ) where
 
 import           Crypto.Saltine.Class
@@ -116,6 +117,34 @@ signOpen (PK k) sm = unsafePerformIO $
       _ -> return   Nothing
   where smlen = S.length sm
 
+signDetached :: SecretKey
+             -> ByteString
+             -- ^ Message
+             -> ByteString
+             -- ^ Signature
+signDetached (SK k) m = unsafePerformIO $
+    alloca $ \psmlen -> do
+        (_err, sm) <- buildUnsafeCVector' Bytes.sign $ \sigbuf ->
+            constVectors [k, m] $ \[(pk, _), (pm, _)] ->
+                c_sign_detached sigbuf psmlen pm (fromIntegral len) pk
+        smlen <- peek psmlen
+        return $ S.take (fromIntegral smlen) sm
+  where len = S.length m
+
+-- | Returns @True@ if the signature is valid for the given public key and
+-- message.
+signVerifyDetached :: PublicKey
+                   -> ByteString
+                   -- ^ Signature
+                   -> ByteString
+                   -- ^ Message
+                   -> Bool
+signVerifyDetached (PK k) sig sm = unsafePerformIO $
+    constVectors [k, sig, sm] $ \[(pk, _), (psig, _), (psm, _)] -> do
+        res <- c_sign_verify_detached psig psm (fromIntegral len) pk
+        return (res == 0)
+  where len = S.length sm
+
 
 foreign import ccall "crypto_sign_keypair"
   c_sign_keypair :: Ptr CChar
@@ -152,3 +181,26 @@ foreign import ccall "crypto_sign_open"
               -- ^ Public key buffer
               -> IO CInt
               -- ^ 0 if signature is verifiable, -1 otherwise
+
+foreign import ccall "crypto_sign_detached"
+    c_sign_detached :: Ptr CChar
+                    -- ^ Signature output buffer
+                    -> Ptr CULLong
+                    -- ^ Length of the signature
+                    -> Ptr CChar
+                    -- ^ Constant message buffer
+                    -> CULLong
+                    -- ^ Length of message buffer
+                    -> Ptr CChar
+                    -- ^ Constant secret key buffer
+                    -> IO CInt
+foreign import ccall "crypto_sign_verify_detached"
+    c_sign_verify_detached :: Ptr CChar
+                           -- ^ Signature buffer
+                           -> Ptr CChar
+                           -- ^ Constant signed message buffer
+                           -> CULLong
+                           -- ^ Length of signed message buffer
+                           -> Ptr CChar
+                           -- ^ Public key buffer
+                           -> IO CInt
