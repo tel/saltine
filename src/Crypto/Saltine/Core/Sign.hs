@@ -117,6 +117,7 @@ signOpen (PK k) sm = unsafePerformIO $
       _ -> return   Nothing
   where smlen = S.length sm
 
+-- | Returns just the signature for a message using a SecretKey.
 signDetached :: SecretKey
              -> ByteString
              -- ^ Message
