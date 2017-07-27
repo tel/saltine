@@ -1,6 +1,7 @@
 module Crypto.Saltine.Internal.Util where
 
 import           Foreign.C
+import           Foreign.Marshal.Alloc    (mallocBytes)
 import           Foreign.Ptr
 import           System.IO.Unsafe
 
@@ -67,8 +68,9 @@ constVectors =
 -- 'IO' monad.
 buildUnsafeCVector' :: Int -> (Ptr CChar -> IO b) -> IO (b, ByteString)
 buildUnsafeCVector' n k = do
-  let bs = S.replicate n 0
-  out   <- unsafeUseAsCString bs k
+  ph  <- mallocBytes n
+  bs  <- unsafePackMallocCStringLen (ph, fromIntegral n)
+  out <- unsafeUseAsCString bs k
   return (out, bs)
 
 -- | Extremely unsafe function, use with utmost care! Builds a new
