@@ -22,10 +22,18 @@ testSign = buildTest $ do
     testProperty "Verifies signed message"
     $ \(Message bs) -> signOpen pk1 (sign sk1 bs) == Just bs,
 
+    testProperty "Verifies signed message w/ detached signature"
+    $ \(Message bs) -> signVerifyDetached pk1 (signDetached sk1 bs) bs,
+
     testProperty "Signed message longer than message"
     $ \(Message bs) -> S.length (sign sk1 bs) >= S.length bs,
 
     testProperty "Rejects message with mismatched key"
-    $ \(Message bs) -> not (S.null bs) ==> signOpen pk2 (sign sk1 bs) == Nothing
+    $ \(Message bs) -> not (S.null bs) ==>
+                         signOpen pk2 (sign sk1 bs) == Nothing,
+
+    testProperty "Rejects message with mismatched key w/ detached signature"
+    $ \(Message bs) -> not (S.null bs) ==>
+                         not (signVerifyDetached pk2 (sign sk1 bs) bs)
 
     ]
