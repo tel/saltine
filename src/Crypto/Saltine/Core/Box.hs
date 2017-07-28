@@ -175,97 +175,104 @@ beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ck
 -- key. They must have your public key in order to decrypt the
 -- message. It is infeasible for an attacker to decrypt the message so
 -- long as the 'Nonce' is not repeated.
-box :: PublicKey -> SecretKey -> Nonce
+box :: PublicKey
+    -> SecretKey
+    -> Nonce
     -> ByteString
     -- ^ Message
     -> ByteString
-    -- ^ Ciphertext
+    -- ^ Ciphertext (incl. authentication tag)
 box (PK pk) (SK sk) (Nonce nonce) msg =
-  unpad' . snd . buildUnsafeCVector len $ \pc ->
-    constVectors [pk, sk, pad' msg, nonce] $ \
+  snd . buildUnsafeCVector bufSize $ \pc ->
+    constVectors [pk, sk, msg, nonce] $ \
       [(ppk, _), (psk, _), (pm, _), (pn, _)] ->
-        c_box pc pm (fromIntegral len) pn ppk psk
-  where len    = S.length msg + Bytes.boxZero
-        pad'   = pad Bytes.boxZero
-        unpad' = unpad Bytes.boxBoxZero
+        c_box_easy pc pm (fromIntegral msgLen) pn ppk psk
+  where
+    bufSize = S.length msg + Bytes.boxMac
+    msgLen  = S.length msg
 
 -- | Decrypts a message sent from the owner of the public key. They
 -- must have encrypted it using your public key. Returns 'Nothing' if
 -- the keys and message do not match.
 boxOpen :: PublicKey -> SecretKey -> Nonce
         -> ByteString
-        -- ^ Ciphertext
+        -- ^ Ciphertext (incl. authentication tag)
         -> Maybe ByteString
         -- ^ Message
 boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
-  let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [pk, sk, pad' cipher, nonce] $ \
+  let (err, vec) = buildUnsafeCVector bufSize $ \pm ->
+        constVectors [pk, sk, cipher, nonce] $ \
           [(ppk, _), (psk, _), (pc, _), (pn, _)] ->
-            c_box_open pm pc (fromIntegral len) pn ppk psk
-  in hush . handleErrno err $ unpad' vec
-  where len    = S.length cipher + Bytes.boxBoxZero
-        pad'   = pad Bytes.boxBoxZero
-        unpad' = unpad Bytes.boxZero
+            c_box_open_easy pm pc (fromIntegral msgLen) pn ppk psk
+  in hush . handleErrno err $ vec
+  where
+    bufSize = S.length cipher - Bytes.boxMac
+    msgLen  = S.length cipher
 
--- | 'box' using a 'CombinedKey' and is thus faster.
-boxAfterNM :: CombinedKey -> Nonce
+-- | 'box' using a 'CombinedKey' and thus faster.
+boxAfterNM :: CombinedKey
+           -> Nonce
            -> ByteString
            -- ^ Message
            -> ByteString
-           -- ^ Ciphertext
+           -- ^ Ciphertext (incl. authentication tag)
 boxAfterNM (CK ck) (Nonce nonce) msg =
-  unpad' . snd . buildUnsafeCVector len $ \pc ->
-    constVectors [ck, pad' msg, nonce] $ \
+  snd . buildUnsafeCVector bufSize $ \pc ->
+    constVectors [ck, msg, nonce] $ \
       [(pck, _), (pm, _), (pn, _)] ->
-        c_box_afternm pc pm (fromIntegral len) pn pck
-  where len    = S.length msg + Bytes.boxZero
-        pad'   = pad Bytes.boxZero
-        unpad' = unpad Bytes.boxBoxZero
+        c_box_easy_afternm pc pm (fromIntegral msgLen) pn pck
+  where
+    bufSize = S.length msg + Bytes.boxMac
+    msgLen  = S.length msg
 
 -- | 'boxOpen' using a 'CombinedKey' and is thus faster.
-boxOpenAfterNM :: CombinedKey -> Nonce
+boxOpenAfterNM :: CombinedKey
+               -> Nonce
                -> ByteString
-               -- ^ Ciphertext
+               -- ^ Ciphertext (incl. authentication tag)
                -> Maybe ByteString
                -- ^ Message
 boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
-  let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [ck, pad' cipher, nonce] $ \
+  let (err, vec) = buildUnsafeCVector bufSize $ \pm ->
+        constVectors [ck, cipher, nonce] $ \
           [(pck, _), (pc, _), (pn, _)] ->
-            c_box_open_afternm pm pc (fromIntegral len) pn pck
-  in hush . handleErrno err $ unpad' vec
-  where len    = S.length cipher + Bytes.boxBoxZero
-        pad'   = pad Bytes.boxBoxZero
-        unpad' = unpad Bytes.boxZero
+            c_box_open_easy_afternm pm pc (fromIntegral msgLen) pn pck
+  in hush . handleErrno err $ vec
+  where
+    bufSize = S.length cipher - Bytes.boxMac
+    msgLen  = S.length cipher
 
 
 -- | Encrypts a message for sending to the owner of the public
 -- key. The message is unauthenticated, but permits integrity checking.
 boxSeal :: PublicKey -> ByteString -> IO ByteString
-boxSeal (PK pk) msg = fmap snd . buildUnsafeCVector' strlen $ \pc ->
+boxSeal (PK pk) msg = fmap snd . buildUnsafeCVector' bufSize $ \pc ->
     constVectors [pk, msg] $ \
       [(ppk, _), (pm, _)] ->
-        c_box_seal pc pm (fromIntegral len) ppk
-  where strlen    = S.length msg + Bytes.sealedBox
-        len       = S.length msg
+        c_box_seal pc pm (fromIntegral msgLen) ppk
+  where
+    bufSize = S.length msg + Bytes.sealedBox
+    msgLen  = S.length msg
 
 -- | Decrypts a sealed box message. The message must have been
 -- encrypted using the receiver's public key.
 -- Returns 'Nothing' if keys and message do not match or integrity
 -- is violated.
-boxSealOpen :: PublicKey -> SecretKey
+boxSealOpen :: PublicKey
+            -> SecretKey
             -> ByteString
             -- ^ Ciphertext
             -> Maybe ByteString
             -- ^ Message
 boxSealOpen (PK pk) (SK sk) cipher =
-  let (err, vec) = buildUnsafeCVector strlen $ \pm ->
+  let (err, vec) = buildUnsafeCVector bufSize $ \pm ->
         constVectors [pk, sk, cipher] $ \
           [(ppk, _), (psk, _), (pc, _)] ->
-          c_box_seal_open pm pc (fromIntegral len) ppk psk
+          c_box_seal_open pm pc (fromIntegral msgLen) ppk psk
   in hush . handleErrno err $ vec
-  where strlen    = S.length cipher - Bytes.sealedBox
-        len       = S.length cipher
+  where
+    bufSize = S.length cipher - Bytes.sealedBox
+    msgLen  = S.length cipher
 
 
 -- | Should always return a 0.
@@ -277,31 +284,14 @@ foreign import ccall "crypto_box_keypair"
                 -> IO CInt
                 -- ^ Always 0
 
--- | The secretbox C API uses 0-padded C strings.
-foreign import ccall "crypto_box"
-  c_box :: Ptr CChar
-        -- ^ Cipher 0-padded output buffer
-        -> Ptr CChar
-        -- ^ Constant 0-padded message input buffer
-        -> CULLong
-        -- ^ Length of message input buffer (incl. 0s)
-        -> Ptr CChar
-        -- ^ Constant nonce buffer
-        -> Ptr CChar
-        -- ^ Constant public key buffer
-        -> Ptr CChar
-        -- ^ Constant secret key buffer
-        -> IO CInt
-        -- ^ Always 0
-
--- | The secretbox C API uses 0-padded C strings.
-foreign import ccall "crypto_box_open"
-  c_box_open :: Ptr CChar
-             -- ^ Message 0-padded output buffer
+-- | The secretbox C API uses C strings.
+foreign import ccall "crypto_box_easy"
+  c_box_easy :: Ptr CChar
+             -- ^ Cipher output buffer
              -> Ptr CChar
-             -- ^ Constant 0-padded ciphertext input buffer
+             -- ^ Constant message input buffer
              -> CULLong
-             -- ^ Length of message input buffer (incl. 0s)
+             -- ^ Length of message input buffer
              -> Ptr CChar
              -- ^ Constant nonce buffer
              -> Ptr CChar
@@ -309,7 +299,24 @@ foreign import ccall "crypto_box_open"
              -> Ptr CChar
              -- ^ Constant secret key buffer
              -> IO CInt
-             -- ^ 0 for success, -1 for failure to verify
+             -- ^ Always 0
+
+-- | The secretbox C API uses C strings.
+foreign import ccall "crypto_box_open_easy"
+  c_box_open_easy :: Ptr CChar
+                  -- ^ Message output buffer
+                  -> Ptr CChar
+                  -- ^ Constant ciphertext input buffer
+                  -> CULLong
+                  -- ^ Length of message input buffer
+                  -> Ptr CChar
+                  -- ^ Constant nonce buffer
+                  -> Ptr CChar
+                  -- ^ Constant public key buffer
+                  -> Ptr CChar
+                  -- ^ Constant secret key buffer
+                  -> IO CInt
+                  -- ^ 0 for success, -1 for failure to verify
 
 -- | Single target key precompilation.
 foreign import ccall "crypto_box_beforenm"
@@ -322,27 +329,12 @@ foreign import ccall "crypto_box_beforenm"
                  -> IO CInt
                  -- ^ Always 0
 
--- | Precompiled key crypto box. Uses 0-padded C strings.
-foreign import ccall "crypto_box_afternm"
-  c_box_afternm :: Ptr CChar
-                -- ^ Cipher 0-padded output buffer
-                -> Ptr CChar
-                -- ^ Constant 0-padded message input buffer
-                -> CULLong
-                -- ^ Length of message input buffer (incl. 0s)
-                -> Ptr CChar
-                -- ^ Constant nonce buffer
-                -> Ptr CChar
-                -- ^ Constant combined key buffer
-                -> IO CInt
-                -- ^ Always 0
-
--- | The secretbox C API uses 0-padded C strings.
-foreign import ccall "crypto_box_open_afternm"
-  c_box_open_afternm :: Ptr CChar
-                     -- ^ Message 0-padded output buffer
+-- | Precompiled key crypto box. Uses C strings.
+foreign import ccall "crypto_box_easy_afternm"
+  c_box_easy_afternm :: Ptr CChar
+                     -- ^ Cipher output buffer
                      -> Ptr CChar
-                     -- ^ Constant 0-padded ciphertext input buffer
+                     -- ^ Constant message input buffer
                      -> CULLong
                      -- ^ Length of message input buffer (incl. 0s)
                      -> Ptr CChar
@@ -350,7 +342,22 @@ foreign import ccall "crypto_box_open_afternm"
                      -> Ptr CChar
                      -- ^ Constant combined key buffer
                      -> IO CInt
-                     -- ^ 0 for success, -1 for failure to verify
+                     -- ^ Always 0
+
+-- | The secretbox C API uses C strings.
+foreign import ccall "crypto_box_open_easy_afternm"
+  c_box_open_easy_afternm :: Ptr CChar
+                          -- ^ Message output buffer
+                          -> Ptr CChar
+                          -- ^ Constant ciphertext input buffer
+                          -> CULLong
+                          -- ^ Length of message input buffer (incl. 0s)
+                          -> Ptr CChar
+                          -- ^ Constant nonce buffer
+                          -> Ptr CChar
+                          -- ^ Constant combined key buffer
+                          -> IO CInt
+                          -- ^ 0 for success, -1 for failure to verify
 
 
 -- | The sealedbox C API uses C strings.
