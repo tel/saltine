@@ -46,6 +46,7 @@ library
                   Crypto.Saltine.Core.Sign
                   Crypto.Saltine.Core.Hash
                   Crypto.Saltine.Core.ScalarMult
+                  Crypto.Saltine.Core.Utils
                   Crypto.Saltine.Class
   other-modules:
                 Crypto.Saltine.Internal.Util
