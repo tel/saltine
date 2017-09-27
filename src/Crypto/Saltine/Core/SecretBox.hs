@@ -40,6 +40,7 @@
 module Crypto.Saltine.Core.SecretBox (
   Key, Nonce,
   secretbox, secretboxOpen,
+  secretboxDetached, secretboxOpenDetached,
   newKey, newNonce
   ) where
 
@@ -105,6 +106,25 @@ secretbox (Key key) (Nonce nonce) msg =
         pad'   = pad Bytes.secretBoxZero
         unpad' = unpad Bytes.secretBoxBoxZero
 
+-- | Encrypts a message. In contrast with 'secretbox', the result is not
+-- serialized as one element and instead provided as an authentication tag and
+-- ciphertext.
+secretboxDetached :: Key -> Nonce
+          -> ByteString
+          -- ^ Message
+          -> (ByteString,ByteString)
+          -- ^ (Ciphertext, Authentication Tag)
+secretboxDetached (Key key) (Nonce nonce) msg =
+  swap . buildUnsafeCVector ctLen $ \pc ->
+   pure . snd . buildUnsafeCVector tagLen $ \ptag ->
+    constVectors [key, msg, nonce] $ \
+      [(pk, _), (pmsg, _), (pn, _)] ->
+        c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
+  where ctLen  = ptLen
+        ptLen  = S.length msg
+        tagLen = Bytes.secretBoxMac
+        swap (a,b) = (b,a)
+
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
 secretboxOpen :: Key -> Nonce 
@@ -122,12 +142,46 @@ secretboxOpen (Key key) (Nonce nonce) cipher =
         pad'   = pad Bytes.secretBoxBoxZero
         unpad' = unpad Bytes.secretBoxZero
 
+-- | Decrypts a message. Returns 'Nothing' if the keys and message do
+-- not match.
+secretboxOpenDetached :: Key -> Nonce
+                 -> ByteString
+                 -- ^ Ciphertext
+                 -> ByteString
+                 -- ^ Auth Tag
+                 -> Maybe ByteString
+                 -- ^ Message
+secretboxOpenDetached (Key key) (Nonce nonce) cipher tag =
+  let (err, vec) = buildUnsafeCVector len $ \pm ->
+        constVectors [key, cipher, tag, nonce] $ \
+          [(pk, _), (pc, _), (pt, _), (pn, _)] ->
+            c_secretbox_open_detached pm pc pt (fromIntegral len) pn pk
+  in hush . handleErrno err $ vec
+  where len    = S.length cipher
+
 -- | The secretbox C API uses 0-padded C strings. Always returns 0.
 foreign import ccall "crypto_secretbox"
   c_secretbox :: Ptr CChar
               -- ^ Cipher 0-padded output buffer
               -> Ptr CChar
               -- ^ Constant 0-padded message input buffer
+              -> CULLong
+              -- ^ Length of message input buffer (incl. 0s)
+              -> Ptr CChar
+              -- ^ Constant nonce buffer
+              -> Ptr CChar
+              -- ^ Constant key buffer
+              -> IO CInt
+
+-- | The secretbox_detached C API uses C strings. Always returns 0.
+foreign import ccall "crypto_secretbox_detached"
+  c_secretbox_detached
+              :: Ptr CChar
+              -- ^ Ciphertext output buffer
+              -> Ptr CChar
+              -- ^ Authentication tag output buffer
+              -> Ptr CChar
+              -- ^ Constant message input buffer
               -> CULLong
               -- ^ Length of message input buffer (incl. 0s)
               -> Ptr CChar
@@ -145,6 +199,24 @@ foreign import ccall "crypto_secretbox_open"
                    -- ^ Constant 0-padded message input buffer
                    -> CULLong
                    -- ^ Length of message input buffer (incl. 0s)
+                   -> Ptr CChar
+                   -- ^ Constant nonce buffer
+                   -> Ptr CChar
+                   -- ^ Constant key buffer
+                   -> IO CInt
+
+-- | The secretbox C API uses C strings. Returns 0 if
+-- successful or -1 if verification failed.
+foreign import ccall "crypto_secretbox_open_detached"
+  c_secretbox_open_detached
+                   :: Ptr CChar
+                   -- ^ Message output buffer
+                   -> Ptr CChar
+                   -- ^ Constant ciphertext input buffer
+                   -> Ptr CChar
+                   -- ^ Constant auth tag input buffer
+                   -> CULLong
+                   -- ^ Length of ciphertext input buffer
                    -> Ptr CChar
                    -- ^ Constant nonce buffer
                    -> Ptr CChar
