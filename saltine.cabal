@@ -68,6 +68,7 @@ test-suite tests
                 OneTimeAuthProperties
                 ScalarMultProperties
                 SecretBoxProperties
+                SealedBoxProperties
                 SignProperties
                 StreamProperties
                 Util

@@ -35,6 +35,7 @@ module Crypto.Saltine.Internal.ByteSizes (
   multScalar,
   secretBoxKey,
   secretBoxNonce,
+  secretBoxMac,
   secretBoxZero,
   secretBoxBoxZero,
   sign,
@@ -56,7 +57,7 @@ boxPK, boxSK, boxNonce, boxZero, boxBoxZero :: Int
 boxMac, boxBeforeNM, sealedBox :: Int
 onetime, onetimeKey :: Int
 mult, multScalar :: Int
-secretBoxKey, secretBoxNonce, secretBoxZero, secretBoxBoxZero :: Int
+secretBoxKey, secretBoxNonce, secretBoxMac, secretBoxZero, secretBoxBoxZero :: Int
 sign, signPK, signSK :: Int
 streamKey, streamNonce :: Int
 hash, shorthash, shorthashKey :: Int
@@ -109,6 +110,8 @@ multScalar = fromIntegral c_crypto_scalarmult_scalarbytes
 secretBoxKey     = fromIntegral c_crypto_secretbox_keybytes
 -- | Size of a @crypto_secretbox@ nonce
 secretBoxNonce   = fromIntegral c_crypto_secretbox_noncebytes
+-- | Size of a @crypto_secretbox@ mac
+secretBoxMac     = fromIntegral c_crypto_secretbox_macbytes
 -- | Size of 0-padding prepended to messages before using
 -- @crypto_secretbox@ or after using @crypto_secretbox_open@
 secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes
@@ -185,6 +188,8 @@ foreign import ccall "crypto_secretbox_keybytes"
   c_crypto_secretbox_keybytes :: CSize
 foreign import ccall "crypto_secretbox_noncebytes"
   c_crypto_secretbox_noncebytes :: CSize
+foreign import ccall "crypto_secretbox_macbytes"
+  c_crypto_secretbox_macbytes :: CSize
 foreign import ccall "crypto_secretbox_zerobytes"
   c_crypto_secretbox_zerobytes :: CSize
 foreign import ccall "crypto_secretbox_boxzerobytes"
