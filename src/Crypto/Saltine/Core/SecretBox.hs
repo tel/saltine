@@ -151,7 +151,9 @@ secretboxOpenDetached :: Key -> Nonce
                  -- ^ Auth Tag
                  -> Maybe ByteString
                  -- ^ Message
-secretboxOpenDetached (Key key) (Nonce nonce) cipher tag =
+secretboxOpenDetached (Key key) (Nonce nonce) cipher tag
+    | S.length tag /= Bytes.secretBoxMac = Nothing
+    | otherwise =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
         constVectors [key, cipher, tag, nonce] $ \
           [(pk, _), (pc, _), (pt, _), (pn, _)] ->
