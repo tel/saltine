@@ -113,17 +113,16 @@ secretboxDetached :: Key -> Nonce
           -> ByteString
           -- ^ Message
           -> (ByteString,ByteString)
-          -- ^ (Ciphertext, Authentication Tag)
+          -- ^ (Authentication Tag, Ciphertext)
 secretboxDetached (Key key) (Nonce nonce) msg =
-  swap . buildUnsafeCVector ctLen $ \pc ->
-   pure . snd . buildUnsafeCVector tagLen $ \ptag ->
+  buildUnsafeCVector ctLen $ \pc ->
+   fmap snd . buildUnsafeCVector' tagLen $ \ptag ->
     constVectors [key, msg, nonce] $ \
       [(pk, _), (pmsg, _), (pn, _)] ->
         c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
   where ctLen  = ptLen
         ptLen  = S.length msg
         tagLen = Bytes.secretBoxMac
-        swap (a,b) = (b,a)
 
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
@@ -146,12 +145,12 @@ secretboxOpen (Key key) (Nonce nonce) cipher =
 -- not match.
 secretboxOpenDetached :: Key -> Nonce
                  -> ByteString
-                 -- ^ Ciphertext
-                 -> ByteString
                  -- ^ Auth Tag
+                 -> ByteString
+                 -- ^ Ciphertext
                  -> Maybe ByteString
                  -- ^ Message
-secretboxOpenDetached (Key key) (Nonce nonce) cipher tag
+secretboxOpenDetached (Key key) (Nonce nonce) tag cipher
     | S.length tag /= Bytes.secretBoxMac = Nothing
     | otherwise =
   let (err, vec) = buildUnsafeCVector len $ \pm ->

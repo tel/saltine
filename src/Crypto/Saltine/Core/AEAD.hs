@@ -133,7 +133,7 @@ aeadDetached :: Key -> Nonce
           -- ^ Tag, Ciphertext
 aeadDetached (Key key) (Nonce nonce) msg aad =
   buildUnsafeCVector clen $ \pc ->
-   pure . snd . buildUnsafeCVector tlen $ \pt ->
+   fmap snd . buildUnsafeCVector' tlen $ \pt ->
     constVectors [key, msg, aad, nonce] $ \
       [(pk, _), (pm, _), (pa, _), (pn, _)] ->
           c_aead_detached pc pt nullPtr pm (fromIntegral mlen) pa (fromIntegral alen) nullPtr pn pk
@@ -153,7 +153,7 @@ aeadOpenDetached :: Key -> Nonce
          -- ^ AAD
          -> Maybe ByteString
          -- ^ Message
-aeadOpenDetached (Key key) (Nonce nonce) tag cipher aad 
+aeadOpenDetached (Key key) (Nonce nonce) tag cipher aad
     | S.length tag /= tlen = Nothing
     | otherwise =
   let (err, vec) = buildUnsafeCVector len $ \pm ->
@@ -163,7 +163,7 @@ aeadOpenDetached (Key key) (Nonce nonce) tag cipher aad
   in hush . handleErrno err $ vec
   where len    = S.length cipher
         alen   = S.length aad
-        tlen    = Bytes.aead_xchacha20poly1305_ietf_ABYTES
+        tlen   = Bytes.aead_xchacha20poly1305_ietf_ABYTES
 
 -- | The aead C API uses C strings. Always returns 0.
 foreign import ccall "crypto_aead_xchacha20poly1305_ietf_encrypt"
