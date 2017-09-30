@@ -38,6 +38,7 @@ module Crypto.Saltine.Internal.ByteSizes (
   secretBoxMac,
   secretBoxZero,
   secretBoxBoxZero,
+  aead_xchacha20poly1305_ietf_ABYTES,
   sign,
   signPK,
   signSK,
@@ -118,6 +119,9 @@ secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes
 -- | Size of 0-padding prepended to ciphertext before using
 -- @crypto_secretbox_open@ or after using @crypto_secretbox@
 secretBoxBoxZero = fromIntegral c_crypto_secretbox_boxzerobytes
+
+aead_xchacha20poly1305_ietf_ABYTES :: Int
+aead_xchacha20poly1305_ietf_ABYTES = fromIntegral c_crypto_aead_xchacha20poly1305_ietf_ABYTES 
 
 -- Signatures
 -- | The maximum size of a signature prepended to a message to form a
@@ -205,6 +209,13 @@ foreign import ccall "crypto_sign_secretkeybytes"
 
 -- HARDCODED
 -- ---------
+
+-- | The size of a @crypto_aead_tag@.
+--
+-- HARDCODED to be @crypto_aead_xchacha20poly1305_ietf_ABYTES@ for now until Sodium
+-- exports the C constant (is a macro).
+c_crypto_aead_xchacha20poly1305_ietf_ABYTES :: CSize
+c_crypto_aead_xchacha20poly1305_ietf_ABYTES = 16
 
 -- | The size of a @crypto_stream@ or @crypto_stream_xor@
 -- key. HARDCODED to be @crypto_stream_xsalsa20@ for now until Sodium
