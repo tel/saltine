@@ -47,7 +47,8 @@ rightInverseFailureProp :: Key -> Nonce -> Message -> Message -> Perturb -> Prop
 rightInverseFailureProp k n (Message bs) (Message aad) p =
   S.length bs /= 0 ==>
    let ct = aead k n bs aad
-   in Nothing == aeadOpen k n (perturb ct p) aad
+       fakeCT = perturb ct p
+   in fakeCT /= ct ==> Nothing == aeadOpen k n fakeCT aad
 
 -- | Ciphertext cannot be decrypted if the aad is perturbed
 rightInverseAADFailureProp :: Key -> Nonce -> Message -> Message -> Message -> Property

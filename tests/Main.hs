@@ -14,8 +14,16 @@ import ScalarMultProperties  (testScalarMult)
 
 import Test.Framework
 
+runOpts :: RunnerOptions
+runOpts = mempty { ropt_color_mode   = Just ColorAlways
+                 , ropt_test_options = Just testOpts
+                 }
+
+testOpts :: TestOptions
+testOpts = mempty { topt_maximum_generated_tests = Just 20000 }
+
 main :: IO ()
-main = flip defaultMainWithOpts mempty { ropt_color_mode = Just ColorAlways } [
+main = flip defaultMainWithOpts runOpts [
   testBox,
   testSealedBox,
   testSecretBox,

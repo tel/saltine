@@ -43,18 +43,22 @@ rightInverseDetachedProp k n (Message bs) =
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed
 rightInverseFailureProp :: Key -> Nonce -> Message -> Perturb -> Property
 rightInverseFailureProp k n (Message bs) p =
-  S.length bs /= 0 ==> Nothing == secretboxOpen k n (perturb (secretbox k n bs) p)
+  let ct     = secretbox k n bs
+      fakeCT = perturb ct p
+  in ct /= fakeCT ==> Nothing == secretboxOpen k n fakeCT
 
 -- | Ciphertext cannot be decrypted if the tag is perturbed
-rightInverseTagFailureProp :: Key -> Nonce -> Message -> Message -> Bool
+rightInverseTagFailureProp :: Key -> Nonce -> Message -> Message -> Property
 rightInverseTagFailureProp k n (Message bs) (Message fakeTag) =
-  Nothing == uncurry (secretboxOpenDetached k n) ((\(a,_) -> (a,fakeTag)) $ secretboxDetached k n bs)
+  let (realTag, ct) = secretboxDetached k n bs
+  in realTag /= fakeTag ==> Nothing == secretboxOpenDetached k n fakeTag ct
 
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed
 rightInverseFailureDetachedProp :: Key -> Nonce -> Message -> Perturb -> Property
 rightInverseFailureDetachedProp k n (Message bs) p =
-  S.length bs /= 0 ==> Nothing == uncurry (secretboxOpenDetached k n) ((\(a,b) -> (perturb a p, b)) $ secretboxDetached k n bs)
-  || S.length bs == 0
+  let (tag,ct) = secretboxDetached k n bs
+      fakeCT = perturb ct p
+  in fakeCT /= ct ==> Nothing == secretboxOpenDetached k n tag fakeCT
 
 -- | Ciphertext cannot be decrypted with a different key
 cannotDecryptKeyProp :: Key -> Key -> Nonce -> Message -> Property
