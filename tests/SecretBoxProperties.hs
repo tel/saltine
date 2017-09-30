@@ -46,9 +46,9 @@ rightInverseFailureProp k n (Message bs) p =
   S.length bs /= 0 ==> Nothing == secretboxOpen k n (perturb (secretbox k n bs) p)
 
 -- | Ciphertext cannot be decrypted if the tag is perturbed
-rightInverseTagFailureProp :: Key -> Nonce -> Message -> Perturb -> Bool
-rightInverseTagFailureProp k n (Message bs) p =
-  Nothing == uncurry (secretboxOpenDetached k n) ((\(a,b) -> (a,perturb b p)) $ secretboxDetached k n bs)
+rightInverseTagFailureProp :: Key -> Nonce -> Message -> Message -> Bool
+rightInverseTagFailureProp k n (Message bs) (Message fakeTag) =
+  Nothing == uncurry (secretboxOpenDetached k n) ((\(a,_) -> (a,fakeTag)) $ secretboxDetached k n bs)
 
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed
 rightInverseFailureDetachedProp :: Key -> Nonce -> Message -> Perturb -> Property
