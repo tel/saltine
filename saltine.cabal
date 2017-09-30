@@ -1,5 +1,5 @@
 name:                saltine
-version:             0.0.1.0
+version:             0.0.2.0
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
@@ -39,6 +39,7 @@ library
                   Crypto.Saltine
                   Crypto.Saltine.Internal.ByteSizes
                   Crypto.Saltine.Core.SecretBox
+                  Crypto.Saltine.Core.AEAD
                   Crypto.Saltine.Core.Box
                   Crypto.Saltine.Core.Stream
                   Crypto.Saltine.Core.Auth
@@ -71,6 +72,7 @@ test-suite tests
                 SealedBoxProperties
                 SignProperties
                 StreamProperties
+                AEADProperties
                 Util
   ghc-options: -Wall -threaded -rtsopts
   hs-source-dirs: tests

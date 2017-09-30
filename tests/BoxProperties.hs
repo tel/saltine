@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedLists #-}
 
 module BoxProperties (
   testBox
@@ -7,6 +8,7 @@ module BoxProperties (
 import           Util
 import           Crypto.Saltine.Core.Box
 import qualified Data.ByteString                      as S
+import           Data.Monoid
 
 import           Test.Framework.Providers.QuickCheck2
 import           Test.Framework
@@ -19,20 +21,20 @@ rightInverseProp (sk1, pk1) (sk2, pk2) n (Message bs) =
   Just bs == boxOpen pk1 sk2 n (box pk2 sk1 n bs)
 
 -- | Cannot decrypt without the corrent secret key
-rightInverseFailureProp1 :: Keypair -> Keypair -> Nonce -> Message -> Bool
-rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n (Message bs) =
-  Nothing == boxOpen pk1 (perturb sk2) n (box pk2 sk1 n bs)
+rightInverseFailureProp1 :: Keypair -> Keypair -> Nonce -> Message -> Perturb -> Bool
+rightInverseFailureProp1 (sk1, pk1) (sk2, pk2) n (Message bs) p =
+  Nothing == boxOpen pk1 (perturb sk2 ([0] <> p)) n (box pk2 sk1 n bs)
 
 -- | Cannot decrypt when not sent to you
-rightInverseFailureProp2 :: Keypair -> Keypair -> Nonce -> Message -> Bool
-rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n (Message bs) =
-  Nothing == boxOpen pk1 sk2 n (box (perturb pk2) sk1 n bs)
+rightInverseFailureProp2 :: Keypair -> Keypair -> Nonce -> Message -> Perturb -> Bool
+rightInverseFailureProp2 (sk1, pk1) (sk2, pk2) n (Message bs) p =
+  Nothing == boxOpen pk1 sk2 n (box (perturb pk2 p) sk1 n bs)
 
 -- | Ciphertext cannot be decrypted (verification failure) if the
 -- ciphertext is perturbed
-rightInverseFailureProp3 :: Keypair -> Keypair -> Nonce -> Message -> Bool
-rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n (Message bs) =
-  Nothing == boxOpen pk1 sk2 n (S.reverse $ box pk2 sk1 n bs)
+rightInverseFailureProp3 :: Keypair -> Keypair -> Nonce -> Message -> Perturb -> Bool
+rightInverseFailureProp3 (sk1, pk1) (sk2, pk2) n (Message bs) p =
+  Nothing == boxOpen pk1 sk2 n (perturb (box pk2 sk1 n bs) p)
 
 -- | Ciphertext cannot be decrypted with a different nonce
 cannotDecryptNonceProp
@@ -58,9 +60,9 @@ rightInverseAfterNMProp ck_1for2 ck_2for1 n (Message bs) =
 
 -- | Perturbed ciphertext cannot be decrypted using combined keys
 rightInverseFailureAfterNMProp1
-  :: CombinedKey -> CombinedKey -> Nonce -> Message -> Bool
-rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n (Message bs) =
-  Nothing == boxOpenAfterNM ck_2for1 n (S.reverse $ boxAfterNM ck_1for2 n bs)
+  :: CombinedKey -> CombinedKey -> Nonce -> Message -> Perturb -> Bool
+rightInverseFailureAfterNMProp1 ck_1for2 ck_2for1 n (Message bs) p =
+  Nothing == boxOpenAfterNM ck_2for1 n (perturb (boxAfterNM ck_1for2 n bs) p)
 
 testBox :: Test
 testBox = buildTest $ do

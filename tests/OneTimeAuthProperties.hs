@@ -14,7 +14,7 @@ import Test.Framework
 testOneTimeAuth :: Test
 testOneTimeAuth = buildTest $ do
   k <- newKey
-  return $ testGroup "...Internal.Auth" [
+  return $ testGroup "...Internal.Auth (one-time)" [
 
     testProperty "Authenticates message"
     $ \(Message bs) -> verify k (auth k bs) bs == True

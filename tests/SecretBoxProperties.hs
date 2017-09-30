@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module SecretBoxProperties (
   testSecretBox
@@ -6,10 +7,28 @@ module SecretBoxProperties (
 
 import           Util
 import           Crypto.Saltine.Core.SecretBox
+import           Crypto.Saltine.Class
+import           Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import qualified Data.ByteString                      as S
 import           Test.Framework.Providers.QuickCheck2
 import           Test.Framework
+import           Test.QuickCheck (Property, (==>))
+import           Test.QuickCheck.Arbitrary
+
+instance Arbitrary Nonce where
+    arbitrary =
+        do bs <- S.pack <$> vector Bytes.secretBoxNonce
+           maybe (fail "impossible arbitrary failure.") pure (decode bs)
+
+instance Arbitrary Key where
+    arbitrary =
+        do bs <- S.pack <$> vector Bytes.secretBoxKey
+           maybe (fail "impossible arbitrary failure.") pure (decode bs)
+instance Show Key where
+    show = show . encode
+instance Show Nonce where
+    show = show . encode
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: Key -> Nonce -> Message -> Bool
@@ -22,78 +41,74 @@ rightInverseDetachedProp k n (Message bs) =
   Just bs == uncurry (secretboxOpenDetached k n) (secretboxDetached k n bs)
 
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed
-rightInverseFailureProp :: Key -> Nonce -> Message -> Bool
-rightInverseFailureProp k n (Message bs) =
-  Nothing == secretboxOpen k n (S.reverse $ secretbox k n bs)
+rightInverseFailureProp :: Key -> Nonce -> Message -> Perturb -> Property
+rightInverseFailureProp k n (Message bs) p =
+  S.length bs /= 0 ==> Nothing == secretboxOpen k n (perturb (secretbox k n bs) p)
 
 -- | Ciphertext cannot be decrypted if the tag is perturbed
-rightInverseTagFailureProp :: Key -> Nonce -> Message -> Bool
-rightInverseTagFailureProp k n (Message bs) =
-  Nothing == uncurry (secretboxOpenDetached k n) ((\(a,b) -> (a,S.reverse b)) $ secretboxDetached k n bs)
+rightInverseTagFailureProp :: Key -> Nonce -> Message -> Perturb -> Bool
+rightInverseTagFailureProp k n (Message bs) p =
+  Nothing == uncurry (secretboxOpenDetached k n) ((\(a,b) -> (a,perturb b p)) $ secretboxDetached k n bs)
 
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed
-rightInverseFailureDetachedProp :: Key -> Nonce -> Message -> Bool
-rightInverseFailureDetachedProp k n (Message bs) =
-  Nothing == uncurry (secretboxOpenDetached k n) ((\(a,b) -> (S.reverse a, b)) $ secretboxDetached k n bs)
+rightInverseFailureDetachedProp :: Key -> Nonce -> Message -> Perturb -> Property
+rightInverseFailureDetachedProp k n (Message bs) p =
+  S.length bs /= 0 ==> Nothing == uncurry (secretboxOpenDetached k n) ((\(a,b) -> (perturb a p, b)) $ secretboxDetached k n bs)
   || S.length bs == 0
 
 -- | Ciphertext cannot be decrypted with a different key
-cannotDecryptKeyProp :: Key -> Key -> Nonce -> Message -> Bool
+cannotDecryptKeyProp :: Key -> Key -> Nonce -> Message -> Property
 cannotDecryptKeyProp k1 k2 n (Message bs) =
-  Nothing == secretboxOpen k2 n (secretbox k1 n bs)
+  k1 /= k2 ==> Nothing == secretboxOpen k2 n (secretbox k1 n bs)
 
 -- | Ciphertext cannot be decrypted with a different key
-cannotDecryptKeyDetachedProp :: Key -> Key -> Nonce -> Message -> Bool
+cannotDecryptKeyDetachedProp :: Key -> Key -> Nonce -> Message -> Property
 cannotDecryptKeyDetachedProp k1 k2 n (Message bs) =
-  Nothing == uncurry (secretboxOpenDetached k2 n) (secretboxDetached k1 n bs)
+  k1 /= k2 ==> Nothing == uncurry (secretboxOpenDetached k2 n) (secretboxDetached k1 n bs)
 
 -- | Ciphertext cannot be decrypted with a different nonce
-cannotDecryptNonceProp :: Key -> Nonce -> Nonce -> Message -> Bool
+cannotDecryptNonceProp :: Key -> Nonce -> Nonce -> Message -> Property
 cannotDecryptNonceProp k n1 n2 (Message bs) =
-  Nothing == secretboxOpen k n2 (secretbox k n1 bs)
+  n1 /= n2 ==> Nothing == secretboxOpen k n2 (secretbox k n1 bs)
 
 -- | Ciphertext cannot be decrypted with a different nonce
-cannotDecryptNonceDetachedProp :: Key -> Nonce -> Nonce -> Message -> Bool
+cannotDecryptNonceDetachedProp :: Key -> Nonce -> Nonce -> Message -> Property
 cannotDecryptNonceDetachedProp k n1 n2 (Message bs) =
-  Nothing == uncurry (secretboxOpenDetached k n2) (secretboxDetached k n1 bs)
+  n1 /= n2 ==> Nothing == uncurry (secretboxOpenDetached k n2) (secretboxDetached k n1 bs)
 
 testSecretBox :: Test
 testSecretBox = buildTest $ do
-  k1 <- newKey
-  k2 <- newKey
-  n1 <- newNonce
-  n2 <- newNonce
 
   return $ testGroup "...Internal.SecretBox" [
 
     testProperty "Can decrypt ciphertext"
-    $ rightInverseProp k1 n1,
+    $ rightInverseProp,
 
     testProperty "Can decrypt ciphertext (detached)"
-    $ rightInverseDetachedProp k1 n1,
+    $ rightInverseDetachedProp,
 
     testGroup "Cannot decrypt ciphertext when..." [
 
       testProperty "... ciphertext is perturbed"
-      $ rightInverseFailureProp k1 n1,
+      $ rightInverseFailureProp,
 
       testProperty "... ciphertext is perturbed (detached)"
-      $ rightInverseFailureDetachedProp k1 n1,
+      $ rightInverseFailureDetachedProp,
 
       testProperty "... tag is perturbed (detached)"
-      $ rightInverseTagFailureProp k1 n1,
+      $ rightInverseTagFailureProp,
 
       testProperty "... using the wrong key"
-      $ cannotDecryptKeyProp   k1 k2 n1,
+      $ cannotDecryptKeyProp,
 
       testProperty "... using the wrong key (detached)"
-      $ cannotDecryptKeyDetachedProp   k1 k2 n1,
+      $ cannotDecryptKeyDetachedProp,
 
       testProperty "... using the wrong nonce"
-      $ cannotDecryptNonceProp k1 n1 n2,
+      $ cannotDecryptNonceProp,
 
       testProperty "... using the wrong nonce (detached"
-      $ cannotDecryptNonceDetachedProp k1 n1 n2
+      $ cannotDecryptNonceDetachedProp
 
       ]
     ]
