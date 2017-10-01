@@ -85,8 +85,8 @@ auth :: Key
      -- ^ Message
      -> Authenticator
 auth (Key key) msg =
-  Au . snd . buildUnsafeCVector Bytes.onetime $ \pa ->
-    constVectors [key, msg] $ \[(pk, _), (pm, _)] ->
+  Au . snd . buildUnsafeByteString Bytes.onetime $ \pa ->
+    constByteStrings [key, msg] $ \[(pk, _), (pm, _)] ->
       c_onetimeauth pa pm (fromIntegral $ S.length msg) pk
 
 -- | Verifies that an 'Authenticator' matches a given message and key.
@@ -97,7 +97,7 @@ verify :: Key
        -> Bool
        -- ^ Is this message authentic?
 verify (Key key) (Au a) msg =
-  unsafeDidSucceed $ constVectors [key, msg, a] $ \
+  unsafeDidSucceed $ constByteStrings [key, msg, a] $ \
     [(pk, _), (pm, _), (pa, _)] ->
       return $ c_onetimeauth_verify pa pm (fromIntegral $ S.length msg) pk
 

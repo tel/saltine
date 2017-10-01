@@ -98,8 +98,8 @@ secretbox :: Key -> Nonce
           -> ByteString
           -- ^ Ciphertext
 secretbox (Key key) (Nonce nonce) msg =
-  unpad' . snd . buildUnsafeCVector len $ \pc ->
-    constVectors [key, pad' msg, nonce] $ \
+  unpad' . snd . buildUnsafeByteString len $ \pc ->
+    constByteStrings [key, pad' msg, nonce] $ \
       [(pk, _), (pm, _), (pn, _)] ->
         c_secretbox pc pm (fromIntegral len) pn pk
   where len    = S.length msg + Bytes.secretBoxZero
@@ -115,9 +115,9 @@ secretboxDetached :: Key -> Nonce
           -> (ByteString,ByteString)
           -- ^ (Authentication Tag, Ciphertext)
 secretboxDetached (Key key) (Nonce nonce) msg =
-  buildUnsafeCVector ctLen $ \pc ->
-   fmap snd . buildUnsafeCVector' tagLen $ \ptag ->
-    constVectors [key, msg, nonce] $ \
+  buildUnsafeByteString ctLen $ \pc ->
+   fmap snd . buildUnsafeByteString' tagLen $ \ptag ->
+    constByteStrings [key, msg, nonce] $ \
       [(pk, _), (pmsg, _), (pn, _)] ->
         c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
   where ctLen  = ptLen
@@ -132,8 +132,8 @@ secretboxOpen :: Key -> Nonce
                  -> Maybe ByteString
                  -- ^ Message
 secretboxOpen (Key key) (Nonce nonce) cipher =
-  let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [key, pad' cipher, nonce] $ \
+  let (err, vec) = buildUnsafeByteString len $ \pm ->
+        constByteStrings [key, pad' cipher, nonce] $ \
           [(pk, _), (pc, _), (pn, _)] ->
             c_secretbox_open pm pc (fromIntegral len) pn pk
   in hush . handleErrno err $ unpad' vec
@@ -153,8 +153,8 @@ secretboxOpenDetached :: Key -> Nonce
 secretboxOpenDetached (Key key) (Nonce nonce) tag cipher
     | S.length tag /= Bytes.secretBoxMac = Nothing
     | otherwise =
-  let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [key, cipher, tag, nonce] $ \
+  let (err, vec) = buildUnsafeByteString len $ \pm ->
+        constByteStrings [key, cipher, tag, nonce] $ \
           [(pk, _), (pc, _), (pt, _), (pn, _)] ->
             c_secretbox_open_detached pm pc pt (fromIntegral len) pn pk
   in hush . handleErrno err $ vec

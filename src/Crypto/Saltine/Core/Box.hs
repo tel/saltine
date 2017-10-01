@@ -154,8 +154,8 @@ newKeypair :: IO Keypair
 newKeypair = do
   -- This is a little bizarre and a likely source of errors.
   -- _err ought to always be 0.
-  ((_err, sk), pk) <- buildUnsafeCVector' Bytes.boxPK $ \pkbuf ->
-    buildUnsafeCVector' Bytes.boxSK $ \skbuf ->
+  ((_err, sk), pk) <- buildUnsafeByteString' Bytes.boxPK $ \pkbuf ->
+    buildUnsafeByteString' Bytes.boxSK $ \skbuf ->
       c_box_keypair pkbuf skbuf
   return (SK sk, PK pk)
 
@@ -167,8 +167,8 @@ newNonce = Nonce <$> randomByteString Bytes.boxNonce
 -- 'PublicKey'. This is a precomputation step which can accelerate
 -- later encryption calls.
 beforeNM :: SecretKey -> PublicKey -> CombinedKey
-beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeCVector Bytes.boxBeforeNM $ \ckbuf ->
-  constVectors [pk, sk] $ \[(ppk, _), (psk, _)] ->
+beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeByteString Bytes.boxBeforeNM $ \ckbuf ->
+  constByteStrings [pk, sk] $ \[(ppk, _), (psk, _)] ->
     c_box_beforenm ckbuf ppk psk
 
 -- | Encrypts a message for sending to the owner of the public
@@ -183,8 +183,8 @@ box :: PublicKey
     -> ByteString
     -- ^ Ciphertext (incl. authentication tag)
 box (PK pk) (SK sk) (Nonce nonce) msg =
-  snd . buildUnsafeCVector bufSize $ \pc ->
-    constVectors [pk, sk, msg, nonce] $ \
+  snd . buildUnsafeByteString bufSize $ \pc ->
+    constByteStrings [pk, sk, msg, nonce] $ \
       [(ppk, _), (psk, _), (pm, _), (pn, _)] ->
         c_box_easy pc pm (fromIntegral msgLen) pn ppk psk
   where
@@ -200,8 +200,8 @@ boxOpen :: PublicKey -> SecretKey -> Nonce
         -> Maybe ByteString
         -- ^ Message
 boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
-  let (err, vec) = buildUnsafeCVector bufSize $ \pm ->
-        constVectors [pk, sk, cipher, nonce] $ \
+  let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
+        constByteStrings [pk, sk, cipher, nonce] $ \
           [(ppk, _), (psk, _), (pc, _), (pn, _)] ->
             c_box_open_easy pm pc (fromIntegral msgLen) pn ppk psk
   in hush . handleErrno err $ vec
@@ -217,8 +217,8 @@ boxAfterNM :: CombinedKey
            -> ByteString
            -- ^ Ciphertext (incl. authentication tag)
 boxAfterNM (CK ck) (Nonce nonce) msg =
-  snd . buildUnsafeCVector bufSize $ \pc ->
-    constVectors [ck, msg, nonce] $ \
+  snd . buildUnsafeByteString bufSize $ \pc ->
+    constByteStrings [ck, msg, nonce] $ \
       [(pck, _), (pm, _), (pn, _)] ->
         c_box_easy_afternm pc pm (fromIntegral msgLen) pn pck
   where
@@ -233,8 +233,8 @@ boxOpenAfterNM :: CombinedKey
                -> Maybe ByteString
                -- ^ Message
 boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
-  let (err, vec) = buildUnsafeCVector bufSize $ \pm ->
-        constVectors [ck, cipher, nonce] $ \
+  let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
+        constByteStrings [ck, cipher, nonce] $ \
           [(pck, _), (pc, _), (pn, _)] ->
             c_box_open_easy_afternm pm pc (fromIntegral msgLen) pn pck
   in hush . handleErrno err $ vec
@@ -246,8 +246,8 @@ boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
 -- | Encrypts a message for sending to the owner of the public
 -- key. The message is unauthenticated, but permits integrity checking.
 boxSeal :: PublicKey -> ByteString -> IO ByteString
-boxSeal (PK pk) msg = fmap snd . buildUnsafeCVector' bufSize $ \pc ->
-    constVectors [pk, msg] $ \
+boxSeal (PK pk) msg = fmap snd . buildUnsafeByteString' bufSize $ \pc ->
+    constByteStrings [pk, msg] $ \
       [(ppk, _), (pm, _)] ->
         c_box_seal pc pm (fromIntegral msgLen) ppk
   where
@@ -265,8 +265,8 @@ boxSealOpen :: PublicKey
             -> Maybe ByteString
             -- ^ Message
 boxSealOpen (PK pk) (SK sk) cipher =
-  let (err, vec) = buildUnsafeCVector bufSize $ \pm ->
-        constVectors [pk, sk, cipher] $ \
+  let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
+        constByteStrings [pk, sk, cipher] $ \
           [(ppk, _), (psk, _), (pc, _)] ->
           c_box_seal_open pm pc (fromIntegral msgLen) ppk psk
   in hush . handleErrno err $ vec

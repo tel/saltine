@@ -95,8 +95,8 @@ aead :: Key -> Nonce
           -> ByteString
           -- ^ Ciphertext
 aead (Key key) (Nonce nonce) msg aad =
-  snd . buildUnsafeCVector clen $ \pc ->
-    constVectors [key, msg, aad, nonce] $ \
+  snd . buildUnsafeByteString clen $ \pc ->
+    constByteStrings [key, msg, aad, nonce] $ \
       [(pk, _), (pm, _), (pa, _), (pn, _)] ->
           c_aead pc nullPtr pm (fromIntegral mlen) pa (fromIntegral alen) nullPtr pn pk
   where mlen    = S.length msg
@@ -113,8 +113,8 @@ aeadOpen :: Key -> Nonce
          -> Maybe ByteString
          -- ^ Message
 aeadOpen (Key key) (Nonce nonce) cipher aad =
-  let (err, vec) = buildUnsafeCVector mlen $ \pm ->
-        constVectors [key, cipher, aad, nonce] $ \
+  let (err, vec) = buildUnsafeByteString mlen $ \pm ->
+        constByteStrings [key, cipher, aad, nonce] $ \
           [(pk, _), (pc, _), (pa, _), (pn, _)] ->
             c_aead_open pm nullPtr nullPtr pc (fromIntegral clen) pa (fromIntegral alen) pn pk
   in hush . handleErrno err $ vec
@@ -132,9 +132,9 @@ aeadDetached :: Key -> Nonce
           -> (ByteString,ByteString)
           -- ^ Tag, Ciphertext
 aeadDetached (Key key) (Nonce nonce) msg aad =
-  buildUnsafeCVector clen $ \pc ->
-   fmap snd . buildUnsafeCVector' tlen $ \pt ->
-    constVectors [key, msg, aad, nonce] $ \
+  buildUnsafeByteString clen $ \pc ->
+   fmap snd . buildUnsafeByteString' tlen $ \pt ->
+    constByteStrings [key, msg, aad, nonce] $ \
       [(pk, _), (pm, _), (pa, _), (pn, _)] ->
           c_aead_detached pc pt nullPtr pm (fromIntegral mlen) pa (fromIntegral alen) nullPtr pn pk
   where mlen    = S.length msg
@@ -156,8 +156,8 @@ aeadOpenDetached :: Key -> Nonce
 aeadOpenDetached (Key key) (Nonce nonce) tag cipher aad
     | S.length tag /= tlen = Nothing
     | otherwise =
-  let (err, vec) = buildUnsafeCVector len $ \pm ->
-        constVectors [key, tag, cipher, aad, nonce] $ \
+  let (err, vec) = buildUnsafeByteString len $ \pm ->
+        constByteStrings [key, tag, cipher, aad, nonce] $ \
           [(pk, _), (pt, _), (pc, _), (pa, _), (pn, _)] ->
             c_aead_open_detached pm nullPtr pc (fromIntegral len) pt pa (fromIntegral alen) pn pk
   in hush . handleErrno err $ vec

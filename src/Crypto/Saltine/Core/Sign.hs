@@ -77,8 +77,8 @@ newKeypair :: IO Keypair
 newKeypair = do
   -- This is a little bizarre and a likely source of errors.
   -- _err ought to always be 0.
-  ((_err, sk), pk) <- buildUnsafeCVector' Bytes.signPK $ \pkbuf ->
-    buildUnsafeCVector' Bytes.signSK $ \skbuf ->
+  ((_err, sk), pk) <- buildUnsafeByteString' Bytes.signPK $ \pkbuf ->
+    buildUnsafeByteString' Bytes.signSK $ \skbuf ->
       c_sign_keypair pkbuf skbuf
   return (SK sk, PK pk)
 
@@ -91,8 +91,8 @@ sign :: SecretKey
      -- ^ Signed message
 sign (SK k) m = unsafePerformIO $
   alloca $ \psmlen -> do
-    (_err, sm) <- buildUnsafeCVector' (len + Bytes.sign) $ \psmbuf ->
-      constVectors [k, m] $ \[(pk, _), (pm, _)] ->
+    (_err, sm) <- buildUnsafeByteString' (len + Bytes.sign) $ \psmbuf ->
+      constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
         c_sign psmbuf psmlen pm (fromIntegral len) pk
     smlen <- peek psmlen
     return $ S.take (fromIntegral smlen) sm
@@ -108,8 +108,8 @@ signOpen :: PublicKey
          -- ^ Maybe the restored message
 signOpen (PK k) sm = unsafePerformIO $
   alloca $ \pmlen -> do
-    (err, m) <- buildUnsafeCVector' smlen $ \pmbuf ->
-      constVectors [k, sm] $ \[(pk, _), (psm, _)] ->
+    (err, m) <- buildUnsafeByteString' smlen $ \pmbuf ->
+      constByteStrings [k, sm] $ \[(pk, _), (psm, _)] ->
         c_sign_open pmbuf pmlen psm (fromIntegral smlen) pk
     mlen <- peek pmlen
     case err of
@@ -125,8 +125,8 @@ signDetached :: SecretKey
              -- ^ Signature
 signDetached (SK k) m = unsafePerformIO $
     alloca $ \psmlen -> do
-        (_err, sm) <- buildUnsafeCVector' Bytes.sign $ \sigbuf ->
-            constVectors [k, m] $ \[(pk, _), (pm, _)] ->
+        (_err, sm) <- buildUnsafeByteString' Bytes.sign $ \sigbuf ->
+            constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
                 c_sign_detached sigbuf psmlen pm (fromIntegral len) pk
         smlen <- peek psmlen
         return $ S.take (fromIntegral smlen) sm
@@ -141,7 +141,7 @@ signVerifyDetached :: PublicKey
                    -- ^ Message
                    -> Bool
 signVerifyDetached (PK k) sig sm = unsafePerformIO $
-    constVectors [k, sig, sm] $ \[(pk, _), (psig, _), (psm, _)] -> do
+    constByteStrings [k, sig, sm] $ \[(pk, _), (psig, _), (psm, _)] -> do
         res <- c_sign_verify_detached psig psm (fromIntegral len) pk
         return (res == 0)
   where len = S.length sm

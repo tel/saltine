@@ -58,33 +58,32 @@ unsafeDidSucceed = go . unsafePerformIO
   where go 0 = True
         go _ = False
 
--- | Convenience function for accessing constant C vectors
--- Manual unfold of: @constVectors = runContT . mapM (ContT . V.unsafeWith)@
-constVectors :: [ByteString] -> ([CStringLen] -> IO b) -> IO b
-constVectors =
+-- | Convenience function for accessing constant C strings
+constByteStrings :: [ByteString] -> ([CStringLen] -> IO b) -> IO b
+constByteStrings =
   foldr (\v kk -> \k -> (unsafeUseAsCStringLen v) (\a -> kk (\as -> k (a:as)))) ($ [])
 
--- | Slightly safer cousin to 'buildUnsafeCVector' that remains in the
+-- | Slightly safer cousin to 'buildUnsafeByteString' that remains in the
 -- 'IO' monad.
-buildUnsafeCVector' :: Int -> (Ptr CChar -> IO b) -> IO (b, ByteString)
-buildUnsafeCVector' n k = do
+buildUnsafeByteString' :: Int -> (Ptr CChar -> IO b) -> IO (b, ByteString)
+buildUnsafeByteString' n k = do
   ph  <- mallocBytes n
   bs  <- unsafePackMallocCStringLen (ph, fromIntegral n)
   out <- unsafeUseAsCString bs k
   return (out, bs)
 
 -- | Extremely unsafe function, use with utmost care! Builds a new
--- Vector using a ccall which is given access to the raw underlying
+-- ByteString using a ccall which is given access to the raw underlying
 -- pointer. Overwrites are UNCHECKED and 'unsafePerformIO' is used so
 -- it's difficult to predict the timing of the 'ByteString' creation.
-buildUnsafeCVector :: Int -> (Ptr CChar -> IO b) -> (b, ByteString)
-buildUnsafeCVector n = unsafePerformIO . buildUnsafeCVector' n
+buildUnsafeByteString :: Int -> (Ptr CChar -> IO b) -> (b, ByteString)
+buildUnsafeByteString n = unsafePerformIO . buildUnsafeByteString' n
 
 -- | Build a sized random 'ByteString' using Sodium's bindings to
 -- @/dev/urandom@.
 randomByteString :: Int -> IO ByteString
 randomByteString n =
-  snd <$> buildUnsafeCVector' n (`c_randombytes_buf` fromIntegral n)
+  snd <$> buildUnsafeByteString' n (`c_randombytes_buf` fromIntegral n)
 
 -- | To prevent a dependency on package 'errors'
 hush :: Either s a -> Maybe a

@@ -107,8 +107,8 @@ stream :: Key -> Nonce -> Int
        -> ByteString
        -- ^ Cryptographic stream
 stream (Key key) (Nonce nonce) n =
-  snd . buildUnsafeCVector n $ \ps ->
-    constVectors [key, nonce] $ \[(pk, _), (pn, _)] ->
+  snd . buildUnsafeByteString n $ \ps ->
+    constByteStrings [key, nonce] $ \[(pk, _), (pn, _)] ->
     c_stream ps (fromIntegral n) pn pk
 
 -- | Computes the exclusive-or between a message and a cryptographic
@@ -124,8 +124,8 @@ xor :: Key -> Nonce
     -> ByteString
     -- ^ Ciphertext
 xor (Key key) (Nonce nonce) msg =
-  snd . buildUnsafeCVector len $ \pc ->
-    constVectors [key, nonce, msg] $ \[(pk, _), (pn, _), (pm, _)] ->
+  snd . buildUnsafeByteString len $ \pc ->
+    constByteStrings [key, nonce, msg] $ \[(pk, _), (pn, _), (pm, _)] ->
     c_stream_xor pc pm (fromIntegral len) pn pk
   where len = S.length msg
 

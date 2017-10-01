@@ -90,8 +90,8 @@ auth :: Key
      -- ^ Message
      -> Authenticator
 auth (Key key) msg =
-  Au . snd . buildUnsafeCVector Bytes.auth $ \pa ->
-    constVectors [key, msg] $ \[(pk, _), (pm, mlen)] ->
+  Au . snd . buildUnsafeByteString Bytes.auth $ \pa ->
+    constByteStrings [key, msg] $ \[(pk, _), (pm, mlen)] ->
     c_auth pa pm (fromIntegral mlen) pk
 
 -- | Checks to see if an authenticator is a correct proof that a
@@ -103,7 +103,7 @@ verify :: Key
        -> Bool
        -- ^ Is this message authentic?
 verify (Key key) (Au a) msg =
-  unsafeDidSucceed $ constVectors [key, msg, a] $ \[(pk, _), (pm, mlen), (pa, _)] ->
+  unsafeDidSucceed $ constByteStrings [key, msg, a] $ \[(pk, _), (pm, mlen), (pa, _)] ->
     return $ c_auth_verify pa pm (fromIntegral mlen) pk
 
 foreign import ccall "crypto_auth"

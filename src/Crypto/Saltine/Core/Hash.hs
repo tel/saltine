@@ -63,8 +63,8 @@ hash :: ByteString
      -- ^ Message
      -> ByteString
      -- ^ Hash
-hash m = snd . buildUnsafeCVector Bytes.hash $ \ph ->
-  constVectors [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
+hash m = snd . buildUnsafeByteString Bytes.hash $ \ph ->
+  constByteStrings [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
 
 -- | An opaque 'shorthash' cryptographic secret key.
 newtype ShorthashKey = ShK ByteString deriving (Eq, Ord)
@@ -87,8 +87,8 @@ shorthash :: ShorthashKey
           -- ^ Message
           -> ByteString
           -- ^ Hash
-shorthash (ShK k) m = snd . buildUnsafeCVector Bytes.shorthash $ \ph ->
-  constVectors [k, m] $ \[(pk, _), (pm, _)] ->
+shorthash (ShK k) m = snd . buildUnsafeByteString Bytes.shorthash $ \ph ->
+  constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
     c_shorthash ph pm (fromIntegral $ S.length m) pk
 
 foreign import ccall "crypto_hash"

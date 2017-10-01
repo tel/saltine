@@ -89,13 +89,13 @@ instance IsEncoding Scalar where
   {-# INLINE encode #-}
 
 mult :: Scalar -> GroupElement -> GroupElement
-mult (Sc n) (GE p) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->
-  constVectors [n, p] $ \[(pn, _), (pp, _)] ->
+mult (Sc n) (GE p) = GE . snd . buildUnsafeByteString Bytes.mult $ \pq ->
+  constByteStrings [n, p] $ \[(pn, _), (pp, _)] ->
     c_scalarmult pq pn pp
 
 multBase :: Scalar -> GroupElement
-multBase (Sc n) = GE . snd . buildUnsafeCVector Bytes.mult $ \pq ->
-  constVectors [n] $ \[(pn, _)] ->
+multBase (Sc n) = GE . snd . buildUnsafeByteString Bytes.mult $ \pq ->
+  constByteStrings [n] $ \[(pn, _)] ->
     c_scalarmult_base pq pn
 
 foreign import ccall "crypto_scalarmult"
