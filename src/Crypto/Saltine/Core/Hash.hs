@@ -79,7 +79,7 @@ instance IsEncoding ShorthashKey where
 
 -- | Randomly generates a new key for 'shorthash'.
 newShorthashKey :: IO ShorthashKey
-newShorthashKey = ShK <$> randomVector Bytes.shorthashKey
+newShorthashKey = ShK <$> randomByteString Bytes.shorthashKey
 
 -- | Computes a very short, fast keyed hash.
 shorthash :: ShorthashKey

@@ -82,8 +82,8 @@ buildUnsafeCVector n = unsafePerformIO . buildUnsafeCVector' n
 
 -- | Build a sized random 'ByteString' using Sodium's bindings to
 -- @/dev/urandom@.
-randomVector :: Int -> IO ByteString
-randomVector n =
+randomByteString :: Int -> IO ByteString
+randomByteString n =
   snd <$> buildUnsafeCVector' n (`c_randombytes_buf` fromIntegral n)
 
 -- | To prevent a dependency on package 'errors'

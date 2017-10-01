@@ -84,11 +84,11 @@ instance IsNonce Nonce where
 
 -- | Creates a random key of the correct size for 'secretbox'.
 newKey :: IO Key
-newKey = Key <$> randomVector Bytes.secretBoxKey
+newKey = Key <$> randomByteString Bytes.secretBoxKey
 
 -- | Creates a random nonce of the correct size for 'secretbox'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomVector Bytes.secretBoxNonce
+newNonce = Nonce <$> randomByteString Bytes.secretBoxNonce
 
 -- | Encrypts a message. It is infeasible for an attacker to decrypt
 -- the message so long as the 'Nonce' is never repeated.
