@@ -2,18 +2,15 @@
 {-# LANGUAGE TypeFamilies             #-}
 
 module Crypto.Saltine (
-  optimize,
-  module Crypto.Saltine.Core.SecretBox
+  sodiumInit
   ) where
 
 import Foreign.C
-import Crypto.Saltine.Core.SecretBox
 
--- | Runs Sodiums's initialization routine. This should be called before
--- using any other function. It is thread-safe since libsodium 1.0.11,
--- but not before.
-optimize :: IO ()
-optimize = do
+-- | Runs Sodiums's initialization routine. This must be called before
+-- using any other function. It is thread-safe since libsodium 1.0.11.
+sodiumInit :: IO ()
+sodiumInit = do
   err <- c_sodiumInit
   case err of
     0 -> -- everything went well
@@ -21,6 +18,6 @@ optimize = do
     1 -> -- already initialized, we're good
       return ()
     _ -> -- some kind of failure
-      error "Crypto.Saltine.optimize"
+      error "Crypto.Saltine.sodiumInit"
 
 foreign import ccall "sodium_init" c_sodiumInit :: IO CInt

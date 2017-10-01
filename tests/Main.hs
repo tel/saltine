@@ -11,6 +11,7 @@ import AuthProperties        (testAuth)
 import OneTimeAuthProperties (testOneTimeAuth)
 import SignProperties        (testSign)
 import ScalarMultProperties  (testScalarMult)
+import Crypto.Saltine
 
 import Test.Framework
 
@@ -23,14 +24,16 @@ testOpts :: TestOptions
 testOpts = mempty { topt_maximum_generated_tests = Just 20000 }
 
 main :: IO ()
-main = flip defaultMainWithOpts runOpts [
-  testBox,
-  testSealedBox,
-  testSecretBox,
-  testAEAD,
-  testStream,
-  testAuth,
-  testOneTimeAuth,
-  testSign,
-  testScalarMult
-  ]
+main = do
+  sodiumInit
+  flip defaultMainWithOpts runOpts [
+        testBox,
+        testSealedBox,
+        testSecretBox,
+        testAEAD,
+        testStream,
+        testAuth,
+        testOneTimeAuth,
+        testSign,
+        testScalarMult
+        ]

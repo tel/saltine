@@ -12,21 +12,13 @@ before_install:
   - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
   - travis_retry sudo apt-get update
   - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
+  - export LIBRARY_PATH=/usr/local/lib:$LIBRARY_PATH
+  - export C_INCLUDE_PATH=/usr/local/include:$C_INCLUDE_PATH
   - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$HOME/.cabal/bin:$PATH
 
-install:
-  - travis_retry cabal update
-  - travis_retry cabal install --only-dependencies --enable-tests --enable-benchmarks
+install: true
 
-script:
-  - cabal configure --enable-tests --enable-benchmarks -v2
-
-  - cabal build
-  - cabal haddock
-  - cabal test --show-details=always
-
-  - cabal check
-  - cabal sdist && cabal install --force-reinstalls dist/saltine-*.tar.gz
+script: ./travis.sh
 
 notifications:
   email: true
