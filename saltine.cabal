@@ -1,5 +1,5 @@
 name:                saltine
-version:             0.0.1.0
+version:             0.1.0.0
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
@@ -27,7 +27,7 @@ copyright:           Copyright (c) Joseph Abrahamson 2013
 category:            Cryptography
 build-type:          Simple
 cabal-version:       >=1.10
-tested-with:         GHC==7.8.4, GHC==7.10.3, GHC==8.0.2
+tested-with:         GHC==7.8.4, GHC==7.10.3, GHC==8.0.2, GHC==8.2.1
 
 source-repository head
   type: git

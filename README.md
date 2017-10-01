@@ -1,15 +1,18 @@
-# Saltine 0.0.1.0 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
+# Saltine 0.1.0.0 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)
 
 A Haskell binding for @jedisct1's portable binding for djb's
 NaCl. **This is an early release.** Please try it out, but don't just
 yet stake your life or job on it.
 
+It is imperative you call `sodiumInit` before using any other function.
+
 ``` haskell
 import           Crypto.Saltine
+import           Crypto.Saltine.Core.SecretBox
 import qualified Data.ByteString.Char8 as BSC8
 
 main = do
-  optimize
+  sodiumInit
   k <- newKey
   n <- newNonce
   let ciphertext = secretbox k n (BSC8.pack "foobar")

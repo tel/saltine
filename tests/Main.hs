@@ -13,14 +13,19 @@ import ScalarMultProperties  (testScalarMult)
 
 import Test.Framework
 
+import Crypto.Saltine
+
 main :: IO ()
-main = defaultMain [
-  testBox,
-  testSealedBox,
-  testSecretBox,
-  testStream,
-  testAuth,
-  testOneTimeAuth,
-  testSign,
-  testScalarMult
-  ]
+main = do
+  sodiumInit
+
+  defaultMain [
+    testBox,
+    testSealedBox,
+    testSecretBox,
+    testStream,
+    testAuth,
+    testOneTimeAuth,
+    testSign,
+    testScalarMult
+    ]
