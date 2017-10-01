@@ -93,12 +93,12 @@ instance IsEncoding Nonce where
 
 -- | Creates a random key of the correct size for 'stream' and 'xor'.
 newKey :: IO Key
-newKey = Key <$> randomVector Bytes.streamKey
+newKey = Key <$> randomByteString Bytes.streamKey
 
 -- | Creates a random nonce of the correct size for 'stream' and
 -- 'xor'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomVector Bytes.streamNonce
+newNonce = Nonce <$> randomByteString Bytes.streamNonce
 
 -- | Generates a cryptographic random stream indexed by the 'Key' and
 -- 'Nonce'. These streams are indistinguishable from random noise so

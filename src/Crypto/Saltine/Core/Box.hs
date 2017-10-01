@@ -161,7 +161,7 @@ newKeypair = do
 
 -- | Randomly generates a nonce for usage with 'box' and 'boxOpen'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomVector Bytes.boxNonce
+newNonce = Nonce <$> randomByteString Bytes.boxNonce
 
 -- | Build a 'CombinedKey' for sending from 'SecretKey' to
 -- 'PublicKey'. This is a precomputation step which can accelerate

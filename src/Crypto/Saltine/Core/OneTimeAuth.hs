@@ -75,7 +75,7 @@ instance IsEncoding Authenticator where
 
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key
-newKey = Key <$> randomVector Bytes.onetimeKey
+newKey = Key <$> randomByteString Bytes.onetimeKey
 
 -- | Builds a keyed 'Authenticator' for a message. This
 -- 'Authenticator' is /impossible/ to forge so long as the 'Key' is

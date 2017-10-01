@@ -39,6 +39,7 @@ library
                   Crypto.Saltine
                   Crypto.Saltine.Internal.ByteSizes
                   Crypto.Saltine.Core.SecretBox
+                  Crypto.Saltine.Core.AEAD
                   Crypto.Saltine.Core.Box
                   Crypto.Saltine.Core.Stream
                   Crypto.Saltine.Core.Auth
@@ -46,6 +47,7 @@ library
                   Crypto.Saltine.Core.Sign
                   Crypto.Saltine.Core.Hash
                   Crypto.Saltine.Core.ScalarMult
+                  Crypto.Saltine.Core.Utils
                   Crypto.Saltine.Class
   other-modules:
                   Crypto.Saltine.Internal.Util
@@ -72,8 +74,10 @@ test-suite tests
                 OneTimeAuthProperties
                 ScalarMultProperties
                 SecretBoxProperties
+                SealedBoxProperties
                 SignProperties
                 StreamProperties
+                AEADProperties
                 Util
   ghc-options: -Wall -threaded -rtsopts
   hs-source-dirs: tests

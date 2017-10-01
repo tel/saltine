@@ -40,6 +40,7 @@
 module Crypto.Saltine.Core.SecretBox (
   Key, Nonce,
   secretbox, secretboxOpen,
+  secretboxDetached, secretboxOpenDetached,
   newKey, newNonce
   ) where
 
@@ -83,11 +84,11 @@ instance IsNonce Nonce where
 
 -- | Creates a random key of the correct size for 'secretbox'.
 newKey :: IO Key
-newKey = Key <$> randomVector Bytes.secretBoxKey
+newKey = Key <$> randomByteString Bytes.secretBoxKey
 
 -- | Creates a random nonce of the correct size for 'secretbox'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomVector Bytes.secretBoxNonce
+newNonce = Nonce <$> randomByteString Bytes.secretBoxNonce
 
 -- | Encrypts a message. It is infeasible for an attacker to decrypt
 -- the message so long as the 'Nonce' is never repeated.
@@ -104,6 +105,24 @@ secretbox (Key key) (Nonce nonce) msg =
   where len    = S.length msg + Bytes.secretBoxZero
         pad'   = pad Bytes.secretBoxZero
         unpad' = unpad Bytes.secretBoxBoxZero
+
+-- | Encrypts a message. In contrast with 'secretbox', the result is not
+-- serialized as one element and instead provided as an authentication tag and
+-- ciphertext.
+secretboxDetached :: Key -> Nonce
+          -> ByteString
+          -- ^ Message
+          -> (ByteString,ByteString)
+          -- ^ (Authentication Tag, Ciphertext)
+secretboxDetached (Key key) (Nonce nonce) msg =
+  buildUnsafeCVector ctLen $ \pc ->
+   fmap snd . buildUnsafeCVector' tagLen $ \ptag ->
+    constVectors [key, msg, nonce] $ \
+      [(pk, _), (pmsg, _), (pn, _)] ->
+        c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
+  where ctLen  = ptLen
+        ptLen  = S.length msg
+        tagLen = Bytes.secretBoxMac
 
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
@@ -122,12 +141,48 @@ secretboxOpen (Key key) (Nonce nonce) cipher =
         pad'   = pad Bytes.secretBoxBoxZero
         unpad' = unpad Bytes.secretBoxZero
 
+-- | Decrypts a message. Returns 'Nothing' if the keys and message do
+-- not match.
+secretboxOpenDetached :: Key -> Nonce
+                 -> ByteString
+                 -- ^ Auth Tag
+                 -> ByteString
+                 -- ^ Ciphertext
+                 -> Maybe ByteString
+                 -- ^ Message
+secretboxOpenDetached (Key key) (Nonce nonce) tag cipher
+    | S.length tag /= Bytes.secretBoxMac = Nothing
+    | otherwise =
+  let (err, vec) = buildUnsafeCVector len $ \pm ->
+        constVectors [key, cipher, tag, nonce] $ \
+          [(pk, _), (pc, _), (pt, _), (pn, _)] ->
+            c_secretbox_open_detached pm pc pt (fromIntegral len) pn pk
+  in hush . handleErrno err $ vec
+  where len    = S.length cipher
+
 -- | The secretbox C API uses 0-padded C strings. Always returns 0.
 foreign import ccall "crypto_secretbox"
   c_secretbox :: Ptr CChar
               -- ^ Cipher 0-padded output buffer
               -> Ptr CChar
               -- ^ Constant 0-padded message input buffer
+              -> CULLong
+              -- ^ Length of message input buffer (incl. 0s)
+              -> Ptr CChar
+              -- ^ Constant nonce buffer
+              -> Ptr CChar
+              -- ^ Constant key buffer
+              -> IO CInt
+
+-- | The secretbox_detached C API uses C strings. Always returns 0.
+foreign import ccall "crypto_secretbox_detached"
+  c_secretbox_detached
+              :: Ptr CChar
+              -- ^ Ciphertext output buffer
+              -> Ptr CChar
+              -- ^ Authentication tag output buffer
+              -> Ptr CChar
+              -- ^ Constant message input buffer
               -> CULLong
               -- ^ Length of message input buffer (incl. 0s)
               -> Ptr CChar
@@ -145,6 +200,24 @@ foreign import ccall "crypto_secretbox_open"
                    -- ^ Constant 0-padded message input buffer
                    -> CULLong
                    -- ^ Length of message input buffer (incl. 0s)
+                   -> Ptr CChar
+                   -- ^ Constant nonce buffer
+                   -> Ptr CChar
+                   -- ^ Constant key buffer
+                   -> IO CInt
+
+-- | The secretbox C API uses C strings. Returns 0 if
+-- successful or -1 if verification failed.
+foreign import ccall "crypto_secretbox_open_detached"
+  c_secretbox_open_detached
+                   :: Ptr CChar
+                   -- ^ Message output buffer
+                   -> Ptr CChar
+                   -- ^ Constant ciphertext input buffer
+                   -> Ptr CChar
+                   -- ^ Constant auth tag input buffer
+                   -> CULLong
+                   -- ^ Length of ciphertext input buffer
                    -> Ptr CChar
                    -- ^ Constant nonce buffer
                    -> Ptr CChar
