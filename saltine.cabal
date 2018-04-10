@@ -89,3 +89,4 @@ test-suite tests
               , QuickCheck
               , test-framework-quickcheck2
               , test-framework
+              , semigroups
