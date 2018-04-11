@@ -1,5 +1,5 @@
 name:                saltine
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
@@ -89,3 +89,4 @@ test-suite tests
               , QuickCheck
               , test-framework-quickcheck2
               , test-framework
+              , semigroups

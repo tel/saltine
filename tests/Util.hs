@@ -11,6 +11,7 @@ import qualified Data.ByteString       as S
 import           Data.Monoid
 import           Data.Word (Word8)
 import           Data.Bits (xor)
+import           Data.Semigroup (Semigroup)
 import           Test.QuickCheck
 import           GHC.Exts (IsList(..))
 
@@ -30,7 +31,7 @@ perturb a (Perturb p) =
         Just x  -> x
 
 newtype Perturb = Perturb [Word8]
-    deriving (Show,Monoid)
+    deriving (Show,Semigroup,Monoid)
 
 instance IsList Perturb where
     type Item Perturb = Word8
