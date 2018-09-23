@@ -199,15 +199,16 @@ boxOpen :: PublicKey -> SecretKey -> Nonce
         -- ^ Ciphertext (incl. authentication tag)
         -> Maybe ByteString
         -- ^ Message
-boxOpen (PK pk) (SK sk) (Nonce nonce) cipher =
+boxOpen (PK pk) (SK sk) (Nonce nonce) cipher = do
+  let msgLen = S.length cipher
+  bufSize <- msgLen `safeSubtract` Bytes.boxMac
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [pk, sk, cipher, nonce] $ \
           [(ppk, _), (psk, _), (pc, _), (pn, _)] ->
             c_box_open_easy pm pc (fromIntegral msgLen) pn ppk psk
-  in hush . handleErrno err $ vec
-  where
-    bufSize = S.length cipher - Bytes.boxMac
-    msgLen  = S.length cipher
+  hush . handleErrno err $ vec
+
+    
 
 -- | 'box' using a 'CombinedKey' and thus faster.
 boxAfterNM :: CombinedKey
@@ -232,15 +233,16 @@ boxOpenAfterNM :: CombinedKey
                -- ^ Ciphertext (incl. authentication tag)
                -> Maybe ByteString
                -- ^ Message
-boxOpenAfterNM (CK ck) (Nonce nonce) cipher =
+boxOpenAfterNM (CK ck) (Nonce nonce) cipher = do
+  let msgLen = S.length cipher
+  bufSize <- msgLen `safeSubtract` Bytes.boxMac
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [ck, cipher, nonce] $ \
           [(pck, _), (pc, _), (pn, _)] ->
             c_box_open_easy_afternm pm pc (fromIntegral msgLen) pn pck
-  in hush . handleErrno err $ vec
-  where
-    bufSize = S.length cipher - Bytes.boxMac
-    msgLen  = S.length cipher
+  hush . handleErrno err $ vec
+
+    
 
 
 -- | Encrypts a message for sending to the owner of the public
@@ -264,16 +266,14 @@ boxSealOpen :: PublicKey
             -- ^ Ciphertext
             -> Maybe ByteString
             -- ^ Message
-boxSealOpen (PK pk) (SK sk) cipher =
+boxSealOpen (PK pk) (SK sk) cipher = do
+  let msgLen = S.length cipher
+  bufSize <- msgLen `safeSubtract` Bytes.boxMac
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [pk, sk, cipher] $ \
           [(ppk, _), (psk, _), (pc, _)] ->
           c_box_seal_open pm pc (fromIntegral msgLen) ppk psk
-  in hush . handleErrno err $ vec
-  where
-    bufSize = S.length cipher - Bytes.sealedBox
-    msgLen  = S.length cipher
-
+  hush . handleErrno err $ vec
 
 -- | Should always return a 0.
 foreign import ccall "crypto_box_keypair"

@@ -112,15 +112,15 @@ aeadOpen :: Key -> Nonce
          -- ^ AAD
          -> Maybe ByteString
          -- ^ Message
-aeadOpen (Key key) (Nonce nonce) cipher aad =
+aeadOpen (Key key) (Nonce nonce) cipher aad = do
+  let clen   = S.length cipher
+      alen   = S.length aad
+  mlen <- clen `safeSubtract` Bytes.aead_xchacha20poly1305_ietf_ABYTES
   let (err, vec) = buildUnsafeByteString mlen $ \pm ->
         constByteStrings [key, cipher, aad, nonce] $ \
           [(pk, _), (pc, _), (pa, _), (pn, _)] ->
             c_aead_open pm nullPtr nullPtr pc (fromIntegral clen) pa (fromIntegral alen) pn pk
-  in hush . handleErrno err $ vec
-  where clen   = S.length cipher
-        alen   = S.length aad
-        mlen   = clen - Bytes.aead_xchacha20poly1305_ietf_ABYTES
+  hush . handleErrno err $ vec
 
 -- | Encrypts a message. It is infeasible for an attacker to decrypt
 -- the message so long as the 'Nonce' is never repeated.

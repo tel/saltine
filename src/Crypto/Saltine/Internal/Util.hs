@@ -11,6 +11,11 @@ import           Data.ByteString          (ByteString)
 import           Data.ByteString.Unsafe
 import           Data.Monoid
 
+-- | Returns @Nothing@ if the subtraction would result in an
+-- underflow or a negative number.
+safeSubtract :: (Ord a, Num a) => a -> a -> Maybe a
+x `safeSubtract` y = if y > x then Nothing else Just (x - y)
+
 -- | @snd . cycleSucc@ computes the 'succ' of a 'Bounded', 'Eq' 'Enum'
 -- with wraparound. The @fst . cycleSuc@ is whether the wraparound
 -- occurred (i.e. @fst . cycleSucc == (== maxBound)@).
