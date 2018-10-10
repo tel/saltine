@@ -1,13 +1,13 @@
 #!/bin/sh
 
-function version_gte() {
-    test "$(printf '%s\n' "$@" | sort -V -r | head -n 1)" == "$1";
+version_gte() {
+    test "$(printf '%s\n' "$@" | sort -V -r | head -n 1)" = "$1";
 }
 
 rm -rf .cabal-sandbox
 cabal update
 
-if version_gte $CABALVER "2.0"; then
+if version_gte "$CABALVER" "2.0"; then
     cabal new-build --enable-documentation --enable-tests
     cabal new-test
     cabal sdist && cabal install --force-reinstalls dist/saltine-*.tar.gz
