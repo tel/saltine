@@ -13,6 +13,7 @@ import SignProperties        (testSign)
 import ScalarMultProperties  (testScalarMult)
 import Crypto.Saltine
 
+import Data.Monoid
 import Test.Framework
 
 runOpts :: RunnerOptions
