@@ -268,7 +268,7 @@ boxSealOpen :: PublicKey
             -- ^ Message
 boxSealOpen (PK pk) (SK sk) cipher = do
   let msgLen = S.length cipher
-  bufSize <- msgLen `safeSubtract` Bytes.boxMac
+  bufSize <- msgLen `safeSubtract` Bytes.sealedBox
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [pk, sk, cipher] $ \
           [(ppk, _), (psk, _), (pc, _)] ->
