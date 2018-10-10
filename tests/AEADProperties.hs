@@ -11,6 +11,7 @@ import           Crypto.Saltine.Class (decode,encode)
 import           Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import qualified Data.ByteString                      as S
+import           Data.Monoid
 import           Test.Framework.Providers.QuickCheck2
 import           Test.Framework
 import           Test.QuickCheck (Property, (==>))
