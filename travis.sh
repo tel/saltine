@@ -9,7 +9,7 @@ cabal update
 
 if version_gte "$CABALVER" "2.0"; then
     cabal new-build --enable-documentation --enable-tests
-    cabal new-test || exit 1
+    cabal new-test --enable-tests || exit 1
     cabal sdist && cabal install --force-reinstalls dist/saltine-*.tar.gz
 else
     cabal sandbox init
