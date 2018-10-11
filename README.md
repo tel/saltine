@@ -1,4 +1,4 @@
-# Saltine 0.1.0.1 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)[![Hackage version](https://img.shields.io/hackage/v/saltine.svg?colorB=4FB900)](https://hackage.haskell.org/package/saltine)
+# Saltine 0.1.0.2 [![Build Status](https://travis-ci.org/tel/saltine.png?branch=master)](https://travis-ci.org/tel/saltine)[![Hackage version](https://img.shields.io/hackage/v/saltine.svg?colorB=4FB900)](https://hackage.haskell.org/package/saltine)
 
 A Haskell binding for @jedisct1's portable binding for djb's
 NaCl. **This is an early release.** Please try it out, but don't just
