@@ -1,4 +1,6 @@
--- |
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
+
+ -- |
 -- Module      : Crypto.Saltine.Core.Hash
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
@@ -55,6 +57,9 @@ import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString as S
 import           Data.ByteString (ByteString)
+import           Data.Hashable (Hashable)
+import           Data.Data (Data, Typeable)
+import           GHC.Generics (Generic)
 
 -- | Computes a cryptographically collision-resistant hash making
 -- @hash m == hash m' ==> m == m'@ highly likely even when under
@@ -67,7 +72,7 @@ hash m = snd . buildUnsafeByteString Bytes.hash $ \ph ->
   constByteStrings [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
 
 -- | An opaque 'shorthash' cryptographic secret key.
-newtype ShorthashKey = ShK ByteString deriving (Eq, Ord)
+newtype ShorthashKey = ShK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding ShorthashKey where
   decode v = if S.length v == Bytes.shorthashKey

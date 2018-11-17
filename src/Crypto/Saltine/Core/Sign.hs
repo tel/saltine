@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
+
 -- |
 -- Module      : Crypto.Saltine.Core.Sign
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -43,11 +45,15 @@ import           Foreign.Storable
 import           System.IO.Unsafe
 import qualified Data.ByteString                   as S
 import           Data.ByteString                     (ByteString)
+import           Data.Data (Data, Typeable)
+import           Data.Hashable (Hashable)
+import           GHC.Generics (Generic)
+
 
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Eq, Ord)
+newtype SecretKey = SK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == Bytes.signSK
@@ -58,7 +64,7 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Eq, Ord)
+newtype PublicKey = PK ByteString deriving (Eq, Ord, Data, Typeable, Hashable, Generic)
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == Bytes.signPK

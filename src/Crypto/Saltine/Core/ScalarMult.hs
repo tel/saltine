@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
+
 -- |
 -- Module      : Crypto.Saltine.Core.ScalarMult
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -63,14 +65,17 @@ import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
 import           Data.ByteString                     (ByteString)
+import           Data.Hashable (Hashable)
+import           Data.Data (Data, Typeable)
+import           GHC.Generics (Generic)
 
 -- $types
 
 -- | A group element.
-newtype GroupElement = GE ByteString deriving (Eq)
+newtype GroupElement = GE ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 -- | A scalar integer.
-newtype Scalar       = Sc ByteString deriving (Eq)
+newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding GroupElement where
   decode v = if S.length v == Bytes.mult

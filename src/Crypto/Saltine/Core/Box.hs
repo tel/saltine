@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
+
 -- |
 -- Module      : Crypto.Saltine.Core.Box
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -94,12 +96,15 @@ import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
 import           Data.ByteString (ByteString)
+import           Data.Hashable (Hashable)
+import           Data.Data (Data, Typeable)
+import           GHC.Generics (Generic)
 
 
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Eq, Ord)
+newtype SecretKey = SK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == Bytes.boxSK
@@ -110,7 +115,7 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Eq, Ord)
+newtype PublicKey = PK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == Bytes.boxPK
@@ -124,7 +129,7 @@ instance IsEncoding PublicKey where
 type Keypair = (SecretKey, PublicKey)
 
 -- | An opaque 'boxAfterNM' cryptographic combined key.
-newtype CombinedKey = CK ByteString deriving (Eq, Ord)
+newtype CombinedKey = CK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding CombinedKey where
   decode v = if S.length v == Bytes.boxBeforeNM
@@ -135,7 +140,7 @@ instance IsEncoding CombinedKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == Bytes.boxNonce
