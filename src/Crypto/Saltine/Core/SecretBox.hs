@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
+
 -- |
 -- Module      : Crypto.Saltine.Core.SecretBox
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -53,11 +55,14 @@ import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
 import           Data.ByteString                     (ByteString)
+import           Data.Hashable (Hashable)
+import           Data.Data (Data, Typeable)
+import           GHC.Generics (Generic)
 
 -- $types
 
 -- | An opaque 'secretbox' cryptographic key.
-newtype Key = Key ByteString deriving (Eq, Ord)
+newtype Key = Key ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding Key where
   decode v = if S.length v == Bytes.secretBoxKey
@@ -68,7 +73,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'secretbox' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == Bytes.secretBoxNonce

@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
+
 -- |
 -- Module      : Crypto.Saltine.Core.Auth
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -52,14 +54,17 @@ import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
 import           Data.ByteString                     (ByteString)
+import           Data.Hashable (Hashable)
+import           Data.Data (Data, Typeable)
+import           GHC.Generics (Generic)
 
 -- $types
 
 -- | An opaque 'auth' cryptographic key.
-newtype Key           = Key ByteString deriving (Eq, Ord)
+newtype Key           = Key ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 -- | An opaque 'auth' authenticator.
-newtype Authenticator = Au ByteString  deriving (Eq, Ord)
+newtype Authenticator = Au ByteString  deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
 
 instance IsEncoding Key where
   decode v = if S.length v == Bytes.authKey
