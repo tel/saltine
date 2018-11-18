@@ -10,6 +10,7 @@ import StreamProperties      (testStream)
 import AuthProperties        (testAuth)
 import OneTimeAuthProperties (testOneTimeAuth)
 import SignProperties        (testSign)
+import HashProperties        (testHash)
 import ScalarMultProperties  (testScalarMult)
 import Crypto.Saltine
 
@@ -36,5 +37,6 @@ main = do
         testAuth,
         testOneTimeAuth,
         testSign,
+        testHash,
         testScalarMult
         ]
