@@ -55,6 +55,8 @@ and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/C
 If you can think of ways to use Haskell's type system to enforce 
 security invariants, please suggest them.
 
+To use it on Windows systems, download [a prebuild libsodium-\*-stable-mingw.tar.gz file](https://download.libsodium.org/libsodium/releases/) and copy the files in `libsodium-win64`  into the equivalent places in `C:\Program Files\Haskell Platform\*\mingw`. Then just add saltine to your cabal file and watch it go.
+
 Tested with [`libsodium-1.0.13`](https://download.libsodium.org/libsodium/releases/).
 
 Inspired by @thoughtpolice's
