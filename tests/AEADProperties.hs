@@ -12,6 +12,7 @@ import           Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import           Control.Applicative
 import qualified Data.ByteString                      as S
+import           Data.Maybe (fromJust)
 import           Test.Framework.Providers.QuickCheck2
 import           Test.Framework
 import           Test.QuickCheck (Property, (==>))
@@ -20,12 +21,12 @@ import           Test.QuickCheck.Arbitrary
 instance Arbitrary Nonce where
     arbitrary =
         do bs <- S.pack <$> vector Bytes.secretBoxNonce
-           maybe (fail "impossible arbitrary failure.") pure (decode bs)
+           pure $ fromJust (decode bs)
 
 instance Arbitrary Key where
     arbitrary =
         do bs <- S.pack <$> vector Bytes.secretBoxKey
-           maybe (fail "impossible arbitrary failure.") pure (decode bs)
+           pure $ fromJust (decode bs)
 
 instance Show Key where
     show = show . encode
