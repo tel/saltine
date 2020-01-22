@@ -46,7 +46,9 @@ module Crypto.Saltine.Internal.ByteSizes (
   streamNonce,
   hash,
   shorthash,
-  shorthashKey
+  shorthashKey,
+  generichashOutLenMax,
+  generichashKeyLenMax
   ) where
 
 import Foreign.C
@@ -62,7 +64,7 @@ secretBoxKey, secretBoxNonce, secretBoxMac, secretBoxZero, secretBoxBoxZero :: I
 sign, signPK, signSK :: Int
 streamKey, streamNonce :: Int
 hash, shorthash, shorthashKey :: Int
-
+generichashOutLenMax, generichashKeyLenMax :: Int
 
 -- Authentication
 -- | Size of a @crypto_auth@ authenticator.
@@ -148,6 +150,12 @@ shorthash    = fromIntegral c_crypto_shorthash_bytes
 -- | The size of a hashing key for the keyed hash function
 -- 'Crypto.Saltine.Internal.Hash.shorthash'.
 shorthashKey = fromIntegral c_crypto_shorthash_keybytes
+-- | The maximum output size of the generic hash function
+-- 'Crypto.Saltine.Core.Hash.generichash'
+generichashOutLenMax = fromIntegral c_crypto_generichash_bytes_max
+-- | The maximum key size of the generic hash function
+-- 'Crypto.Saltine.Core.Hash.generichash'
+generichashKeyLenMax = fromIntegral c_crypto_generichash_keybytes_max
 
 -- src/libsodium/crypto_auth/crypto_auth.c
 foreign import ccall "crypto_auth_bytes"
@@ -206,6 +214,12 @@ foreign import ccall "crypto_sign_publickeybytes"
   c_crypto_sign_publickeybytes :: CSize
 foreign import ccall "crypto_sign_secretkeybytes"
   c_crypto_sign_secretkeybytes :: CSize
+
+-- src/libsodium/crypto_generichash/crypto_generichash.c
+foreign import ccall "crypto_generichash_bytes_max"
+  c_crypto_generichash_bytes_max :: CSize
+foreign import ccall "crypto_generichash_keybytes_max"
+  c_crypto_generichash_keybytes_max :: CSize
 
 -- HARDCODED
 -- ---------

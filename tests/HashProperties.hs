@@ -16,6 +16,9 @@ testHash :: Test
 testHash = buildTest $ do
   shKey <- newShorthashKey
   shKey2 <- newShorthashKey
+  ghKey <- newGenerichashKey 24 >>= maybe undefined return
+  ghKey2 <- newGenerichashKey 24 >>= maybe undefined return
+  let ghOutLen = maybe undefined id $ generichashOutLen 32
 
   return $ testGroup "...Internal.Hash" [
 
@@ -29,7 +32,13 @@ testHash = buildTest $ do
     $ \(Message bs1, Message bs2) -> bs1 /= bs2 ==> shorthash shKey bs1 /= shorthash shKey bs2,
 
     testProperty "Different keys produce different shorthashes"
-    $ \(Message bs) -> shorthash shKey bs /= shorthash shKey2 bs
+    $ \(Message bs) -> shorthash shKey bs /= shorthash shKey2 bs,
+
+    testProperty "No two generic hashes are alike"
+    $ \(Message bs1, Message bs2) -> bs1 /= bs2 ==> generichash ghKey bs1 ghOutLen /= generichash ghKey bs2 ghOutLen,
+
+    testProperty "Different keys produce different generichashes"
+    $ \(Message bs) -> generichash ghKey bs ghOutLen /= generichash ghKey2 bs ghOutLen
 
     ]
 

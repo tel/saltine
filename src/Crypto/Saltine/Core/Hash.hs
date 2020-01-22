@@ -45,7 +45,11 @@
 module Crypto.Saltine.Core.Hash (
   ShorthashKey,
   hash,
-  shorthash, newShorthashKey
+  shorthash, newShorthashKey,
+  GenerichashKey,
+  newGenerichashKey,
+  GenerichashOutLen,
+  generichashOutLen, generichash
   ) where
 
 import           Crypto.Saltine.Class
@@ -96,6 +100,43 @@ shorthash (ShK k) m = snd . buildUnsafeByteString Bytes.shorthash $ \ph ->
   constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
     c_shorthash ph pm (fromIntegral $ S.length m) pk
 
+-- | An opaque 'generichash' cryptographic secret key.
+newtype GenerichashKey = GhK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+
+instance IsEncoding GenerichashKey where
+  decode v = if S.length v <= Bytes.generichashKeyLenMax
+             then Just (GhK v)
+             else Nothing
+  {-# INLINE decode #-}
+  encode (GhK v) = v
+  {-# INLINE encode #-}
+
+-- | Randomly generates a new key for 'generichash' of the given length.
+newGenerichashKey :: Int -> IO (Maybe GenerichashKey)
+newGenerichashKey n = if n >= 0 && n <= Bytes.generichashKeyLenMax
+                      then Just . GhK <$> randomByteString n
+                      else return Nothing
+
+newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+
+-- | Create a validated Generichash output length
+generichashOutLen :: Int -> Maybe GenerichashOutLen
+generichashOutLen n = if n > 0 && n <= Bytes.generichashOutLenMax
+                      then Just $ GhOL $ fromIntegral n
+                      else Nothing
+
+-- | Computes a generic, keyed hash.
+generichash :: GenerichashKey
+            -> ByteString
+            -- ^ Message
+            -> GenerichashOutLen
+            -- ^ Desired output hash length
+            -> ByteString
+            -- ^ Hash
+generichash (GhK k) m (GhOL outLen) = snd . buildUnsafeByteString outLen $ \ph ->
+  constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
+    c_generichash ph (fromIntegral outLen) pm (fromIntegral $ S.length m) pk (fromIntegral $ S.length k)
+
 foreign import ccall "crypto_hash"
   c_hash :: Ptr CChar
          -- ^ Output hash buffer
@@ -117,3 +158,19 @@ foreign import ccall "crypto_shorthash"
               -- ^ Constant Key buffer
               -> IO CInt
               -- ^ Always 0
+
+foreign import ccall "crypto_generichash"
+  c_generichash :: Ptr CChar
+                -- ^ Output hash buffer
+                -> CULLong
+                -- ^ Output hash length
+                -> Ptr CChar
+                -- ^ Constant message buffer
+                -> CULLong
+                -- ^ Message buffer length
+                -> Ptr CChar
+                -- ^ Constant Key buffer
+                -> CULLong
+                -- ^ Key buffer length
+                -> IO CInt
+                -- ^ Always 0
