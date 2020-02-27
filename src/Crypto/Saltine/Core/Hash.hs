@@ -36,9 +36,9 @@
 -- alternatives that inspire satisfactory levels of confidence. One
 -- can hope that NIST's SHA-3 competition will improve the situation.
 --
--- Sodium includes an implementation of the Blake2 hash
--- (<https://blake2.net/>) but since this is not standard NaCl nor was
--- Blake2 selected to be SHA-3 the library doesn't bind it.
+-- Sodium includes an implementation of the Blake2b hash function
+-- (<https://blake2.net/>) and is bound here as the 'generichash'
+-- function.
 --
 -- This is version 2010.08.30 of the hash.html web page. Information
 -- about SipHash has been added.
