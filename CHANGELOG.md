@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [0.1.1.1] - 2021-01-15
+### Changed
+- Fix for running tests in `cabal repl` (thanks [@timds])
+- Allow newer profunctors
+
 ## [0.1.1.0] - 2020-02-29
 ### Added
 - bindings to generichash (Blake2), thanks [@donatello](https://github.com/donatello)
