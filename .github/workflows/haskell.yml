@@ -1,0 +1,47 @@
+name: Haskell CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, 'skip ci') && !contains(github.event.head_commit.message, 'ci skip')"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ghc-version: ['7.8.4','7.10.3','8.0.2','8.2.2','8.4.4','8.6.5','8.8.4','8.10.3']
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-haskell@v1
+      with:
+        ghc-version: ${{ matrix.ghc-version }}
+        cabal-version: '3.2'
+
+    - name: Cache
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-cabal-ghc-${{ matrix.ghc-version }}
+      with:
+        path: ~/.cabal
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+
+    - name: Install libsodium
+      run: |
+        curl -# -L https://github.com/jedisct1/libsodium/releases/download/$SODIUMVER/libsodium-$SODIUMVER.tar.gz | tar xzf -
+        (cd libsodium-$SODIUMVER && ./autogen.sh && ./configure && make check && sudo make install && sudo ldconfig)
+      env:
+        SODIUMVER: 1.0.13
+
+    - name: Install dependencies
+      run: |
+        cabal update
+        cabal build --only-dependencies --enable-tests --enable-benchmarks
+    - name: Build
+      run: cabal build --enable-tests --enable-benchmarks all
+    - name: Run tests
+      run: cabal test all
+    - name: Install
+      run: cabal install --lib
