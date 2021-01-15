@@ -18,6 +18,10 @@ description:
   /Saltine/ is a Haskell binding to the NaCl primitives going through
   Sodium for build convenience and, eventually, portability.
 
+extra-source-files:
+                     README.md
+                     CHANGELOG.md
+
 license:             MIT
 license-file:        LICENSE
 author:              Joseph Abrahamson
