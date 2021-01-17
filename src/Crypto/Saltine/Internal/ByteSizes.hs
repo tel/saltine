@@ -2,9 +2,10 @@
 -- |
 -- Module      : Crypto.Saltine.Internal.ByteSizes
 -- Copyright   : (c) Joseph Abrahamson 2013
+--               (c) Max Amanshauser 2021
 -- License     : MIT
 --
--- Maintainer  : me@jspha.com
+-- Maintainer  : max@lambdalifting.org
 -- Stability   : experimental
 -- Portability : non-portable
 --
@@ -13,10 +14,7 @@
 -- While technically these sizes are hidden behind opaque newtype
 -- wrappers, they can be useful for computation and sizing and are
 -- thus exposed.
---
--- As of @libsodium-4.1@ some of these sizes are not exported and thus
--- are hardcoded here. This limitation should be removed in later
--- versions of @libsodium@.
+
 module Crypto.Saltine.Internal.ByteSizes (
 
   auth,
