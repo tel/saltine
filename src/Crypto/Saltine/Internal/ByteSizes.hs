@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 -- |
--- Module      : Crypto.Saltine.Core.ScalarMult
+-- Module      : Crypto.Saltine.Internal.ByteSizes
 -- Copyright   : (c) Joseph Abrahamson 2013
 -- License     : MIT
 --
@@ -185,50 +185,24 @@ foreign import ccall "crypto_generichash_bytes_max"
 foreign import ccall "crypto_generichash_keybytes_max"
   c_crypto_generichash_keybytes_max :: CSize
 
--- HARDCODED
--- ---------
-
--- | The size of a @crypto_stream@ or @crypto_stream_xor@
--- key. HARDCODED to be @crypto_stream_xsalsa20@ for now until Sodium
--- exports the C constant.
-c_crypto_stream_keybytes :: CSize
-c_crypto_stream_keybytes = 32
-
--- | The size of a @crypto_stream@ or @crypto_stream_xor@
--- nonce. HARDCODED to be @crypto_stream_xsalsa20@ for now until
--- Sodium exports the C constant.
-c_crypto_stream_noncebytes :: CSize
-c_crypto_stream_noncebytes = 24
-
--- | The size of a @crypto_hash@ output hash. HARDCODED to be
--- @crypto_hash_sha512@ for now until Sodium exports the C constant.
-c_crypto_hash_bytes :: CSize
-c_crypto_hash_bytes = 64
-
--- | The size of a @crypto_shorthash@ output hash. HARDCODED to be
--- @crypto_shorthash_siphash24@ for now until Sodium exports the C
--- constant.
-c_crypto_shorthash_bytes :: CSize
-c_crypto_shorthash_bytes = 8
-
--- | The size of a @crypto_shorthash@ key. HARDCODED to be
--- @crypto_shorthash_siphash24@ for now until Sodium exports the C
--- constant.
-c_crypto_shorthash_keybytes :: CSize
-c_crypto_shorthash_keybytes = 16
-
+-- src/libsodium/crypto_hash/crypto_hash.c
+-- src/libsodium/include/sodium/crypto_hash.h
+foreign import ccall "crypto_hash_bytes"
+  c_crypto_hash_bytes :: CSize
 
 -- src/libsodium/crypto_stream/crypto_stream.c
--- foreign import ccall "crypto_stream_keybytes"
---   c_crypto_stream_keybytes :: CSize
--- foreign import ccall "crypto_stream_noncebytes"
---   c_crypto_stream_noncebytes :: CSize
+-- src/libsodium/include/sodium/crypto_stream.h
+foreign import ccall "crypto_stream_keybytes"
+  c_crypto_stream_keybytes :: CSize
+foreign import ccall "crypto_stream_noncebytes"
+  c_crypto_stream_noncebytes :: CSize
 
 -- src/libsodium/crypto_shorthash/crypto_shorthash.c
--- foreign import ccall "crypto_shorthash_bytes"
---   c_crypto_shorthash_bytes :: CSize
--- foreign import ccall "crypto_shorthash_keybytes"
---   c_crypto_shorthash_keybytes :: CSize
+-- src/libsodium/include/sodium/crypto_shorthash.h
+foreign import ccall "crypto_shorthash_bytes"
+  c_crypto_shorthash_bytes :: CSize
+foreign import ccall "crypto_shorthash_keybytes"
+  c_crypto_shorthash_keybytes :: CSize
 
 -- Others
 -- ------
