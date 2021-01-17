@@ -41,9 +41,18 @@ library
   hs-source-dirs:     src
   exposed-modules:
                   Crypto.Saltine
+                  Crypto.Saltine.Internal.AEAD.AES256GCM
+                  Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305
+                  Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF
+                  Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305
                   Crypto.Saltine.Internal.ByteSizes
+                  Crypto.Saltine.Internal.SecretBox
                   Crypto.Saltine.Core.SecretBox
                   Crypto.Saltine.Core.AEAD
+                  Crypto.Saltine.Core.AEAD.AES256GCM
+                  Crypto.Saltine.Core.AEAD.ChaCha20Poly1305
+                  Crypto.Saltine.Core.AEAD.ChaCha20Poly1305IETF
+                  Crypto.Saltine.Core.AEAD.XChaCha20Poly1305
                   Crypto.Saltine.Core.Box
                   Crypto.Saltine.Core.Stream
                   Crypto.Saltine.Core.Auth
@@ -83,7 +92,10 @@ test-suite tests
                 SealedBoxProperties
                 SignProperties
                 StreamProperties
-                AEADProperties
+                AEAD.AES256GCMProperties
+                AEAD.ChaCha20Poly1305IETFProperties
+                AEAD.ChaCha20Poly1305Properties
+                AEAD.XChaCha20Poly1305Properties
                 Util
   ghc-options: -Wall -threaded -rtsopts
   hs-source-dirs: tests

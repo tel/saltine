@@ -33,12 +33,6 @@ module Crypto.Saltine.Internal.ByteSizes (
   onetimeKey,
   mult,
   multScalar,
-  secretBoxKey,
-  secretBoxNonce,
-  secretBoxMac,
-  secretBoxZero,
-  secretBoxBoxZero,
-  aead_xchacha20poly1305_ietf_ABYTES,
   sign,
   signPK,
   signSK,
@@ -60,7 +54,6 @@ boxPK, boxSK, boxNonce, boxZero, boxBoxZero :: Int
 boxMac, boxBeforeNM, sealedBox :: Int
 onetime, onetimeKey :: Int
 mult, multScalar :: Int
-secretBoxKey, secretBoxNonce, secretBoxMac, secretBoxZero, secretBoxBoxZero :: Int
 sign, signPK, signSK :: Int
 streamKey, streamNonce :: Int
 hash, shorthash, shorthashKey :: Int
@@ -107,23 +100,6 @@ onetimeKey = fromIntegral c_crypto_onetimeauth_keybytes
 mult = fromIntegral c_crypto_scalarmult_bytes
 -- | Size of a integer string representation for @crypto_scalarmult@.
 multScalar = fromIntegral c_crypto_scalarmult_scalarbytes
-
--- SecretBox
--- | Size of a @crypto_secretbox@ secret key
-secretBoxKey     = fromIntegral c_crypto_secretbox_keybytes
--- | Size of a @crypto_secretbox@ nonce
-secretBoxNonce   = fromIntegral c_crypto_secretbox_noncebytes
--- | Size of a @crypto_secretbox@ mac
-secretBoxMac     = fromIntegral c_crypto_secretbox_macbytes
--- | Size of 0-padding prepended to messages before using
--- @crypto_secretbox@ or after using @crypto_secretbox_open@
-secretBoxZero    = fromIntegral c_crypto_secretbox_zerobytes
--- | Size of 0-padding prepended to ciphertext before using
--- @crypto_secretbox_open@ or after using @crypto_secretbox@
-secretBoxBoxZero = fromIntegral c_crypto_secretbox_boxzerobytes
-
-aead_xchacha20poly1305_ietf_ABYTES :: Int
-aead_xchacha20poly1305_ietf_ABYTES = fromIntegral c_crypto_aead_xchacha20poly1305_ietf_ABYTES 
 
 -- Signatures
 -- | The maximum size of a signature prepended to a message to form a
@@ -195,18 +171,6 @@ foreign import ccall "crypto_scalarmult_bytes"
 foreign import ccall "crypto_scalarmult_scalarbytes"
   c_crypto_scalarmult_scalarbytes :: CSize
 
--- src/libsodium/crypto_secretbox/crypto_secretbox.c
-foreign import ccall "crypto_secretbox_keybytes"
-  c_crypto_secretbox_keybytes :: CSize
-foreign import ccall "crypto_secretbox_noncebytes"
-  c_crypto_secretbox_noncebytes :: CSize
-foreign import ccall "crypto_secretbox_macbytes"
-  c_crypto_secretbox_macbytes :: CSize
-foreign import ccall "crypto_secretbox_zerobytes"
-  c_crypto_secretbox_zerobytes :: CSize
-foreign import ccall "crypto_secretbox_boxzerobytes"
-  c_crypto_secretbox_boxzerobytes :: CSize
-
 -- src/libsodium/crypto_sign/crypto_sign.c
 foreign import ccall "crypto_sign_bytes"
   c_crypto_sign_bytes :: CSize
@@ -223,13 +187,6 @@ foreign import ccall "crypto_generichash_keybytes_max"
 
 -- HARDCODED
 -- ---------
-
--- | The size of a @crypto_aead_tag@.
---
--- HARDCODED to be @crypto_aead_xchacha20poly1305_ietf_ABYTES@ for now until Sodium
--- exports the C constant (is a macro).
-c_crypto_aead_xchacha20poly1305_ietf_ABYTES :: CSize
-c_crypto_aead_xchacha20poly1305_ietf_ABYTES = 16
 
 -- | The size of a @crypto_stream@ or @crypto_stream_xor@
 -- key. HARDCODED to be @crypto_stream_xsalsa20@ for now until Sodium

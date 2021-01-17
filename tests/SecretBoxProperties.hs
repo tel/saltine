@@ -8,7 +8,7 @@ module SecretBoxProperties (
 import           Util
 import           Crypto.Saltine.Core.SecretBox
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.ByteSizes as Bytes
+import           Crypto.Saltine.Internal.SecretBox as Bytes
 
 import           Control.Applicative
 import qualified Data.ByteString                      as S

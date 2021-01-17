@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AEADProperties (
-  testAEAD
+module AEAD.ChaCha20Poly1305IETFProperties (
+  testAEADIETF
   ) where
 
 import           Util
-import           Crypto.Saltine.Core.AEAD
+import           Crypto.Saltine.Core.AEAD.ChaCha20Poly1305IETF
 import           Crypto.Saltine.Class (decode,encode)
-import           Crypto.Saltine.Internal.ByteSizes as Bytes
+import           Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF as Bytes
 
 import           Control.Applicative
 import qualified Data.ByteString                      as S
@@ -20,12 +20,12 @@ import           Test.QuickCheck.Arbitrary
 
 instance Arbitrary Nonce where
     arbitrary =
-        do bs <- S.pack <$> vector Bytes.secretBoxNonce
+        do bs <- S.pack <$> vector Bytes.aead_chacha20poly1305_ietf_npubbytes
            pure $ fromJust (decode bs)
 
 instance Arbitrary Key where
     arbitrary =
-        do bs <- S.pack <$> vector Bytes.secretBoxKey
+        do bs <- S.pack <$> vector Bytes.aead_chacha20poly1305_ietf_keybytes
            pure $ fromJust (decode bs)
 
 instance Show Key where
@@ -93,10 +93,10 @@ cannotDecryptNonceDetachedProp k n1 n2 (Message bs) (Message aad) =
   let (tag,ct) = aeadDetached k n1 bs aad
   in n1 /= n2 ==> Nothing == aeadOpenDetached k n2 tag ct aad
 
-testAEAD :: Test
-testAEAD = buildTest $ do
+testAEADIETF :: Test
+testAEADIETF = buildTest $ do
 
-  return $ testGroup "...Internal.AEAD" [
+  return $ testGroup "...Internal.AEAD.ChaCha20Poly1305IETF" [
 
     testProperty "Can decrypt ciphertext"
     $ rightInverseProp,

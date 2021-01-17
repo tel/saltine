@@ -3,7 +3,10 @@
 module Main where
 
 import SecretBoxProperties   (testSecretBox)
-import AEADProperties        (testAEAD)
+import AEAD.ChaCha20Poly1305Properties      (testAEADChaCha20)
+import AEAD.ChaCha20Poly1305IETFProperties  (testAEADIETF)
+import AEAD.XChaCha20Poly1305Properties     (testAEADXChaCha20)
+import AEAD.AES256GCMProperties             (testAEADAES)
 import BoxProperties         (testBox)
 import SealedBoxProperties   (testSealedBox)
 import StreamProperties      (testStream)
@@ -32,7 +35,10 @@ main = do
         testBox,
         testSealedBox,
         testSecretBox,
-        testAEAD,
+        testAEADChaCha20,
+        testAEADIETF,
+        testAEADXChaCha20,
+        testAEADAES,
         testStream,
         testAuth,
         testOneTimeAuth,
