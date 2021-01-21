@@ -133,7 +133,9 @@ instance IsEncoding PublicKey where
 type Keypair = (SecretKey, PublicKey)
 
 -- | An opaque 'boxAfterNM' cryptographic combined key.
-newtype CombinedKey = CK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq CombinedKey where
+    CK a == CK b = U.compare a b
 
 instance IsEncoding CombinedKey where
   decode v = if S.length v == Bytes.boxBeforeNM
