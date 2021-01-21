@@ -35,7 +35,7 @@ module Crypto.Saltine.Core.Sign (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import           Crypto.Saltine.Internal.Util      as U
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import           Foreign.C
@@ -53,7 +53,9 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq SecretKey where
+    SK a == SK b = U.compare a b
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == Bytes.signSK
@@ -64,7 +66,9 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Eq, Ord, Data, Typeable, Hashable, Generic)
+newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic)
+instance Eq PublicKey where
+    PK a == PK b = U.compare a b
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == Bytes.signPK

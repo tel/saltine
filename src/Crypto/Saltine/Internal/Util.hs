@@ -1,15 +1,16 @@
 module Crypto.Saltine.Internal.Util where
 
 import           Foreign.C
-import           Foreign.Marshal.Alloc    (mallocBytes)
+import           Foreign.Marshal.Alloc              (mallocBytes)
 import           Foreign.Ptr
 import           System.IO.Unsafe
 
 import           Control.Applicative
-import qualified Data.ByteString        as S
-import           Data.ByteString          (ByteString)
+import qualified Data.ByteString            as S
+import           Data.ByteString                (ByteString)
 import           Data.ByteString.Unsafe
 import           Data.Monoid
+import           GHC.Word                       (Word8)
 
 -- | Returns @Nothing@ if the subtraction would result in an
 -- underflow or a negative number.
@@ -96,3 +97,39 @@ hush = either (const Nothing) Just
 
 foreign import ccall "randombytes_buf"
   c_randombytes_buf :: Ptr CChar -> CInt -> IO ()
+
+-- | Constant time memory comparison
+foreign import ccall unsafe "sodium_memcmp"
+  c_sodium_memcmp
+    :: Ptr CChar -- a
+    -> Ptr CChar -- b
+    -> CInt   -- Length
+    -> IO CInt
+
+foreign import ccall unsafe "sodium_malloc"
+  c_sodium_malloc
+    :: CSize -> IO (Ptr a)
+
+foreign import ccall unsafe "sodium_free"
+  c_sodium_free
+    :: Ptr Word8 -> IO ()
+
+-- | Not sure yet what to use this for
+buildUnsafeScrubbedByteString' :: Int -> (Ptr CChar -> IO b) -> IO (b,ByteString)
+buildUnsafeScrubbedByteString' n k = do
+    p <- c_sodium_malloc (fromIntegral n)
+
+    bs <- unsafePackCStringFinalizer p n (c_sodium_free p)
+    out <- unsafeUseAsCString bs k
+    pure (out,bs)
+
+-- | Not sure yet what to use this for
+buildUnsafeScrubbedByteString :: Int -> (Ptr CChar -> IO b) -> (b,ByteString)
+buildUnsafeScrubbedByteString n = unsafePerformIO . buildUnsafeScrubbedByteString' n
+
+-- | Constant-time comparison
+compare :: ByteString -> ByteString -> Bool
+compare a b =
+    (S.length a == S.length b) && unsafePerformIO (constByteStrings [a, b] $ \
+        [(bsa, _), (bsb,_)] ->
+            (== 0) <$> c_sodium_memcmp bsa bsb (fromIntegral $ S.length a))

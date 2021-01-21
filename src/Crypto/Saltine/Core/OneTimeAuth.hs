@@ -42,7 +42,7 @@ module Crypto.Saltine.Core.OneTimeAuth (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import           Crypto.Saltine.Internal.Util      as U
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import           Control.Applicative
@@ -57,7 +57,9 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'auth' cryptographic key.
-newtype Key           = Key ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Key           = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq Key where
+    Key a == Key b = U.compare a b
 
 -- | An opaque 'auth' authenticator.
 newtype Authenticator = Au ByteString  deriving (Eq, Ord, Hashable, Data, Typeable, Generic)

@@ -53,7 +53,7 @@ module Crypto.Saltine.Core.Hash (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import           Crypto.Saltine.Internal.Util      as U
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import           Control.Applicative
@@ -76,7 +76,9 @@ hash m = snd . buildUnsafeByteString Bytes.hash $ \ph ->
   constByteStrings [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
 
 -- | An opaque 'shorthash' cryptographic secret key.
-newtype ShorthashKey = ShK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq ShorthashKey where
+    ShK a == ShK b = U.compare a b
 
 instance IsEncoding ShorthashKey where
   decode v = if S.length v == Bytes.shorthashKey
@@ -101,7 +103,9 @@ shorthash (ShK k) m = snd . buildUnsafeByteString Bytes.shorthash $ \ph ->
     c_shorthash ph pm (fromIntegral $ S.length m) pk
 
 -- | An opaque 'generichash' cryptographic secret key.
-newtype GenerichashKey = GhK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq GenerichashKey where
+    GhK a == GhK b = U.compare a b
 
 instance IsEncoding GenerichashKey where
   decode v = if S.length v <= Bytes.generichashKeyLenMax

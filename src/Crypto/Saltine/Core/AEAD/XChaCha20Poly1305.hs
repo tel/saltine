@@ -23,7 +23,7 @@ module Crypto.Saltine.Core.AEAD.XChaCha20Poly1305 (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import           Crypto.Saltine.Internal.Util                   as U
 import qualified Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305 as Bytes
 import           Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305     (c_aead, c_aead_open, c_aead_detached, c_aead_open_detached)
 
@@ -39,7 +39,9 @@ import           GHC.Generics                                       (Generic)
 -- $types
 
 -- | An opaque 'XChaCha20Poly1305' cryptographic key.
-newtype Key = Key ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq Key where
+    Key a == Key b = U.compare a b
 
 instance IsEncoding Key where
   decode v = if S.length v == Bytes.aead_xchacha20poly1305_ietf_keybytes

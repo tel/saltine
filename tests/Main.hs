@@ -15,6 +15,7 @@ import OneTimeAuthProperties (testOneTimeAuth)
 import SignProperties        (testSign)
 import HashProperties        (testHash)
 import ScalarMultProperties  (testScalarMult)
+import UtilProperties        (testUtils)
 import Crypto.Saltine
 
 import Data.Monoid
@@ -32,6 +33,7 @@ main :: IO ()
 main = do
   sodiumInit
   flip defaultMainWithOpts runOpts [
+        testUtils,
         testBox,
         testSealedBox,
         testSecretBox,

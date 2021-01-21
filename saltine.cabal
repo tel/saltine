@@ -41,12 +41,7 @@ library
   hs-source-dirs:     src
   exposed-modules:
                   Crypto.Saltine
-                  Crypto.Saltine.Internal.AEAD.AES256GCM
-                  Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305
-                  Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF
-                  Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305
-                  Crypto.Saltine.Internal.ByteSizes
-                  Crypto.Saltine.Internal.SecretBox
+                  Crypto.Saltine.Class
                   Crypto.Saltine.Core.SecretBox
                   Crypto.Saltine.Core.AEAD
                   Crypto.Saltine.Core.AEAD.AES256GCM
@@ -61,9 +56,14 @@ library
                   Crypto.Saltine.Core.Hash
                   Crypto.Saltine.Core.ScalarMult
                   Crypto.Saltine.Core.Utils
-                  Crypto.Saltine.Class
-  other-modules:
+                  Crypto.Saltine.Internal.AEAD.AES256GCM
+                  Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305
+                  Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF
+                  Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305
+                  Crypto.Saltine.Internal.ByteSizes
+                  Crypto.Saltine.Internal.SecretBox
                   Crypto.Saltine.Internal.Util
+  other-modules:
 
   if os(windows)
     extra-libraries: sodium

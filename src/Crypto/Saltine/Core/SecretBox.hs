@@ -47,7 +47,7 @@ module Crypto.Saltine.Core.SecretBox (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import           Crypto.Saltine.Internal.Util      as U
 import qualified Crypto.Saltine.Internal.SecretBox as Bytes
 
 import           Control.Applicative
@@ -62,7 +62,9 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'secretbox' cryptographic key.
-newtype Key = Key ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq Key where
+    Key a == Key b = U.compare a b
 
 instance IsEncoding Key where
   decode v = if S.length v == Bytes.secretBoxKey

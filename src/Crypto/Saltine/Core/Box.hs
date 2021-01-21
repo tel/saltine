@@ -88,7 +88,7 @@ module Crypto.Saltine.Core.Box (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import           Crypto.Saltine.Internal.Util      as U
 import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
 
 import           Control.Applicative
@@ -104,7 +104,9 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq SecretKey where
+    SK a == SK b = U.compare a b
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == Bytes.boxSK
@@ -115,7 +117,9 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+instance Eq PublicKey where
+    PK a == PK b = U.compare a b
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == Bytes.boxPK
@@ -213,7 +217,6 @@ boxOpen (PK pk) (SK sk) (Nonce nonce) cipher = do
             c_box_open_easy pm pc (fromIntegral msgLen) pn ppk psk
   hush . handleErrno err $ vec
 
-    
 
 -- | 'box' using a 'CombinedKey' and thus faster.
 boxAfterNM :: CombinedKey
@@ -246,8 +249,6 @@ boxOpenAfterNM (CK ck) (Nonce nonce) cipher = do
           [(pck, _), (pc, _), (pn, _)] ->
             c_box_open_easy_afternm pm pc (fromIntegral msgLen) pn pck
   hush . handleErrno err $ vec
-
-    
 
 
 -- | Encrypts a message for sending to the owner of the public

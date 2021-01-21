@@ -45,7 +45,7 @@ instance Arbitrary Perturb where
             then pure (Perturb (1:bs))
             else pure (Perturb bs)
 
-newtype ByteString32 = ByteString32 S.ByteString deriving (Show)
+newtype ByteString32 = ByteString32 S.ByteString deriving (Eq,Show)
 
 instance Arbitrary ByteString32 where
   arbitrary = ByteString32 . S.pack <$> replicateM 32 arbitrary
