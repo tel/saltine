@@ -56,10 +56,12 @@ module Crypto.Saltine.Core.Stream (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util      as U
-import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
+import           Crypto.Saltine.Internal.Util   as U
+import qualified Crypto.Saltine.Internal.Stream as Bytes
+import           Crypto.Saltine.Internal.Stream (c_stream, c_stream_xor)
 
 import           Control.Applicative
+import           Control.DeepSeq (NFData)
 import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString as S
@@ -71,7 +73,7 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'stream' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 
@@ -84,7 +86,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'stream' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsNonce Nonce where
   zero = Nonce (S.replicate Bytes.streamNonce 0)
@@ -135,29 +137,3 @@ xor (Key key) (Nonce nonce) msg =
     constByteStrings [key, nonce, msg] $ \[(pk, _), (pn, _), (pm, _)] ->
     c_stream_xor pc pm (fromIntegral len) pn pk
   where len = S.length msg
-
-foreign import ccall "crypto_stream"
-  c_stream :: Ptr CChar
-           -- ^ Stream output buffer
-           -> CULLong
-           -- ^ Length of stream to generate
-           -> Ptr CChar
-           -- ^ Constant nonce buffer
-           -> Ptr CChar
-           -- ^ Constant key buffer
-           -> IO CInt
-           -- ^ Always 0
-
-foreign import ccall "crypto_stream_xor"
-  c_stream_xor :: Ptr CChar
-               -- ^ Ciphertext output buffer
-               -> Ptr CChar
-               -- ^ Constant message buffer
-               -> CULLong
-               -- ^ Length of message buffer
-               -> Ptr CChar
-               -- ^ Constant nonce buffer
-               -> Ptr CChar
-               -- ^ Constant key buffer
-               -> IO CInt
-               -- ^ Always 0

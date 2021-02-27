@@ -24,7 +24,6 @@ import Foreign.Ptr
 
 aead_aes256gcm_keybytes, aead_aes256gcm_abytes, aead_aes256gcm_npubbytes :: Int
 
--- SecretBox
 -- | Size of an AES256 key
 aead_aes256gcm_keybytes  = fromIntegral c_crypto_aead_aes256gcm_keybytes
 -- | Size of an AES256 nonce

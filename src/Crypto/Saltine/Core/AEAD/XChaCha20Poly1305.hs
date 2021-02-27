@@ -28,6 +28,7 @@ import qualified Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305 as Bytes
 import           Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305     (c_aead, c_aead_open, c_aead_detached, c_aead_open_detached)
 
 import           Control.Applicative
+import           Control.DeepSeq
 import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                                as S
@@ -39,7 +40,7 @@ import           GHC.Generics                                       (Generic)
 -- $types
 
 -- | An opaque 'XChaCha20Poly1305' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 
@@ -52,7 +53,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'XChaCha20Poly1305' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == Bytes.aead_xchacha20poly1305_ietf_npubbytes

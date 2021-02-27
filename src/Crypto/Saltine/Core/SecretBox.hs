@@ -49,10 +49,10 @@ module Crypto.Saltine.Core.SecretBox (
 import           Crypto.Saltine.Class
 import           Crypto.Saltine.Internal.Util      as U
 import qualified Crypto.Saltine.Internal.SecretBox as Bytes
+import           Crypto.Saltine.Internal.SecretBox (c_secretbox, c_secretbox_detached, c_secretbox_open, c_secretbox_open_detached)
 
 import           Control.Applicative
-import           Foreign.C
-import           Foreign.Ptr
+import           Control.DeepSeq (NFData)
 import qualified Data.ByteString                   as S
 import           Data.ByteString                     (ByteString)
 import           Data.Hashable (Hashable)
@@ -62,7 +62,7 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'secretbox' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 
@@ -75,7 +75,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'secretbox' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == Bytes.secretBoxNonce
@@ -174,69 +174,3 @@ secretboxOpenDetached (Key key) (Nonce nonce) tag cipher
             c_secretbox_open_detached pm pc pt (fromIntegral len) pn pk
   in hush . handleErrno err $ vec
   where len    = S.length cipher
-
--- | The secretbox C API uses 0-padded C strings. Always returns 0.
-foreign import ccall "crypto_secretbox"
-  c_secretbox
-    :: Ptr CChar
-    -- ^ Cipher 0-padded output buffer
-    -> Ptr CChar
-    -- ^ Constant 0-padded message input buffer
-    -> CULLong
-    -- ^ Length of message input buffer (incl. 0s)
-    -> Ptr CChar
-    -- ^ Constant nonce buffer
-    -> Ptr CChar
-    -- ^ Constant key buffer
-    -> IO CInt
-
--- | The secretbox_detached C API uses C strings. Always returns 0.
-foreign import ccall "crypto_secretbox_detached"
-  c_secretbox_detached
-    :: Ptr CChar
-    -- ^ Ciphertext output buffer
-    -> Ptr CChar
-    -- ^ Authentication tag output buffer
-    -> Ptr CChar
-    -- ^ Constant message input buffer
-    -> CULLong
-    -- ^ Length of message input buffer (incl. 0s)
-    -> Ptr CChar
-    -- ^ Constant nonce buffer
-    -> Ptr CChar
-    -- ^ Constant key buffer
-    -> IO CInt
-
--- | The secretbox C API uses 0-padded C strings. Returns 0 if
--- successful or -1 if verification failed.
-foreign import ccall "crypto_secretbox_open"
-  c_secretbox_open
-    :: Ptr CChar
-    -- ^ Message 0-padded output buffer
-    -> Ptr CChar
-    -- ^ Constant 0-padded message input buffer
-    -> CULLong
-    -- ^ Length of message input buffer (incl. 0s)
-    -> Ptr CChar
-    -- ^ Constant nonce buffer
-    -> Ptr CChar
-    -- ^ Constant key buffer
-    -> IO CInt
-
--- | The secretbox C API uses C strings. Returns 0 if
--- successful or -1 if verification failed.
-foreign import ccall "crypto_secretbox_open_detached"
-  c_secretbox_open_detached
-    :: Ptr CChar
-    -- ^ Message output buffer
-    -> Ptr CChar
-    -- ^ Constant ciphertext input buffer
-    -> Ptr CChar
-    -- ^ Constant auth tag input buffer
-    -> CULLong
-    -- ^ Length of ciphertext input buffer
-    -> Ptr CChar
-    -- ^ Constant nonce buffer
-    -> Ptr CChar
-    -- ^ Constant key buffer
-    -> IO CInt

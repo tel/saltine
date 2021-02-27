@@ -35,25 +35,25 @@ module Crypto.Saltine.Core.Sign (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util      as U
-import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
+import           Crypto.Saltine.Internal.Util as U
+import qualified Crypto.Saltine.Internal.Sign as Bytes
+import           Crypto.Saltine.Internal.Sign (c_sign_keypair, c_sign, c_sign_open, c_sign_detached, c_sign_verify_detached)
 
-import           Foreign.C
-import           Foreign.Ptr
+import           Control.DeepSeq                        (NFData)
 import           Foreign.Marshal.Alloc
 import           Foreign.Storable
 import           System.IO.Unsafe
-import qualified Data.ByteString                   as S
-import           Data.ByteString                     (ByteString)
-import           Data.Data (Data, Typeable)
-import           Data.Hashable (Hashable)
-import           GHC.Generics (Generic)
+import qualified Data.ByteString                    as S
+import           Data.ByteString                        (ByteString)
+import           Data.Data                              (Data, Typeable)
+import           Data.Hashable                          (Hashable)
+import           GHC.Generics                           (Generic)
 
 
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 
@@ -66,7 +66,7 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic)
+newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 
@@ -157,61 +157,3 @@ signVerifyDetached (PK k) sig sm = unsafePerformIO $
   where len = S.length sm
 
 
-foreign import ccall "crypto_sign_keypair"
-  c_sign_keypair :: Ptr CChar
-                 -- ^ Public key output buffer
-                 -> Ptr CChar
-                 -- ^ Secret key output buffer
-                 -> IO CInt
-                 -- ^ Always 0
-
-foreign import ccall "crypto_sign"
-  c_sign :: Ptr CChar
-         -- ^ Signed message output buffer
-         -> Ptr CULLong
-         -- ^ Length of signed message
-         -> Ptr CChar
-         -- ^ Constant message buffer
-         -> CULLong
-         -- ^ Length of message input buffer
-         -> Ptr CChar
-         -- ^ Constant secret key buffer
-         -> IO CInt
-         -- ^ Always 0
-
-foreign import ccall "crypto_sign_open"
-  c_sign_open :: Ptr CChar
-              -- ^ Message output buffer
-              -> Ptr CULLong
-              -- ^ Length of message
-              -> Ptr CChar
-              -- ^ Constant signed message buffer
-              -> CULLong
-              -- ^ Length of signed message buffer
-              -> Ptr CChar
-              -- ^ Public key buffer
-              -> IO CInt
-              -- ^ 0 if signature is verifiable, -1 otherwise
-
-foreign import ccall "crypto_sign_detached"
-    c_sign_detached :: Ptr CChar
-                    -- ^ Signature output buffer
-                    -> Ptr CULLong
-                    -- ^ Length of the signature
-                    -> Ptr CChar
-                    -- ^ Constant message buffer
-                    -> CULLong
-                    -- ^ Length of message buffer
-                    -> Ptr CChar
-                    -- ^ Constant secret key buffer
-                    -> IO CInt
-foreign import ccall "crypto_sign_verify_detached"
-    c_sign_verify_detached :: Ptr CChar
-                           -- ^ Signature buffer
-                           -> Ptr CChar
-                           -- ^ Constant signed message buffer
-                           -> CULLong
-                           -- ^ Length of signed message buffer
-                           -> Ptr CChar
-                           -- ^ Public key buffer
-                           -> IO CInt

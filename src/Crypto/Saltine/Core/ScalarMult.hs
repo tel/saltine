@@ -59,10 +59,10 @@ module Crypto.Saltine.Core.ScalarMult (
 
 import           Crypto.Saltine.Class
 import           Crypto.Saltine.Internal.Util
-import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
+import qualified Crypto.Saltine.Internal.ScalarMult as Bytes
+import           Crypto.Saltine.Internal.ScalarMult (c_scalarmult, c_scalarmult_base)
 
-import           Foreign.C
-import           Foreign.Ptr
+import           Control.DeepSeq
 import qualified Data.ByteString                   as S
 import           Data.ByteString                     (ByteString)
 import           Data.Hashable (Hashable)
@@ -72,10 +72,10 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | A group element.
-newtype GroupElement = GE ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype GroupElement = GE ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 -- | A scalar integer.
-newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsEncoding GroupElement where
   decode v = if S.length v == Bytes.mult
@@ -102,21 +102,3 @@ multBase :: Scalar -> GroupElement
 multBase (Sc n) = GE . snd . buildUnsafeByteString Bytes.mult $ \pq ->
   constByteStrings [n] $ \[(pn, _)] ->
     c_scalarmult_base pq pn
-
-foreign import ccall "crypto_scalarmult"
-  c_scalarmult :: Ptr CChar
-               -- ^ Output group element buffer
-               -> Ptr CChar
-               -- ^ Input integer buffer
-               -> Ptr CChar
-               -- ^ Input group element buffer
-               -> IO CInt
-               -- ^ Always 0
-
-foreign import ccall "crypto_scalarmult_base"
-  c_scalarmult_base :: Ptr CChar
-                    -- ^ Output group element buffer
-                    -> Ptr CChar
-                    -- ^ Input integer buffer
-                    -> IO CInt
-                    -- ^ Always 0

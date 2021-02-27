@@ -23,7 +23,6 @@ import Foreign.Ptr
 
 aead_xchacha20poly1305_ietf_keybytes, aead_xchacha20poly1305_ietf_abytes, aead_xchacha20poly1305_ietf_npubbytes :: Int
 
--- SecretBox
 -- | Size of a XChaCha20-Poly1305 key
 aead_xchacha20poly1305_ietf_keybytes  = fromIntegral c_crypto_aead_xchacha20poly1305_ietf_keybytes
 -- | Size of a XChaCha20-Poly1305 nonce

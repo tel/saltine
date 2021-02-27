@@ -1,3 +1,5 @@
+cabal-version: 2.0
+
 name:                saltine
 version:             0.1.1.1
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
@@ -30,7 +32,6 @@ bug-reports:         http://github.com/tel/saltine/issues
 copyright:           Copyright (c) Joseph Abrahamson 2013
 category:            Cryptography
 build-type:          Simple
-cabal-version:       >=1.10
 tested-with:         GHC==7.8.4, GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.3, GHC==8.6.5, GHC==8.8.3
 
 source-repository head
@@ -60,8 +61,15 @@ library
                   Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305
                   Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF
                   Crypto.Saltine.Internal.AEAD.XChaCha20Poly1305
+                  Crypto.Saltine.Internal.Auth
+                  Crypto.Saltine.Internal.Box
                   Crypto.Saltine.Internal.ByteSizes
+                  Crypto.Saltine.Internal.Hash
+                  Crypto.Saltine.Internal.OneTimeAuth
+                  Crypto.Saltine.Internal.ScalarMult
                   Crypto.Saltine.Internal.SecretBox
+                  Crypto.Saltine.Internal.Sign
+                  Crypto.Saltine.Internal.Stream
                   Crypto.Saltine.Internal.Util
   other-modules:
 
@@ -76,6 +84,7 @@ library
   build-depends:
                 base >= 4.5 && < 5
               , bytestring >= 0.10.8 && < 0.11
+              , deepseq    ^>= 1.4
               , profunctors >= 5.3 && < 5.7
               , hashable
 

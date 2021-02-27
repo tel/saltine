@@ -46,10 +46,13 @@ module Crypto.Saltine.Core.Auth (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util      as U
-import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
+import           Crypto.Saltine.Internal.Util as U
+import qualified Crypto.Saltine.Internal.Auth as Bytes
+import           Crypto.Saltine.Internal.Auth (c_auth, c_auth_verify)
+
 
 import           Control.Applicative
+import           Control.DeepSeq
 import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
@@ -61,12 +64,12 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'auth' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 
 -- | An opaque 'auth' authenticator.
-newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsEncoding Key where
   decode v = if S.length v == Bytes.authKey
@@ -112,29 +115,3 @@ verify :: Key
 verify (Key key) (Au a) msg =
   unsafeDidSucceed $ constByteStrings [key, msg, a] $ \[(pk, _), (pm, mlen), (pa, _)] ->
     return $ c_auth_verify pa pm (fromIntegral mlen) pk
-
-foreign import ccall "crypto_auth"
-  c_auth :: Ptr CChar
-         -- ^ Authenticator output buffer
-         -> Ptr CChar
-         -- ^ Constant message buffer
-         -> CULLong
-         -- ^ Length of message buffer
-         -> Ptr CChar
-         -- ^ Constant key buffer
-         -> IO CInt
-         -- ^ Always 0
-
--- | We don't even include this in the IO monad since all of the
--- buffers are constant.
-foreign import ccall "crypto_auth_verify"
-  c_auth_verify :: Ptr CChar
-                -- ^ Constant authenticator buffer
-                -> Ptr CChar
-                -- ^ Constant message buffer
-                -> CULLong
-                -- ^ Length of message buffer
-                -> Ptr CChar
-                -- ^ Constant key buffer
-                -> CInt
-                -- ^ Success if 0, failure if -1

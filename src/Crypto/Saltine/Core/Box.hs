@@ -88,10 +88,11 @@ module Crypto.Saltine.Core.Box (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util      as U
-import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
-
+import           Crypto.Saltine.Internal.Util as U
+import qualified Crypto.Saltine.Internal.Box as Bytes
+import           Crypto.Saltine.Internal.Box (c_box_keypair, c_box_easy, c_box_open_easy, c_box_beforenm, c_box_easy_afternm, c_box_open_easy_afternm, c_box_seal, c_box_seal_open)
 import           Control.Applicative
+import           Control.DeepSeq (NFData)
 import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
@@ -104,7 +105,7 @@ import           GHC.Generics (Generic)
 -- $types
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 
@@ -117,7 +118,7 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 
@@ -133,7 +134,7 @@ instance IsEncoding PublicKey where
 type Keypair = (SecretKey, PublicKey)
 
 -- | An opaque 'boxAfterNM' cryptographic combined key.
-newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq CombinedKey where
     CK a == CK b = U.compare a b
 
@@ -146,7 +147,7 @@ instance IsEncoding CombinedKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == Bytes.boxNonce
@@ -282,116 +283,3 @@ boxSealOpen (PK pk) (SK sk) cipher = do
           [(ppk, _), (psk, _), (pc, _)] ->
           c_box_seal_open pm pc (fromIntegral msgLen) ppk psk
   hush . handleErrno err $ vec
-
--- | Should always return a 0.
-foreign import ccall "crypto_box_keypair"
-  c_box_keypair :: Ptr CChar
-                -- ^ Public key
-                -> Ptr CChar
-                -- ^ Secret key
-                -> IO CInt
-                -- ^ Always 0
-
--- | The secretbox C API uses C strings.
-foreign import ccall "crypto_box_easy"
-  c_box_easy :: Ptr CChar
-             -- ^ Cipher output buffer
-             -> Ptr CChar
-             -- ^ Constant message input buffer
-             -> CULLong
-             -- ^ Length of message input buffer
-             -> Ptr CChar
-             -- ^ Constant nonce buffer
-             -> Ptr CChar
-             -- ^ Constant public key buffer
-             -> Ptr CChar
-             -- ^ Constant secret key buffer
-             -> IO CInt
-             -- ^ Always 0
-
--- | The secretbox C API uses C strings.
-foreign import ccall "crypto_box_open_easy"
-  c_box_open_easy :: Ptr CChar
-                  -- ^ Message output buffer
-                  -> Ptr CChar
-                  -- ^ Constant ciphertext input buffer
-                  -> CULLong
-                  -- ^ Length of message input buffer
-                  -> Ptr CChar
-                  -- ^ Constant nonce buffer
-                  -> Ptr CChar
-                  -- ^ Constant public key buffer
-                  -> Ptr CChar
-                  -- ^ Constant secret key buffer
-                  -> IO CInt
-                  -- ^ 0 for success, -1 for failure to verify
-
--- | Single target key precompilation.
-foreign import ccall "crypto_box_beforenm"
-  c_box_beforenm :: Ptr CChar
-                 -- ^ Combined key output buffer
-                 -> Ptr CChar
-                 -- ^ Constant public key buffer
-                 -> Ptr CChar
-                 -- ^ Constant secret key buffer
-                 -> IO CInt
-                 -- ^ Always 0
-
--- | Precompiled key crypto box. Uses C strings.
-foreign import ccall "crypto_box_easy_afternm"
-  c_box_easy_afternm :: Ptr CChar
-                     -- ^ Cipher output buffer
-                     -> Ptr CChar
-                     -- ^ Constant message input buffer
-                     -> CULLong
-                     -- ^ Length of message input buffer (incl. 0s)
-                     -> Ptr CChar
-                     -- ^ Constant nonce buffer
-                     -> Ptr CChar
-                     -- ^ Constant combined key buffer
-                     -> IO CInt
-                     -- ^ Always 0
-
--- | The secretbox C API uses C strings.
-foreign import ccall "crypto_box_open_easy_afternm"
-  c_box_open_easy_afternm :: Ptr CChar
-                          -- ^ Message output buffer
-                          -> Ptr CChar
-                          -- ^ Constant ciphertext input buffer
-                          -> CULLong
-                          -- ^ Length of message input buffer (incl. 0s)
-                          -> Ptr CChar
-                          -- ^ Constant nonce buffer
-                          -> Ptr CChar
-                          -- ^ Constant combined key buffer
-                          -> IO CInt
-                          -- ^ 0 for success, -1 for failure to verify
-
-
--- | The sealedbox C API uses C strings.
-foreign import ccall "crypto_box_seal"
-  c_box_seal :: Ptr CChar
-             -- ^ Cipher output buffer
-             -> Ptr CChar
-             -- ^ Constant message input buffer
-             -> CULLong
-             -- ^ Length of message input buffer
-             -> Ptr CChar
-             -- ^ Constant public key buffer
-             -> IO CInt
-             -- ^ Always 0
-
--- | The sealedbox C API uses C strings.
-foreign import ccall "crypto_box_seal_open"
-  c_box_seal_open :: Ptr CChar
-                  -- ^ Message output buffer
-                  -> Ptr CChar
-                  -- ^ Constant ciphertext input buffer
-                  -> CULLong
-                  -- ^ Length of message input buffer
-                  -> Ptr CChar
-                  -- ^ Constant public key buffer
-                  -> Ptr CChar
-                  -- ^ Constant secret key buffer
-                  -> IO CInt
-                  -- ^ 0 for success, -1 for failure to decrypt

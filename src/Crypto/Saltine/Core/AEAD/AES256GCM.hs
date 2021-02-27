@@ -37,6 +37,7 @@ import qualified Crypto.Saltine.Internal.AEAD.AES256GCM as Bytes
 import           Crypto.Saltine.Internal.AEAD.AES256GCM (c_aead_aes256gcm_is_available, c_aead, c_aead_open, c_aead_detached, c_aead_open_detached)
 
 import           Control.Applicative
+import           Control.DeepSeq
 import           Foreign.C
 import           Foreign.Ptr
 import qualified Data.ByteString                   as S
@@ -49,7 +50,7 @@ import           System.IO.Unsafe                   (unsafePerformIO)
 -- $types
 
 -- | An opaque 'AES256GCM' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 
@@ -62,7 +63,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'AES256GCM' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == Bytes.aead_aes256gcm_npubbytes

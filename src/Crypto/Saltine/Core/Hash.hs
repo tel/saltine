@@ -53,12 +53,13 @@ module Crypto.Saltine.Core.Hash (
   ) where
 
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util      as U
-import qualified Crypto.Saltine.Internal.ByteSizes as Bytes
+import           Crypto.Saltine.Internal.Util as U
+import qualified Crypto.Saltine.Internal.Hash as Bytes
+import           Crypto.Saltine.Internal.Hash (c_hash, c_shorthash, c_generichash)
+
 
 import           Control.Applicative
-import           Foreign.C
-import           Foreign.Ptr
+import           Control.DeepSeq
 import qualified Data.ByteString as S
 import           Data.ByteString (ByteString)
 import           Data.Hashable (Hashable)
@@ -76,7 +77,7 @@ hash m = snd . buildUnsafeByteString Bytes.hash $ \ph ->
   constByteStrings [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
 
 -- | An opaque 'shorthash' cryptographic secret key.
-newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq ShorthashKey where
     ShK a == ShK b = U.compare a b
 
@@ -103,7 +104,7 @@ shorthash (ShK k) m = snd . buildUnsafeByteString Bytes.shorthash $ \ph ->
     c_shorthash ph pm (fromIntegral $ S.length m) pk
 
 -- | An opaque 'generichash' cryptographic secret key.
-newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic)
+newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq GenerichashKey where
     GhK a == GhK b = U.compare a b
 
@@ -121,7 +122,7 @@ newGenerichashKey n = if n >= 0 && n <= Bytes.generichashKeyLenMax
                       then Just . GhK <$> randomByteString n
                       else return Nothing
 
-newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic)
+newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 -- | Create a validated Generichash output length
 generichashOutLen :: Int -> Maybe GenerichashOutLen
@@ -140,41 +141,3 @@ generichash :: GenerichashKey
 generichash (GhK k) m (GhOL outLen) = snd . buildUnsafeByteString outLen $ \ph ->
   constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
     c_generichash ph (fromIntegral outLen) pm (fromIntegral $ S.length m) pk (fromIntegral $ S.length k)
-
-foreign import ccall "crypto_hash"
-  c_hash :: Ptr CChar
-         -- ^ Output hash buffer
-         -> Ptr CChar
-         -- ^ Constant message buffer
-         -> CULLong
-         -- ^ Constant message buffer length
-         -> IO CInt
-         -- ^ Always 0
-
-foreign import ccall "crypto_shorthash"
-  c_shorthash :: Ptr CChar
-              -- ^ Output hash buffer
-              -> Ptr CChar
-              -- ^ Constant message buffer
-              -> CULLong
-              -- ^ Message buffer length
-              -> Ptr CChar
-              -- ^ Constant Key buffer
-              -> IO CInt
-              -- ^ Always 0
-
-foreign import ccall "crypto_generichash"
-  c_generichash :: Ptr CChar
-                -- ^ Output hash buffer
-                -> CULLong
-                -- ^ Output hash length
-                -> Ptr CChar
-                -- ^ Constant message buffer
-                -> CULLong
-                -- ^ Message buffer length
-                -> Ptr CChar
-                -- ^ Constant Key buffer
-                -> CULLong
-                -- ^ Key buffer length
-                -> IO CInt
-                -- ^ Always 0
