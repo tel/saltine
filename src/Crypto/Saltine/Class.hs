@@ -13,9 +13,9 @@ module Crypto.Saltine.Class (
   IsNonce (..)
   ) where
 
-import           Control.Applicative
-import           Data.Profunctor
-import           Data.ByteString     (ByteString)
+import Control.Applicative
+import Data.Profunctor
+import Data.ByteString (ByteString)
 
 -- | Class for all keys and nonces in Saltine which have a
 -- representation as ByteString. 'encoded' is a 'Prism' of

@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
 
 -- |
 -- Module      : Crypto.Saltine.Core.Sign
@@ -34,52 +33,24 @@ module Crypto.Saltine.Core.Sign (
   signDetached, signVerifyDetached
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util as U
+import Crypto.Saltine.Internal.Sign
+            ( c_sign_keypair
+            , c_sign
+            , c_sign_open
+            , c_sign_detached
+            , c_sign_verify_detached
+            , SecretKey(..)
+            , PublicKey(..)
+            , Keypair
+            )
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Foreign.Marshal.Alloc
+import Foreign.Storable
+import System.IO.Unsafe
+
 import qualified Crypto.Saltine.Internal.Sign as Bytes
-import           Crypto.Saltine.Internal.Sign (c_sign_keypair, c_sign, c_sign_open, c_sign_detached, c_sign_verify_detached)
-
-import           Control.DeepSeq                        (NFData)
-import           Foreign.Marshal.Alloc
-import           Foreign.Storable
-import           System.IO.Unsafe
-import qualified Data.ByteString                    as S
-import           Data.ByteString                        (ByteString)
-import           Data.Data                              (Data, Typeable)
-import           Data.Hashable                          (Hashable)
-import           GHC.Generics                           (Generic)
-
-
--- $types
-
--- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq SecretKey where
-    SK a == SK b = U.compare a b
-
-instance IsEncoding SecretKey where
-  decode v = if S.length v == Bytes.signSK
-           then Just (SK v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (SK v) = v
-  {-# INLINE encode #-}
-
--- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
-instance Eq PublicKey where
-    PK a == PK b = U.compare a b
-
-instance IsEncoding PublicKey where
-  decode v = if S.length v == Bytes.signPK
-           then Just (PK v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (PK v) = v
-  {-# INLINE encode #-}
-
--- | A convenience type for keypairs
-type Keypair = (SecretKey, PublicKey)
+import qualified Data.ByteString              as S
 
 -- | Creates a random key of the correct size for 'sign' and
 -- 'signOpen' of form @(secretKey, publicKey)@.

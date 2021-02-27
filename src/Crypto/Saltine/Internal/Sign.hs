@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.Sign
 -- Copyright   : (c) Max Amanshauser 2021
@@ -17,10 +17,52 @@ module Crypto.Saltine.Internal.Sign (
   , c_sign_open
   , c_sign_detached
   , c_sign_verify_detached
+  , SecretKey(..)
+  , PublicKey(..)
+  , Keypair
 ) where
 
+import Control.DeepSeq              (NFData)
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
+import GHC.Generics                 (Generic)
+
+import qualified Data.ByteString as S
+
+
+-- | An opaque 'box' cryptographic secret key.
+newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq SecretKey where
+    SK a == SK b = U.compare a b
+
+instance IsEncoding SecretKey where
+  decode v = if S.length v == signSK
+           then Just (SK v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (SK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'box' cryptographic public key.
+newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
+instance Eq PublicKey where
+    PK a == PK b = U.compare a b
+
+instance IsEncoding PublicKey where
+  decode v = if S.length v == signPK
+           then Just (PK v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (PK v) = v
+  {-# INLINE encode #-}
+
+-- | A convenience type for keypairs
+type Keypair = (SecretKey, PublicKey)
 
 sign, signPK, signSK :: Int
 

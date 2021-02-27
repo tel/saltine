@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.SecretBox
 -- Copyright   : (c) Max Amanshauser 2021
@@ -17,15 +17,54 @@ module Crypto.Saltine.Internal.SecretBox (
   c_secretbox,
   c_secretbox_detached,
   c_secretbox_open,
-  c_secretbox_open_detached
+  c_secretbox_open_detached,
+  Key(..),
+  Nonce(..)
 ) where
 
+import Control.DeepSeq              (NFData)
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
+import GHC.Generics                 (Generic)
+
+import qualified Data.ByteString as S
 
 secretBoxKey, secretBoxNonce, secretBoxMac, secretBoxZero, secretBoxBoxZero :: Int
 
--- SecretBox
+-- | An opaque 'secretbox' cryptographic key.
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq Key where
+    Key a == Key b = U.compare a b
+
+instance IsEncoding Key where
+  decode v = if S.length v == secretBoxKey
+           then Just (Key v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'secretbox' nonce.
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+
+instance IsEncoding Nonce where
+  decode v = if S.length v == secretBoxNonce
+           then Just (Nonce v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
+
+instance IsNonce Nonce where
+  zero            = Nonce (S.replicate secretBoxNonce 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
+
+
 -- | Size of a @crypto_secretbox@ secret key
 secretBoxKey     = fromIntegral c_crypto_secretbox_keybytes
 -- | Size of a @crypto_secretbox@ nonce

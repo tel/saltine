@@ -57,41 +57,16 @@ module Crypto.Saltine.Core.ScalarMult (
   mult, multBase
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Internal.Util
+import Crypto.Saltine.Internal.ScalarMult
+            ( c_scalarmult
+            , c_scalarmult_base
+            , GroupElement(..)
+            , Scalar(..)
+            )
+
 import qualified Crypto.Saltine.Internal.ScalarMult as Bytes
-import           Crypto.Saltine.Internal.ScalarMult (c_scalarmult, c_scalarmult_base)
 
-import           Control.DeepSeq
-import qualified Data.ByteString                   as S
-import           Data.ByteString                     (ByteString)
-import           Data.Hashable (Hashable)
-import           Data.Data (Data, Typeable)
-import           GHC.Generics (Generic)
-
--- $types
-
--- | A group element.
-newtype GroupElement = GE ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
--- | A scalar integer.
-newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
-instance IsEncoding GroupElement where
-  decode v = if S.length v == Bytes.mult
-           then Just (GE v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (GE v) = v
-  {-# INLINE encode #-}
-
-instance IsEncoding Scalar where
-  decode v = if S.length v == Bytes.multScalar
-           then Just (Sc v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Sc v) = v
-  {-# INLINE encode #-}
 
 mult :: Scalar -> GroupElement -> GroupElement
 mult (Sc n) (GE p) = GE . snd . buildUnsafeByteString Bytes.mult $ \pq ->

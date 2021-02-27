@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305
 -- Copyright   : (c) Max Amanshauser 2021
@@ -16,10 +16,51 @@ module Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305 (
   , c_aead_open
   , c_aead_detached
   , c_aead_open_detached
+  , Key(..)
+  , Nonce(..)
 ) where
 
+import Control.DeepSeq
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
+import GHC.Generics                 (Generic)
+
+import qualified Data.ByteString as S
+
+
+-- | An opaque 'ChaCha20Poly1305' cryptographic key.
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq Key where
+    Key a == Key b = U.compare a b
+
+instance IsEncoding Key where
+  decode v = if S.length v == aead_chacha20poly1305_keybytes
+           then Just (Key v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'ChaCha20Poly1305' nonce.
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+
+instance IsEncoding Nonce where
+  decode v = if S.length v == aead_chacha20poly1305_npubbytes
+           then Just (Nonce v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
+
+instance IsNonce Nonce where
+  zero            = Nonce (S.replicate aead_chacha20poly1305_npubbytes 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
+
 
 aead_chacha20poly1305_keybytes, aead_chacha20poly1305_abytes, aead_chacha20poly1305_npubbytes :: Int
 

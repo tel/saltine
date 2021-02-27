@@ -1,16 +1,17 @@
 module Crypto.Saltine.Internal.Util where
 
-import           Foreign.C
-import           Foreign.Marshal.Alloc              (mallocBytes)
-import           Foreign.Ptr
-import           System.IO.Unsafe
 
-import           Control.Applicative
-import qualified Data.ByteString            as S
-import           Data.ByteString                (ByteString)
-import           Data.ByteString.Unsafe
-import           Data.Monoid
-import           GHC.Word                       (Word8)
+import Control.Applicative
+import Data.ByteString          (ByteString)
+import Data.ByteString.Unsafe
+import Data.Monoid
+import Foreign.C
+import Foreign.Marshal.Alloc    (mallocBytes)
+import Foreign.Ptr
+import GHC.Word                 (Word8)
+import System.IO.Unsafe
+
+import qualified Data.ByteString as S
 
 -- | Returns @Nothing@ if the subtraction would result in an
 -- underflow or a negative number.

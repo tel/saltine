@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
-
 -- |
 -- Module      : Crypto.Saltine.Core.Box
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -87,79 +85,26 @@ module Crypto.Saltine.Core.Box (
   boxSeal, boxSealOpen
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util as U
+import Control.Applicative
+import Crypto.Saltine.Internal.Box
+            ( c_box_keypair
+            , c_box_easy
+            , c_box_open_easy
+            , c_box_beforenm
+            , c_box_easy_afternm
+            , c_box_open_easy_afternm
+            , c_box_seal, c_box_seal_open
+            , SecretKey(..)
+            , PublicKey(..)
+            , Keypair
+            , CombinedKey(..)
+            , Nonce(..)
+            )
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+
 import qualified Crypto.Saltine.Internal.Box as Bytes
-import           Crypto.Saltine.Internal.Box (c_box_keypair, c_box_easy, c_box_open_easy, c_box_beforenm, c_box_easy_afternm, c_box_open_easy_afternm, c_box_seal, c_box_seal_open)
-import           Control.Applicative
-import           Control.DeepSeq (NFData)
-import           Foreign.C
-import           Foreign.Ptr
-import qualified Data.ByteString                   as S
-import           Data.ByteString (ByteString)
-import           Data.Hashable (Hashable)
-import           Data.Data (Data, Typeable)
-import           GHC.Generics (Generic)
-
-
--- $types
-
--- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq SecretKey where
-    SK a == SK b = U.compare a b
-
-instance IsEncoding SecretKey where
-  decode v = if S.length v == Bytes.boxSK
-           then Just (SK v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (SK v) = v
-  {-# INLINE encode #-}
-
--- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq PublicKey where
-    PK a == PK b = U.compare a b
-
-instance IsEncoding PublicKey where
-  decode v = if S.length v == Bytes.boxPK
-           then Just (PK v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (PK v) = v
-  {-# INLINE encode #-}
-
--- | A convenience type for keypairs
-type Keypair = (SecretKey, PublicKey)
-
--- | An opaque 'boxAfterNM' cryptographic combined key.
-newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq CombinedKey where
-    CK a == CK b = U.compare a b
-
-instance IsEncoding CombinedKey where
-  decode v = if S.length v == Bytes.boxBeforeNM
-           then Just (CK v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (CK v) = v
-  {-# INLINE encode #-}
-
--- | An opaque 'box' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
-instance IsEncoding Nonce where
-  decode v = if S.length v == Bytes.boxNonce
-           then Just (Nonce v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Nonce v) = v
-  {-# INLINE encode #-}
-
-instance IsNonce Nonce where
-  zero            = Nonce (S.replicate Bytes.boxNonce 0)
-  nudge (Nonce n) = Nonce (nudgeBS n)
+import qualified Data.ByteString             as S
 
 -- | Randomly generates a secret key and a corresponding public key.
 newKeypair :: IO Keypair

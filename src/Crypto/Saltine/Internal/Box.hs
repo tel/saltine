@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.Box
 -- Copyright   : (c) Max Amanshauser 2021
@@ -25,10 +25,82 @@ module Crypto.Saltine.Internal.Box (
   , c_box_open_easy_afternm
   , c_box_seal
   , c_box_seal_open
+  , SecretKey(..)
+  , PublicKey(..)
+  , Keypair
+  , CombinedKey(..)
+  , Nonce(..)
 ) where
 
+import Control.DeepSeq              (NFData)
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
+import GHC.Generics                 (Generic)
+
+import qualified Data.ByteString as S
+
+-- | An opaque 'box' cryptographic secret key.
+newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq SecretKey where
+    SK a == SK b = U.compare a b
+
+instance IsEncoding SecretKey where
+  decode v = if S.length v == boxSK
+           then Just (SK v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (SK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'box' cryptographic public key.
+newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq PublicKey where
+    PK a == PK b = U.compare a b
+
+instance IsEncoding PublicKey where
+  decode v = if S.length v == boxPK
+           then Just (PK v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (PK v) = v
+  {-# INLINE encode #-}
+
+-- | A convenience type for keypairs
+type Keypair = (SecretKey, PublicKey)
+
+-- | An opaque 'boxAfterNM' cryptographic combined key.
+newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq CombinedKey where
+    CK a == CK b = U.compare a b
+
+instance IsEncoding CombinedKey where
+  decode v = if S.length v == boxBeforeNM
+           then Just (CK v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (CK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'box' nonce.
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+
+instance IsEncoding Nonce where
+  decode v = if S.length v == boxNonce
+           then Just (Nonce v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
+
+instance IsNonce Nonce where
+  zero            = Nonce (S.replicate boxNonce 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
+
 
 boxPK, boxSK, boxNonce, boxZero, boxBoxZero :: Int
 boxMac, boxBeforeNM, sealedBox :: Int

@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.Stream
 -- Copyright   : (c) Max Amanshauser 2021
@@ -13,10 +13,49 @@ module Crypto.Saltine.Internal.Stream (
   , streamNonce
   , c_stream
   , c_stream_xor
+  , Key(..)
+  , Nonce(..)
 ) where
 
+import Control.DeepSeq              (NFData)
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
+import GHC.Generics                 (Generic)
+
+import qualified Data.ByteString as S
+
+-- | An opaque 'stream' cryptographic key.
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq Key where
+    Key a == Key b = U.compare a b
+
+instance IsEncoding Key where
+  decode v = if S.length v == streamKey
+           then Just (Key v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'stream' nonce.
+newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+
+instance IsNonce Nonce where
+  zero = Nonce (S.replicate streamNonce 0)
+  nudge (Nonce n) = Nonce (nudgeBS n)
+
+instance IsEncoding Nonce where
+  decode v = if S.length v == streamNonce
+           then Just (Nonce v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Nonce v) = v
+  {-# INLINE encode #-}
 
 streamKey, streamNonce :: Int
 

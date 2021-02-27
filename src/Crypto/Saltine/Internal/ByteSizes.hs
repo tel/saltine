@@ -1,4 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.ByteSizes
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -11,9 +10,6 @@
 --
 module Crypto.Saltine.Internal.ByteSizes (
   ) where
-
-import Foreign.C
-
 
 
 -- Others

@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
-
 -- |
 -- Module      : Crypto.Saltine.Core.Auth
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -45,47 +43,17 @@ module Crypto.Saltine.Core.Auth (
   auth, verify
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util as U
+import Control.Applicative
+import Crypto.Saltine.Internal.Auth
+            ( c_auth
+            , c_auth_verify
+            , Key(..)
+            , Authenticator(..)
+            )
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+
 import qualified Crypto.Saltine.Internal.Auth as Bytes
-import           Crypto.Saltine.Internal.Auth (c_auth, c_auth_verify)
-
-
-import           Control.Applicative
-import           Control.DeepSeq
-import           Foreign.C
-import           Foreign.Ptr
-import qualified Data.ByteString                   as S
-import           Data.ByteString                     (ByteString)
-import           Data.Hashable (Hashable)
-import           Data.Data (Data, Typeable)
-import           GHC.Generics (Generic)
-
--- $types
-
--- | An opaque 'auth' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq Key where
-    Key a == Key b = U.compare a b
-
--- | An opaque 'auth' authenticator.
-newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
-instance IsEncoding Key where
-  decode v = if S.length v == Bytes.authKey
-           then Just (Key v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Key v) = v
-  {-# INLINE encode #-}
-
-instance IsEncoding Authenticator where
-  decode v = if S.length v == Bytes.auth
-           then Just (Au v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Au v) = v
-  {-# INLINE encode #-}
 
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key

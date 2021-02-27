@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.Auth
 -- Copyright   : (c) Max Amanshauser 2021
@@ -13,10 +13,47 @@ module Crypto.Saltine.Internal.Auth (
   , authKey
   , c_auth
   , c_auth_verify
+  , Key(..)
+  , Authenticator(..)
 ) where
 
+
+import Control.DeepSeq
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
+import GHC.Generics                 (Generic)
 import Foreign.C
 import Foreign.Ptr
+
+import qualified Data.ByteString as S
+
+-- | An opaque 'auth' cryptographic key.
+newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq Key where
+    Key a == Key b = U.compare a b
+
+-- | An opaque 'auth' authenticator.
+newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+
+instance IsEncoding Key where
+  decode v = if S.length v == authKey
+           then Just (Key v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Key v) = v
+  {-# INLINE encode #-}
+
+instance IsEncoding Authenticator where
+  decode v = if S.length v == auth
+           then Just (Au v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Au v) = v
+  {-# INLINE encode #-}
+
 
 auth, authKey :: Int
 

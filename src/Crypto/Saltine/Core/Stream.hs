@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
-
 -- |
 -- Module      : Crypto.Saltine.Core.Stream
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -55,50 +53,18 @@ module Crypto.Saltine.Core.Stream (
   stream, xor
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util   as U
+
+import Control.Applicative
+import Crypto.Saltine.Internal.Stream ( c_stream
+                                      , c_stream_xor
+                                      , Key(..)
+                                      , Nonce(..)
+                                      )
+import Crypto.Saltine.Internal.Util   as U
+import Data.ByteString                (ByteString)
+
 import qualified Crypto.Saltine.Internal.Stream as Bytes
-import           Crypto.Saltine.Internal.Stream (c_stream, c_stream_xor)
-
-import           Control.Applicative
-import           Control.DeepSeq (NFData)
-import           Foreign.C
-import           Foreign.Ptr
-import qualified Data.ByteString as S
-import           Data.ByteString (ByteString)
-import           Data.Hashable (Hashable)
-import           Data.Data (Data, Typeable)
-import           GHC.Generics (Generic)
-
--- $types
-
--- | An opaque 'stream' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq Key where
-    Key a == Key b = U.compare a b
-
-instance IsEncoding Key where
-  decode v = if S.length v == Bytes.streamKey
-           then Just (Key v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Key v) = v
-  {-# INLINE encode #-}
-
--- | An opaque 'stream' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
-instance IsNonce Nonce where
-  zero = Nonce (S.replicate Bytes.streamNonce 0)
-  nudge (Nonce n) = Nonce (nudgeBS n)
-
-instance IsEncoding Nonce where
-  decode v = if S.length v == Bytes.streamNonce
-           then Just (Nonce v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Nonce v) = v
-  {-# INLINE encode #-}
+import qualified Data.ByteString                as S
 
 -- | Creates a random key of the correct size for 'stream' and 'xor'.
 newKey :: IO Key

@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
-
  -- |
 -- Module      : Crypto.Saltine.Core.Hash
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -52,19 +50,20 @@ module Crypto.Saltine.Core.Hash (
   generichashOutLen, generichash
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util as U
+import Control.Applicative
+import Crypto.Saltine.Internal.Hash
+            ( c_hash
+            , c_shorthash
+            , c_generichash
+            , ShorthashKey(..)
+            , GenerichashKey(..)
+            , GenerichashOutLen(..)
+            )
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+
 import qualified Crypto.Saltine.Internal.Hash as Bytes
-import           Crypto.Saltine.Internal.Hash (c_hash, c_shorthash, c_generichash)
-
-
-import           Control.Applicative
-import           Control.DeepSeq
-import qualified Data.ByteString as S
-import           Data.ByteString (ByteString)
-import           Data.Hashable (Hashable)
-import           Data.Data (Data, Typeable)
-import           GHC.Generics (Generic)
+import qualified Data.ByteString              as S
 
 -- | Computes a cryptographically collision-resistant hash making
 -- @hash m == hash m' ==> m == m'@ highly likely even when under
@@ -75,19 +74,6 @@ hash :: ByteString
      -- ^ Hash
 hash m = snd . buildUnsafeByteString Bytes.hash $ \ph ->
   constByteStrings [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
-
--- | An opaque 'shorthash' cryptographic secret key.
-newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq ShorthashKey where
-    ShK a == ShK b = U.compare a b
-
-instance IsEncoding ShorthashKey where
-  decode v = if S.length v == Bytes.shorthashKey
-           then Just (ShK v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (ShK v) = v
-  {-# INLINE encode #-}
 
 -- | Randomly generates a new key for 'shorthash'.
 newShorthashKey :: IO ShorthashKey
@@ -103,26 +89,11 @@ shorthash (ShK k) m = snd . buildUnsafeByteString Bytes.shorthash $ \ph ->
   constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
     c_shorthash ph pm (fromIntegral $ S.length m) pk
 
--- | An opaque 'generichash' cryptographic secret key.
-newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq GenerichashKey where
-    GhK a == GhK b = U.compare a b
-
-instance IsEncoding GenerichashKey where
-  decode v = if S.length v <= Bytes.generichashKeyLenMax
-             then Just (GhK v)
-             else Nothing
-  {-# INLINE decode #-}
-  encode (GhK v) = v
-  {-# INLINE encode #-}
-
 -- | Randomly generates a new key for 'generichash' of the given length.
 newGenerichashKey :: Int -> IO (Maybe GenerichashKey)
 newGenerichashKey n = if n >= 0 && n <= Bytes.generichashKeyLenMax
                       then Just . GhK <$> randomByteString n
                       else return Nothing
-
-newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 -- | Create a validated Generichash output length
 generichashOutLen :: Int -> Maybe GenerichashOutLen

@@ -31,51 +31,23 @@ module Crypto.Saltine.Core.AEAD.AES256GCM (
   newKey, newNonce
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util           as U
+import Control.Applicative
+import Crypto.Saltine.Internal.AEAD.AES256GCM
+            ( c_aead_aes256gcm_is_available
+            , c_aead
+            , c_aead_open
+            , c_aead_detached
+            , c_aead_open_detached
+            , Key(..)
+            , Nonce(..)
+            )
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Foreign.Ptr
+import System.IO.Unsafe             (unsafePerformIO)
+
 import qualified Crypto.Saltine.Internal.AEAD.AES256GCM as Bytes
-import           Crypto.Saltine.Internal.AEAD.AES256GCM (c_aead_aes256gcm_is_available, c_aead, c_aead_open, c_aead_detached, c_aead_open_detached)
-
-import           Control.Applicative
-import           Control.DeepSeq
-import           Foreign.C
-import           Foreign.Ptr
-import qualified Data.ByteString                   as S
-import           Data.ByteString                    (ByteString)
-import           Data.Hashable                      (Hashable)
-import           Data.Data                          (Data, Typeable)
-import           GHC.Generics                       (Generic)
-import           System.IO.Unsafe                   (unsafePerformIO)
-
--- $types
-
--- | An opaque 'AES256GCM' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq Key where
-    Key a == Key b = U.compare a b
-
-instance IsEncoding Key where
-  decode v = if S.length v == Bytes.aead_aes256gcm_keybytes
-           then Just (Key v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Key v) = v
-  {-# INLINE encode #-}
-
--- | An opaque 'AES256GCM' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
-instance IsEncoding Nonce where
-  decode v = if S.length v == Bytes.aead_aes256gcm_npubbytes
-           then Just (Nonce v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Nonce v) = v
-  {-# INLINE encode #-}
-
-instance IsNonce Nonce where
-  zero            = Nonce (S.replicate Bytes.aead_aes256gcm_npubbytes 0)
-  nudge (Nonce n) = Nonce (nudgeBS n)
+import qualified Data.ByteString                        as S
 
 -- | Creates a random 'AES256GCM' key
 newKey :: IO Key

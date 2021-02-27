@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric, ForeignFunctionInterface #-}
 -- |
 -- Module      : Crypto.Saltine.Internal.Hash
 -- Copyright   : (c) Max Amanshauser 2021
@@ -17,10 +17,50 @@ module Crypto.Saltine.Internal.Hash (
   , c_hash
   , c_shorthash
   , c_generichash
+  , ShorthashKey(..)
+  , GenerichashKey(..)
+  , GenerichashOutLen(..)
 ) where
 
+import Control.DeepSeq
+import Crypto.Saltine.Class
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
+import GHC.Generics                 (Generic)
+
+import qualified Data.ByteString as S
+
+-- | An opaque 'shorthash' cryptographic secret key.
+newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq ShorthashKey where
+    ShK a == ShK b = U.compare a b
+
+instance IsEncoding ShorthashKey where
+  decode v = if S.length v == shorthashKey
+           then Just (ShK v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (ShK v) = v
+  {-# INLINE encode #-}
+
+-- | An opaque 'generichash' cryptographic secret key.
+newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Eq GenerichashKey where
+    GhK a == GhK b = U.compare a b
+
+instance IsEncoding GenerichashKey where
+  decode v = if S.length v <= generichashKeyLenMax
+             then Just (GhK v)
+             else Nothing
+  {-# INLINE decode #-}
+  encode (GhK v) = v
+  {-# INLINE encode #-}
+
+newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 hash, shorthash, shorthashKey, generichashOutLenMax, generichashKeyLenMax :: Int
 

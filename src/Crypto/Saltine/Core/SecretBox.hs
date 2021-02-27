@@ -46,48 +46,20 @@ module Crypto.Saltine.Core.SecretBox (
   newKey, newNonce
   ) where
 
-import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.Util      as U
+import Control.Applicative
+import Crypto.Saltine.Internal.SecretBox
+            ( c_secretbox
+            , c_secretbox_detached
+            , c_secretbox_open
+            , c_secretbox_open_detached
+            , Key(..)
+            , Nonce(..)
+            )
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+
 import qualified Crypto.Saltine.Internal.SecretBox as Bytes
-import           Crypto.Saltine.Internal.SecretBox (c_secretbox, c_secretbox_detached, c_secretbox_open, c_secretbox_open_detached)
-
-import           Control.Applicative
-import           Control.DeepSeq (NFData)
 import qualified Data.ByteString                   as S
-import           Data.ByteString                     (ByteString)
-import           Data.Hashable (Hashable)
-import           Data.Data (Data, Typeable)
-import           GHC.Generics (Generic)
-
--- $types
-
--- | An opaque 'secretbox' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
-instance Eq Key where
-    Key a == Key b = U.compare a b
-
-instance IsEncoding Key where
-  decode v = if S.length v == Bytes.secretBoxKey
-           then Just (Key v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Key v) = v
-  {-# INLINE encode #-}
-
--- | An opaque 'secretbox' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
-instance IsEncoding Nonce where
-  decode v = if S.length v == Bytes.secretBoxNonce
-           then Just (Nonce v)
-           else Nothing
-  {-# INLINE decode #-}
-  encode (Nonce v) = v
-  {-# INLINE encode #-}
-
-instance IsNonce Nonce where
-  zero            = Nonce (S.replicate Bytes.secretBoxNonce 0)
-  nudge (Nonce n) = Nonce (nudgeBS n)
 
 -- | Creates a random key of the correct size for 'secretbox'.
 newKey :: IO Key
