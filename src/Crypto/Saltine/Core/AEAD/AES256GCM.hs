@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
-
 -- |
 -- Module      : Crypto.Saltine.Core.AEAD.AES256GCM
 -- Copyright   : (c) Thomas DuBuisson 2017
