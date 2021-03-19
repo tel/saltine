@@ -133,7 +133,6 @@ benchmark benchmarks
     , criterion
     , deepseq
     , saltine
-    , memory
   other-modules:
       AuthBench
       OneTimeAuthBench

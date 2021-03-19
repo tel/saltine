@@ -3,7 +3,6 @@ module HashBench (benchHash, hashEnv) where
 import Criterion
 
 import Control.Monad
-import Data.ByteArray
 
 import Crypto.Saltine.Core.Hash
 import Crypto.Saltine.Core.Utils
