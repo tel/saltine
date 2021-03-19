@@ -61,7 +61,7 @@ and copy the files in `libsodium-win64`  into the equivalent places
 in `C:\Program Files\Haskell Platform\*\mingw`. Then just add saltine 
 to your cabal file and watch it go.
 
-Tested with [`libsodium-1.0.13`](https://download.libsodium.org/libsodium/releases/).
+Tested with [`libsodium-1.0.18`](https://download.libsodium.org/libsodium/releases/).
 
 Inspired by @thoughtpolice's
 [`salt`](http://github.com/thoughtpolice/salt) library. `salt` also
