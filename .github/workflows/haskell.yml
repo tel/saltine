@@ -30,7 +30,7 @@ jobs:
 
     - name: Install libsodium
       run: |
-        curl -# -L https://github.com/jedisct1/libsodium/releases/download/$SODIUMVER/libsodium-$SODIUMVER.tar.gz | tar xzf -
+        curl -# -L https://github.com/jedisct1/libsodium/releases/download/$SODIUMVER-RELEASE/libsodium-$SODIUMVER.tar.gz | tar xzf -
         (cd libsodium-$SODIUMVER && ./autogen.sh && ./configure && make check && sudo make install && sudo ldconfig)
       env:
         SODIUMVER: 1.0.18
