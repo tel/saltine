@@ -14,6 +14,7 @@ import RandomBench
 import ScalarMultBench
 import SignBench
 import StreamBench
+import PasswordBench
 import AES256GCMBench
 import ChaCha20Poly1305Bench
 import ChaCha20Poly1305IETFBench
@@ -42,6 +43,9 @@ main = do
   streamKeyToEval <- streamEnv
   streamKey <- evaluate $ force streamKeyToEval
 
+  passwordSaltToEval <- passwordEnv
+  passwordSalt <- evaluate $ force passwordSaltToEval
+
   hashKeysToEval <- hashEnv
   hashKeys <- evaluate $ force hashKeysToEval
 
@@ -66,6 +70,7 @@ main = do
     , benchScalarMult scml
     , benchSign signKey
     , benchStream streamKey
+    , benchPassword passwordSalt
     , benchComparison
     , benchAes256GCM aes256GCMKey
     , benchChaCha20Poly1305 chaCha20Poly1305Key

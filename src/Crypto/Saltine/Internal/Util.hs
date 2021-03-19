@@ -79,6 +79,18 @@ buildUnsafeByteString' n k = do
   out <- unsafeUseAsCString bs k
   return (out, bs)
 
+
+-- | Sometimes we have to deal with variable-length strings
+buildUnsafeVariableByteString' :: Int -> (Ptr CChar -> IO b) -> IO (b, ByteString)
+buildUnsafeVariableByteString' n k = do
+  ph  <- mallocBytes n
+  out <- k ph
+  bs  <- unsafePackMallocCString ph
+  return (out, bs)
+
+buildUnsafeVariableByteString :: Int -> (Ptr CChar -> IO b) -> (b, ByteString)
+buildUnsafeVariableByteString n = unsafePerformIO . buildUnsafeVariableByteString' n
+
 -- | Extremely unsafe function, use with utmost care! Builds a new
 -- ByteString using a ccall which is given access to the raw underlying
 -- pointer. Overwrites are UNCHECKED and 'unsafePerformIO' is used so
