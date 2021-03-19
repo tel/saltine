@@ -201,6 +201,8 @@ boxOpenAfterNM (CK ck) (Nonce nonce) cipher = do
 
 -- | Encrypts a message for sending to the owner of the public
 -- key. The message is unauthenticated, but permits integrity checking.
+-- This function is non-deterministic, it uses newly created ephemeral keys internally,
+-- and thus in IO.
 boxSeal :: PublicKey -> ByteString -> IO ByteString
 boxSeal (PK pk) msg = fmap snd . buildUnsafeByteString' bufSize $ \pc ->
     constByteStrings [pk, msg] $ \
