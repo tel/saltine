@@ -39,30 +39,33 @@ instance Arbitrary Opslimit where
 instance Arbitrary Policy where
     arbitrary = applyArbitrary3 Policy
 
-rightInverseProp :: Message -> Policy -> Bool
-rightInverseProp (Message pw) pol =
-    True == pwhashStrVerify (pwhashStr pw pol) pw
+rightInverseProp :: Message -> Policy -> IO Bool
+rightInverseProp (Message pw) pol = do
+    h <- pwhashStr pw pol
+    pure $ pwhashStrVerify h pw
 
-rightInverseFailureProp1 :: Message -> Policy -> Perturb -> Bool
+rightInverseFailureProp1 :: Message -> Policy -> Perturb -> IO Bool
 rightInverseFailureProp1 (Message pw) pol per@(Perturb p) =
-    let np = perturb pw ([0] <> per)
+    let np  = perturb pw ([0] <> per)
         np2 = if np == pw then np <> S.pack p else np
-    in
-        False == pwhashStrVerify (pwhashStr pw pol) np2
+    in do
+        h <- pwhashStr pw pol
+        pure . not $ pwhashStrVerify h np2
 
-rightProp :: Message -> Policy -> Bool
-rightProp (Message pw) pol =
-    Just False == needsRehash pol (pwhashStr pw pol)
+rightProp :: Message -> Policy -> IO Bool
+rightProp (Message pw) pol = do
+    h <- pwhashStr pw pol
+    pure $ Just False == needsRehash (opsPolicy pol) (memPolicy pol) h
 
-rightFailureProp :: Message -> Policy -> Policy -> Bool
-rightFailureProp (Message pw) pol pol2 =
-    (Just True == needsRehash pol2 (pwhashStr pw pol))
-            || opsPolicy pol == opsPolicy pol2
+rightFailureProp :: Message -> Opslimit -> Opslimit -> Memlimit -> Memlimit -> IO Bool
+rightFailureProp (Message pw) ops1 ops2 mem1 mem2 = do
+    h <- pwhashStr pw (Policy ops1 mem1 defaultAlgorithm)
+    pure $ Just True == needsRehash ops2 mem2 h
+            || ops1 == ops2
 
-rightFailureProp2 :: Message -> Policy -> Bool
-rightFailureProp2 (Message invhash) pol =
-    isNothing $ needsRehash pol (I.PasswordHash invhash)
-
+rightFailureProp2 :: Message -> Opslimit -> Memlimit -> Bool
+rightFailureProp2 (Message invhash) ops mem =
+    isNothing $ needsRehash ops mem (I.PasswordHash invhash)
 
 rightProp2 :: Salt -> Message -> Policy -> Gen Bool
 rightProp2 salt (Message bs) pol = do
@@ -79,16 +82,16 @@ testPassword = buildTest $ do
   return $ testGroup "... Password" [
 
     testProperty "Can hash passwords and verify them..."
-        rightInverseProp,
+        $ ioProperty . uncurry rightInverseProp,
 
     testProperty "Hashed passwords cannot be verified with the wrong password..."
-        rightInverseFailureProp1,
+        $ ioProperty . uncurry3 rightInverseFailureProp1,
 
     testProperty "Hashed passwords do not need to be rehashed with the same policy..."
-        rightProp,
+        $ ioProperty . uncurry rightProp,
 
     testProperty "Hashed passwords do need to be rehashed with a different policy..."
-        rightFailureProp,
+        $ ioProperty . uncurry5 rightFailureProp,
 
     testProperty "needsRehash detects invalid hashes..."
         rightFailureProp2,

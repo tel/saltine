@@ -70,12 +70,13 @@ newSalt :: IO Salt
 newSalt = Salt <$> randomByteString Bytes.pwhash_saltbytes
 
 -- | Hashes a password according to the policy
-pwhashStr :: ByteString -> Policy -> PasswordHash
+-- This function is non-deterministic and hence in IO.
+pwhashStr :: ByteString -> Policy -> IO PasswordHash
 pwhashStr pw policy = do
   let (ops, mem, _alg)  = unpackPolicy policy
   let pwlen             = fromIntegral $ BS.length pw
 
-  PasswordHash . snd . buildUnsafeVariableByteString pwhash_strbytes $ \pp ->
+  fmap (PasswordHash . snd) $ buildUnsafeVariableByteString' pwhash_strbytes $ \pp ->
     constByteStrings [pw] $ \
       [(ppw, _)] ->
           c_pwhash_str pp ppw pwlen (fromIntegral ops) (fromIntegral mem)
@@ -90,14 +91,15 @@ pwhashStrVerify (PasswordHash bs) pw = unsafePerformIO $
     pwlen = fromIntegral $ BS.length pw
 
 -- | Indicates whether a password needs to be rehashed, because the opslimit/memlimit parameters
--- used to hash the password are inconsistent with the supplied policy.
+-- used to hash the password are inconsistent with the supplied values.
 -- Returns Nothing if the hash appears to be invalid.
-needsRehash :: Policy -> PasswordHash -> Maybe Bool
-needsRehash policy (PasswordHash bs) =
-    let (ops, mem, _alg) = unpackPolicy policy in
+-- Internally this function will always use the current DefaultAlgorithm and hence will give
+-- undefined results if a different algorithm was used to hash the password.
+needsRehash :: Opslimit -> Memlimit -> PasswordHash -> Maybe Bool
+needsRehash (Opslimit ops) (Memlimit mem) (PasswordHash bs) =
     unsafePerformIO $
         constByteStrings [bs] $ \[(pbs, _)] -> do
-                res <- c_pwhash_str_needs_rehash pbs ops mem
+                res <- c_pwhash_str_needs_rehash pbs (fromIntegral ops) (fromIntegral mem)
                 pure $  if res == -1
                         then Nothing
                         else Just (res == 1)

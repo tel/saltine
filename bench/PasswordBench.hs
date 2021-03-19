@@ -17,10 +17,14 @@ passwordEnv = newSalt
 benchPassword :: Salt -> Benchmark
 benchPassword s = do
   let hashAndVerify :: ByteString -> IO Bool
-      hashAndVerify p = pure $ pwhashStrVerify (pwhashStr p interactivePolicy) p
+      hashAndVerify p = do
+          h <- pwhashStr p interactivePolicy
+          pure $ pwhashStrVerify h p
 
       hashAndRehash :: ByteString -> IO (Maybe Bool)
-      hashAndRehash p = pure $ needsRehash interactivePolicy (pwhashStr p interactivePolicy)
+      hashAndRehash p = do
+          h <- pwhashStr p interactivePolicy
+          pure $ needsRehash (opsPolicy interactivePolicy) (memPolicy interactivePolicy) h
 
   bgroup "Password"
     [ bench "newSalt" $ nfIO newSalt

@@ -146,3 +146,9 @@ compare a b =
     (S.length a == S.length b) && unsafePerformIO (constByteStrings [a, b] $ \
         [(bsa, _), (bsb,_)] ->
             (== 0) <$> c_sodium_memcmp bsa bsb (fromIntegral $ S.length a))
+
+uncurry3 :: (a -> b -> c -> d) -> ((a, b, c) -> d)
+uncurry3 f ~(a,b,c) = f a b c
+
+uncurry5 :: (a -> b -> c -> d -> e -> f) -> ((a, b, c, d, e) -> f)
+uncurry5 f ~(a,b,c,d,e) = f a b c d e
