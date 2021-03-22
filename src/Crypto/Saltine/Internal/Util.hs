@@ -11,7 +11,8 @@ import Foreign.Ptr
 import GHC.Word                 (Word8)
 import System.IO.Unsafe
 
-import qualified Data.ByteString as S
+import qualified Data.ByteString       as S
+import qualified Data.ByteString.Char8 as S8
 
 -- | Returns @Nothing@ if the subtraction would result in an
 -- underflow or a negative number.
@@ -146,6 +147,22 @@ compare a b =
     (S.length a == S.length b) && unsafePerformIO (constByteStrings [a, b] $ \
         [(bsa, _), (bsb,_)] ->
             (== 0) <$> c_sodium_memcmp bsa bsb (fromIntegral $ S.length a))
+
+-- | bin2hex conversion for showing various binary types
+foreign import ccall unsafe "sodium_bin2hex"
+  c_sodium_bin2hex
+    :: Ptr CChar            -- Target zone
+    -> CInt                 -- Max. length of target string (must be min. bin_len * 2 + 1)
+    -> Ptr CChar            -- Source
+    -> CInt                 -- Source length
+    -> IO (Ptr CChar)
+
+bin2hex :: ByteString -> String
+bin2hex bs = let tlen = S.length bs * 2 + 1 in
+    S8.unpack . S8.init . snd . buildUnsafeByteString tlen $ \t ->
+        constByteStrings [bs] $ \
+            [(pbs, _)] ->
+                c_sodium_bin2hex t (fromIntegral tlen) pbs (fromIntegral $ S.length bs)
 
 uncurry3 :: (a -> b -> c -> d) -> ((a, b, c) -> d)
 uncurry3 f ~(a,b,c) = f a b c

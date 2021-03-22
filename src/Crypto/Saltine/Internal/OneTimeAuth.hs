@@ -34,9 +34,8 @@ import qualified Data.ByteString as S
 newtype Key           = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
-
--- | An opaque 'auth' authenticator.
-newtype Authenticator = Au ByteString  deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Key where
+    show = bin2hex . encode
 
 instance IsEncoding Key where
   decode v = if S.length v == onetimeKey
@@ -45,6 +44,11 @@ instance IsEncoding Key where
   {-# INLINE decode #-}
   encode (Key v) = v
   {-# INLINE encode #-}
+
+-- | An opaque 'auth' authenticator.
+newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Authenticator where
+    show = bin2hex . encode
 
 instance IsEncoding Authenticator where
   decode v = if S.length v == onetime

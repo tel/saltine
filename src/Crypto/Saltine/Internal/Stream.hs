@@ -33,6 +33,8 @@ import qualified Data.ByteString as S
 newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
+instance Show Key where
+    show = bin2hex . encode
 
 instance IsEncoding Key where
   decode v = if S.length v == streamKey
@@ -44,6 +46,8 @@ instance IsEncoding Key where
 
 -- | An opaque 'stream' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Nonce where
+    show = bin2hex . encode
 
 instance IsNonce Nonce where
   zero = Nonce (S.replicate streamNonce 0)

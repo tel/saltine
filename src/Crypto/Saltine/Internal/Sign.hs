@@ -39,6 +39,8 @@ import qualified Data.ByteString as S
 newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
+instance Show SecretKey where
+    show = bin2hex . encode
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == signSK
@@ -52,6 +54,8 @@ instance IsEncoding SecretKey where
 newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
+instance Show PublicKey where
+    show = bin2hex . encode
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == signPK

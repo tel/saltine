@@ -28,11 +28,6 @@ instance Arbitrary Key where
         do bs <- S.pack <$> vector Bytes.aead_xchacha20poly1305_ietf_keybytes
            pure $ fromJust (decode bs)
 
-instance Show Key where
-    show = show . encode
-instance Show Nonce where
-    show = show . encode
-
 -- | Ciphertext can be decrypted
 rightInverseProp :: Key -> Nonce -> Message -> Message -> Bool
 rightInverseProp k n (Message bs) (Message aad) =

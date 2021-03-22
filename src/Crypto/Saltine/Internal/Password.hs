@@ -112,6 +112,8 @@ import qualified Data.ByteString.Char8            as S8
 newtype Salt = Salt { unSalt :: ByteString } deriving (Ord, Data, Hashable, Typeable, Generic, NFData)
 instance Eq Salt where
     Salt a == Salt b = U.compare a b
+instance Show Salt where
+    show = bin2hex . encode
 
 instance IsEncoding Salt where
   decode v = if S.length v == pwhash_saltbytes
@@ -122,6 +124,7 @@ instance IsEncoding Salt where
   {-# INLINE encode #-}
 
 -- | Verification string for stored passwords
+-- This hash contains only printable characters, hence we can just derive Show.
 newtype PasswordHash = PasswordHash { unPasswordHash :: ByteString } deriving (Ord, Data, Hashable, Typeable, Generic, Show, NFData)
 instance Eq PasswordHash where
     PasswordHash a == PasswordHash b = U.compare a b

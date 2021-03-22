@@ -38,6 +38,8 @@ import qualified Data.ByteString as S
 newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq ShorthashKey where
     ShK a == ShK b = U.compare a b
+instance Show ShorthashKey where
+    show = bin2hex . encode
 
 instance IsEncoding ShorthashKey where
   decode v = if S.length v == shorthashKey
@@ -51,6 +53,8 @@ instance IsEncoding ShorthashKey where
 newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq GenerichashKey where
     GhK a == GhK b = U.compare a b
+instance Show GenerichashKey where
+    show = bin2hex . encode
 
 instance IsEncoding GenerichashKey where
   decode v = if S.length v <= generichashKeyLenMax

@@ -27,10 +27,6 @@ instance Arbitrary Key where
     arbitrary =
         do bs <- S.pack <$> vector Bytes.secretBoxKey
            pure $ fromJust (decode bs)
-instance Show Key where
-    show = show . encode
-instance Show Nonce where
-    show = show . encode
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: Key -> Nonce -> Message -> Bool

@@ -37,6 +37,8 @@ import qualified Data.ByteString as S
 newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
+instance Show Key where
+    show = bin2hex . encode
 
 instance IsEncoding Key where
   decode v = if S.length v == aead_chacha20poly1305_ietf_keybytes
@@ -48,6 +50,8 @@ instance IsEncoding Key where
 
 -- | An opaque 'ChaCha20Poly1305IETF' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Nonce where
+    show = bin2hex . encode
 
 instance IsEncoding Nonce where
   decode v = if S.length v == aead_chacha20poly1305_ietf_npubbytes

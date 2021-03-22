@@ -48,6 +48,8 @@ import qualified Data.ByteString as S
 newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
+instance Show SecretKey where
+    show = bin2hex . encode
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == boxSK
@@ -61,6 +63,8 @@ instance IsEncoding SecretKey where
 newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
+instance Show PublicKey where
+    show = bin2hex . encode
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == boxPK
@@ -77,6 +81,8 @@ type Keypair = (SecretKey, PublicKey)
 newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq CombinedKey where
     CK a == CK b = U.compare a b
+instance Show CombinedKey where
+    show = bin2hex . encode
 
 instance IsEncoding CombinedKey where
   decode v = if S.length v == boxBeforeNM

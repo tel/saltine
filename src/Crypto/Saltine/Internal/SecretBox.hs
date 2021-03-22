@@ -40,6 +40,8 @@ secretBoxKey, secretBoxNonce, secretBoxMac, secretBoxZero, secretBoxBoxZero :: I
 newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
+instance Show Key where
+    show = bin2hex . encode
 
 instance IsEncoding Key where
   decode v = if S.length v == secretBoxKey
@@ -51,6 +53,8 @@ instance IsEncoding Key where
 
 -- | An opaque 'secretbox' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Nonce where
+    show = bin2hex . encode
 
 instance IsEncoding Nonce where
   decode v = if S.length v == secretBoxNonce

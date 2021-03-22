@@ -19,21 +19,21 @@ module Crypto.Saltine.Internal.ScalarMult (
 
 import Control.DeepSeq
 import Crypto.Saltine.Class
-import Data.ByteString (ByteString)
-import Data.Data       (Data, Typeable)
-import Data.Hashable   (Hashable)
+import Crypto.Saltine.Internal.Util as U
+import Data.ByteString              (ByteString)
+import Data.Data                    (Data, Typeable)
+import Data.Hashable                (Hashable)
 import Foreign.C
 import Foreign.Ptr
-import GHC.Generics    (Generic)
+import GHC.Generics                 (Generic)
 
 import qualified Data.ByteString as S
 
 
 -- | A group element.
 newtype GroupElement = GE ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
-
--- | A scalar integer.
-newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show GroupElement where
+    show = bin2hex . encode
 
 instance IsEncoding GroupElement where
   decode v = if S.length v == mult
@@ -42,6 +42,11 @@ instance IsEncoding GroupElement where
   {-# INLINE decode #-}
   encode (GE v) = v
   {-# INLINE encode #-}
+
+-- | A scalar integer.
+newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Scalar where
+    show = bin2hex . encode
 
 instance IsEncoding Scalar where
   decode v = if S.length v == multScalar

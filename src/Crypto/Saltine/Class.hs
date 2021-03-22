@@ -1,3 +1,5 @@
+-- {-# LANGUAGE FlexibleInstances #-}
+
 -- |
 -- Module      : Crypto.Saltine.Class
 -- Copyright   : (c) Joseph Abrahamson 2013
