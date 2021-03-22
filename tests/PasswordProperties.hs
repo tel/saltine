@@ -70,9 +70,8 @@ rightFailureProp2 (Message invhash) ops mem =
 rightProp2 :: Salt -> Message -> Policy -> Gen Bool
 rightProp2 salt (Message bs) pol = do
     i <- chooseInt (I.pwhash_bytes_min, 1024)
-    l <- chooseInt (I.pwhash_passwd_min, I.pwhash_passwd_max)
 
-    pure $ isJust $ traceShowId (pwhash bs i salt pol)
+    pure $ isJust $ pwhash bs i salt pol
 
 
 testPassword :: Test
