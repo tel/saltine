@@ -100,12 +100,13 @@ import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
 import Data.Hashable                (Hashable)
+import Data.Text                    (Text)
 import GHC.Generics                 (Generic)
 import Foreign.C
 import Foreign.Ptr
 
-import qualified Data.ByteString as S
-import qualified Data.ByteString.Char8            as S8
+import qualified Data.ByteString    as S
+import qualified Data.Text.Encoding as DTE
 
 
 -- | Salt for deriving keys from passwords
@@ -125,9 +126,10 @@ instance IsEncoding Salt where
 
 -- | Verification string for stored passwords
 -- This hash contains only printable characters, hence we can just derive Show.
-newtype PasswordHash = PasswordHash { unPasswordHash :: ByteString } deriving (Ord, Data, Hashable, Typeable, Generic, Show, NFData)
+newtype PasswordHash = PasswordHash { unPasswordHash :: Text } deriving (Ord, Data, Hashable, Typeable, Generic, Show, NFData)
+-- Constant time Eq instance, just in case.
 instance Eq PasswordHash where
-    PasswordHash a == PasswordHash b = U.compare a b
+    PasswordHash a == PasswordHash b = U.compare (DTE.encodeUtf8 a) (DTE.encodeUtf8 b)
 
 -- | Wrapper type for the operations used by password hashing
 newtype Opslimit = Opslimit { getOpslimit :: Int } deriving (Eq, Ord, Data, Hashable, Typeable, Generic, Show, NFData)
@@ -226,7 +228,7 @@ pwhash_strprefix = fromIntegral c_crypto_pwhash_strprefix
 
 
 -- | Constants for Argon2ID
--- | Minimum output length for key derivation (16 (128 bits)).
+-- | Minimum output length for key derivation (= 16 (128 bits)).
 pwhash_argon2id_bytes_min :: Int
 pwhash_argon2id_bytes_min = fromIntegral c_crypto_pwhash_argon2id_bytes_min
 -- | Maximum output length for key derivation.
@@ -284,7 +286,7 @@ pwhash_argon2id_strprefix :: Int
 pwhash_argon2id_strprefix = fromIntegral c_crypto_pwhash_argon2id_strprefix
 
 -- | Constants for ARGON2I
--- | Minimum output length for key derivation (16 (128 bits)).
+-- | Minimum output length for key derivation (= 16 (128 bits)).
 pwhash_argon2i_bytes_min :: Int
 pwhash_argon2i_bytes_min = fromIntegral c_crypto_pwhash_argon2i_bytes_min
 -- | Maximum output length for key derivation.

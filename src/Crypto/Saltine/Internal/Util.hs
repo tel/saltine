@@ -1,4 +1,9 @@
-module Crypto.Saltine.Internal.Util where
+module Crypto.Saltine.Internal.Util (
+    module Crypto.Saltine.Internal.Util
+  , withCString
+  , allocaBytes
+)
+where
 
 
 import Control.Applicative
@@ -6,7 +11,7 @@ import Data.ByteString          (ByteString)
 import Data.ByteString.Unsafe
 import Data.Monoid
 import Foreign.C
-import Foreign.Marshal.Alloc    (mallocBytes)
+import Foreign.Marshal.Alloc    (mallocBytes, allocaBytes)
 import Foreign.Ptr
 import GHC.Word                 (Word8)
 import System.IO.Unsafe
@@ -65,6 +70,12 @@ unsafeDidSucceed :: IO CInt -> Bool
 unsafeDidSucceed = go . unsafePerformIO
   where go 0 = True
         go _ = False
+
+withCStrings :: [String] -> ([CString] -> IO a) -> IO a
+withCStrings = foldr (\v kk -> \k -> (withCString v) (\a -> kk (\as -> k (a:as)))) ($ [])
+
+withCStringLens :: [String] -> ([CStringLen] -> IO a) -> IO a
+withCStringLens = foldr (\v kk -> \k -> (withCStringLen v) (\a -> kk (\as -> k (a:as)))) ($ [])
 
 -- | Convenience function for accessing constant C strings
 constByteStrings :: [ByteString] -> ([CStringLen] -> IO b) -> IO b

@@ -89,6 +89,7 @@ library
               , deepseq    ^>= 1.4
               , profunctors >= 5.3    && < 5.7
               , hashable
+              , text       ^>= 1.2
 
 test-suite tests
   type:    exitcode-stdio-1.0
@@ -117,6 +118,7 @@ test-suite tests
                 base >= 4.7 && < 5
               , saltine
               , bytestring
+              , text
               , QuickCheck
               , test-framework-quickcheck2
               , test-framework
@@ -133,6 +135,7 @@ benchmark benchmarks
   build-depends:
       base
     , bytestring
+    , text
     , criterion
     , deepseq
     , saltine

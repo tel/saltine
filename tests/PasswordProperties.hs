@@ -9,8 +9,9 @@ import Util
 import Crypto.Saltine.Core.Password
 import Crypto.Saltine.Internal.Util
 import Data.Monoid
-import Data.Maybe                             (isJust, isNothing)
+import Data.Maybe                             (isJust, isNothing, fromJust)
 import Data.ByteString                        (ByteString)
+import Data.Text                              (Text)
 import Debug.Trace
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
@@ -20,7 +21,10 @@ import Test.QuickCheck.Property               (ioProperty)
 import qualified Crypto.Saltine.Internal.Password as I
 import qualified Data.ByteString                  as S
 import qualified Data.ByteString.Char8            as S8
+import qualified Data.Text                        as T
 
+instance Arbitrary Text where
+    arbitrary = T.pack <$> arbitrary
 
 instance Arbitrary Algorithm where
     arbitrary = elements $ enumFromTo minBound maxBound
@@ -39,39 +43,38 @@ instance Arbitrary Opslimit where
 instance Arbitrary Policy where
     arbitrary = applyArbitrary3 Policy
 
-rightInverseProp :: Message -> Policy -> IO Bool
-rightInverseProp (Message pw) pol = do
+rightInverseProp :: Text -> Policy -> IO Bool
+rightInverseProp pw pol = do
     h <- pwhashStr pw pol
-    pure $ pwhashStrVerify h pw
+    pure $ pwhashStrVerify (fromJust h) pw
 
-rightInverseFailureProp1 :: Message -> Policy -> Perturb -> IO Bool
-rightInverseFailureProp1 (Message pw) pol per@(Perturb p) =
-    let np  = perturb pw ([0] <> per)
-        np2 = if np == pw then np <> S.pack p else np
+rightInverseFailureProp1 :: Text -> Policy -> Text -> IO Bool
+rightInverseFailureProp1 pw pol per =
+    let npw = T.reverse pw <> T.pack "0"
     in do
         h <- pwhashStr pw pol
-        pure . not $ pwhashStrVerify h np2
+        pure . not $ pwhashStrVerify (fromJust h) npw
 
-rightProp :: Message -> Policy -> IO Bool
-rightProp (Message pw) pol = do
+rightProp :: Text -> Policy -> IO Bool
+rightProp pw pol = do
     h <- pwhashStr pw pol
-    pure $ Just False == needsRehash (opsPolicy pol) (memPolicy pol) h
+    pure $ Just False == needsRehash (opsPolicy pol) (memPolicy pol) (fromJust h)
 
-rightFailureProp :: Message -> Opslimit -> Opslimit -> Memlimit -> Memlimit -> IO Bool
-rightFailureProp (Message pw) ops1 ops2 mem1 mem2 = do
+rightFailureProp :: Text -> Opslimit -> Opslimit -> Memlimit -> Memlimit -> IO Bool
+rightFailureProp pw ops1 ops2 mem1 mem2 = do
     h <- pwhashStr pw (Policy ops1 mem1 defaultAlgorithm)
-    pure $ Just True == needsRehash ops2 mem2 h
+    pure $ Just True == needsRehash ops2 mem2 (fromJust h)
             || ops1 == ops2
 
-rightFailureProp2 :: Message -> Opslimit -> Memlimit -> Bool
-rightFailureProp2 (Message invhash) ops mem =
+rightFailureProp2 :: Text -> Opslimit -> Memlimit -> Bool
+rightFailureProp2 invhash ops mem =
     isNothing $ needsRehash ops mem (I.PasswordHash invhash)
 
-rightProp2 :: Salt -> Message -> Policy -> Gen Bool
-rightProp2 salt (Message bs) pol = do
+rightProp2 :: Salt -> Text -> Policy -> Gen Bool
+rightProp2 salt pw pol = do
     i <- chooseInt (I.pwhash_bytes_min, 1024)
 
-    pure $ isJust $ pwhash bs i salt pol
+    pure $ isJust $ pwhash pw i salt pol
 
 
 testPassword :: Test

@@ -12,6 +12,10 @@
 --
 -- When in doubt, just use one of [ interactivePolicy, moderatePolicy, sensitivePolicy ],
 -- but this module also allows you to fine-tune parameters for specific circumstances.
+--
+-- This module uses the `Text` type for passwords, because this seems to be the only
+-- reasonable way to get consistent encodings across locales and architectures, short of
+-- letting users mess around with ByteStrings themselves.
 
 module Crypto.Saltine.Core.Password
   ( Salt
@@ -23,7 +27,6 @@ module Crypto.Saltine.Core.Password
   , pwhashStrVerify
   , pwhash
 
-  -- * Hashing policy
   , Policy(..)
   , interactivePolicy
   , moderatePolicy
@@ -58,12 +61,13 @@ module Crypto.Saltine.Core.Password
 import Crypto.Saltine.Internal.Util
 import Crypto.Saltine.Internal.Password as I
 import Data.ByteString (ByteString)
+import Data.Text       (Text)
 import Foreign.C
 import System.IO.Unsafe
 
 import qualified Crypto.Saltine.Internal.Password as Bytes
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BS8
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 
 
 newSalt :: IO Salt
@@ -71,24 +75,27 @@ newSalt = Salt <$> randomByteString Bytes.pwhash_saltbytes
 
 -- | Hashes a password according to the policy
 -- This function is non-deterministic and hence in IO.
-pwhashStr :: ByteString -> Policy -> IO PasswordHash
+-- Since this function may cause a huge amount of memory to be allocated, it will return
+-- Nothing if the allocation failed and on any other error.
+pwhashStr :: Text -> Policy -> IO (Maybe PasswordHash)
 pwhashStr pw policy = do
-  let (ops, mem, _alg)  = unpackPolicy policy
-  let pwlen             = fromIntegral $ BS.length pw
+  let (ops, mem, _alg) = unpackPolicy policy
 
-  fmap (PasswordHash . snd) $ buildUnsafeVariableByteString' pwhash_strbytes $ \pp ->
-    constByteStrings [pw] $ \
-      [(ppw, _)] ->
-          c_pwhash_str pp ppw pwlen (fromIntegral ops) (fromIntegral mem)
+  -- Hash is always ASCII, so no decoding needed
+  fmap (fmap (PasswordHash . T.pack)) $ allocaBytes pwhash_strbytes $ \pp ->
+    constByteStrings [TE.encodeUtf8 pw] $ \ [(ppw, ppwlen)] -> do
+          ret <- c_pwhash_str pp ppw (fromIntegral ppwlen) (fromIntegral ops) (fromIntegral mem)
+
+          case ret of
+              0 -> Just <$> peekCAString pp
+              _ -> pure Nothing
 
 -- | Verifies that a certain password hash was constructed from the supplied password
-pwhashStrVerify :: PasswordHash -> ByteString -> Bool
-pwhashStrVerify (PasswordHash bs) pw = unsafePerformIO $
-  constByteStrings [bs, pw] $ \[(pbs, _), (ppw, _)] -> do
-    res <- c_pwhash_str_verify pbs ppw pwlen
+pwhashStrVerify :: PasswordHash -> Text -> Bool
+pwhashStrVerify (PasswordHash h) pw = unsafePerformIO $
+  constByteStrings [TE.encodeUtf8 $ T.snoc h '\NUL', TE.encodeUtf8 pw] $ \[(ph, _), (ppw, ppwlen)] -> do
+    res <- c_pwhash_str_verify ph ppw (fromIntegral ppwlen)
     pure (res == 0)
-  where
-    pwlen = fromIntegral $ BS.length pw
 
 -- | Indicates whether a password needs to be rehashed, because the opslimit/memlimit parameters
 -- used to hash the password are inconsistent with the supplied values.
@@ -96,27 +103,27 @@ pwhashStrVerify (PasswordHash bs) pw = unsafePerformIO $
 -- Internally this function will always use the current DefaultAlgorithm and hence will give
 -- undefined results if a different algorithm was used to hash the password.
 needsRehash :: Opslimit -> Memlimit -> PasswordHash -> Maybe Bool
-needsRehash (Opslimit ops) (Memlimit mem) (PasswordHash bs) =
+needsRehash (Opslimit ops) (Memlimit mem) (PasswordHash h) =
     unsafePerformIO $
-        constByteStrings [bs] $ \[(pbs, _)] -> do
-                res <- c_pwhash_str_needs_rehash pbs (fromIntegral ops) (fromIntegral mem)
-                pure $  if res == -1
-                        then Nothing
-                        else Just (res == 1)
+        constByteStrings [TE.encodeUtf8 $ T.snoc h '\NUL'] $ \[(ph,_)] -> do
+            res <- c_pwhash_str_needs_rehash ph (fromIntegral ops) (fromIntegral mem)
+            pure $  if res == -1
+                    then Nothing
+                    else Just (res == 1)
 
 -- | Derives a key of the specified length from a password using a salt according to the provided policy.
 -- Since this function may cause a huge amount of memory to be allocated, it will return
 -- Nothing if the allocation failed and on any other error.
-pwhash :: ByteString -> Int -> Salt -> Policy -> Maybe ByteString
+pwhash :: Text -> Int -> Salt -> Policy -> Maybe ByteString
 pwhash pw len (Salt salt) policy = do
   let (ops, mem, alg) = unpackPolicy policy
 
   let (e, hashed) =
         buildUnsafeByteString len $ \hbuf ->
-          constByteStrings [pw, salt] $ \[(ppw, _), (psalt, _)] ->
+          constByteStrings [TE.encodeUtf8 pw, salt] $ \[(ppw,ppwlen), (psalt,_)] ->
               c_pwhash
                     hbuf (fromIntegral len)
-                    ppw (fromIntegral $ BS.length pw)
+                    ppw (fromIntegral ppwlen)
                     psalt
                     (fromIntegral ops)
                     (fromIntegral mem)

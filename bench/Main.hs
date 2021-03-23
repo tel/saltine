@@ -61,8 +61,8 @@ main = do
   xChaCha20Poly1305KeyToEval <- xChaCha20Poly1305Env
   xChaCha20Poly1305Key <- evaluate $ force xChaCha20Poly1305KeyToEval
 
-  defaultMain
-    [ benchAuth authKey
+  defaultMain [
+      benchAuth authKey
     , benchOneTimeAuth oneTimeAuthKey
     , benchBox boxKeys
     , benchSecretbox secretboxKey
