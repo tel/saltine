@@ -111,20 +111,20 @@ newKeypair :: IO Keypair
 newKeypair = do
   -- This is a little bizarre and a likely source of errors.
   -- _err ought to always be 0.
-  ((_err, sk), pk) <- buildUnsafeByteString' Bytes.boxPK $ \pkbuf ->
-    buildUnsafeByteString' Bytes.boxSK $ \skbuf ->
+  ((_err, sk), pk) <- buildUnsafeByteString' Bytes.box_publickeybytes $ \pkbuf ->
+    buildUnsafeByteString' Bytes.box_secretkeybytes $ \skbuf ->
       c_box_keypair pkbuf skbuf
   return (SK sk, PK pk)
 
 -- | Randomly generates a nonce for usage with 'box' and 'boxOpen'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomByteString Bytes.boxNonce
+newNonce = Nonce <$> randomByteString Bytes.box_noncebytes
 
 -- | Build a 'CombinedKey' for sending from 'SecretKey' to
 -- 'PublicKey'. This is a precomputation step which can accelerate
 -- later encryption calls.
 beforeNM :: SecretKey -> PublicKey -> CombinedKey
-beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeByteString Bytes.boxBeforeNM $ \ckbuf ->
+beforeNM (SK sk) (PK pk) = CK $ snd $ buildUnsafeByteString Bytes.box_beforenmbytes $ \ckbuf ->
   constByteStrings [pk, sk] $ \[(ppk, _), (psk, _)] ->
     c_box_beforenm ckbuf ppk psk
 
@@ -145,7 +145,7 @@ box (PK pk) (SK sk) (Nonce nonce) msg =
       [(ppk, _), (psk, _), (pm, _), (pn, _)] ->
         c_box_easy pc pm (fromIntegral msgLen) pn ppk psk
   where
-    bufSize = S.length msg + Bytes.boxMac
+    bufSize = S.length msg + Bytes.box_macbytes
     msgLen  = S.length msg
 
 -- | Decrypts a message sent from the owner of the public key. They
@@ -158,7 +158,7 @@ boxOpen :: PublicKey -> SecretKey -> Nonce
         -- ^ Message
 boxOpen (PK pk) (SK sk) (Nonce nonce) cipher = do
   let msgLen = S.length cipher
-  bufSize <- msgLen `safeSubtract` Bytes.boxMac
+  bufSize <- msgLen `safeSubtract` Bytes.box_macbytes
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [pk, sk, cipher, nonce] $ \
           [(ppk, _), (psk, _), (pc, _), (pn, _)] ->
@@ -179,7 +179,7 @@ boxAfterNM (CK ck) (Nonce nonce) msg =
       [(pck, _), (pm, _), (pn, _)] ->
         c_box_easy_afternm pc pm (fromIntegral msgLen) pn pck
   where
-    bufSize = S.length msg + Bytes.boxMac
+    bufSize = S.length msg + Bytes.box_macbytes
     msgLen  = S.length msg
 
 -- | 'boxOpen' using a 'CombinedKey' and is thus faster.
@@ -191,7 +191,7 @@ boxOpenAfterNM :: CombinedKey
                -- ^ Message
 boxOpenAfterNM (CK ck) (Nonce nonce) cipher = do
   let msgLen = S.length cipher
-  bufSize <- msgLen `safeSubtract` Bytes.boxMac
+  bufSize <- msgLen `safeSubtract` Bytes.box_macbytes
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [ck, cipher, nonce] $ \
           [(pck, _), (pc, _), (pn, _)] ->
@@ -209,7 +209,7 @@ boxSeal (PK pk) msg = fmap snd . buildUnsafeByteString' bufSize $ \pc ->
       [(ppk, _), (pm, _)] ->
         c_box_seal pc pm (fromIntegral msgLen) ppk
   where
-    bufSize = S.length msg + Bytes.sealedBox
+    bufSize = S.length msg + Bytes.box_sealbytes
     msgLen  = S.length msg
 
 -- | Decrypts a sealed box message. The message must have been
@@ -224,7 +224,7 @@ boxSealOpen :: PublicKey
             -- ^ Message
 boxSealOpen (PK pk) (SK sk) cipher = do
   let msgLen = S.length cipher
-  bufSize <- msgLen `safeSubtract` Bytes.sealedBox
+  bufSize <- msgLen `safeSubtract` Bytes.box_sealbytes
   let (err, vec) = buildUnsafeByteString bufSize $ \pm ->
         constByteStrings [pk, sk, cipher] $ \
           [(ppk, _), (psk, _), (pc, _)] ->

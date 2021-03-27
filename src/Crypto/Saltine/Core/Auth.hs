@@ -57,7 +57,7 @@ import qualified Crypto.Saltine.Internal.Auth as Bytes
 
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key
-newKey = Key <$> randomByteString Bytes.authKey
+newKey = Key <$> randomByteString Bytes.auth_keybytes
 
 -- | Computes an keyed authenticator 'ByteString' from a message. It
 -- is infeasible to forge these authenticators without the key, even
@@ -68,7 +68,7 @@ auth :: Key
      -- ^ Message
      -> Authenticator
 auth (Key key) msg =
-  Au . snd . buildUnsafeByteString Bytes.auth $ \pa ->
+  Au . snd . buildUnsafeByteString Bytes.auth_bytes $ \pa ->
     constByteStrings [key, msg] $ \[(pk, _), (pm, mlen)] ->
     c_auth pa pm (fromIntegral mlen) pk
 

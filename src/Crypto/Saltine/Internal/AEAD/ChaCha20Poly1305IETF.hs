@@ -22,6 +22,8 @@ module Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF (
 
 import Control.DeepSeq
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -38,7 +40,7 @@ newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, N
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show = bin2hex . encode
+    show k = "AEAD.ChaCha20Poly1305IETF.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding Key where
   decode v = if S.length v == aead_chacha20poly1305_ietf_keybytes
@@ -51,7 +53,7 @@ instance IsEncoding Key where
 -- | An opaque 'ChaCha20Poly1305IETF' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Nonce where
-    show = bin2hex . encode
+    show k = "AEAD.ChaCha20Poly1305IETF.Nonce " <> bin2hex (encode k)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == aead_chacha20poly1305_ietf_npubbytes

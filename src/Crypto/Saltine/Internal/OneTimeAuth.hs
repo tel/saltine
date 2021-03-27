@@ -9,8 +9,8 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.OneTimeAuth (
-    onetime
-  , onetimeKey
+    onetimeauth_bytes
+  , onetimeauth_keybytes
   , c_onetimeauth
   , c_onetimeauth_verify
   , Key(..)
@@ -20,6 +20,8 @@ module Crypto.Saltine.Internal.OneTimeAuth (
 
 import Control.DeepSeq
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -35,10 +37,10 @@ newtype Key           = Key ByteString deriving (Ord, Hashable, Data, Typeable, 
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show = bin2hex . encode
+    show k = "OneTimeAuth.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding Key where
-  decode v = if S.length v == onetimeKey
+  decode v = if S.length v == onetimeauth_keybytes
            then Just (Key v)
            else Nothing
   {-# INLINE decode #-}
@@ -48,10 +50,10 @@ instance IsEncoding Key where
 -- | An opaque 'auth' authenticator.
 newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Authenticator where
-    show = bin2hex . encode
+    show k = "OneTimeAuth.Authenticator " <> bin2hex (encode k)
 
 instance IsEncoding Authenticator where
-  decode v = if S.length v == onetime
+  decode v = if S.length v == onetimeauth_bytes
            then Just (Au v)
            else Nothing
   {-# INLINE decode #-}
@@ -59,13 +61,13 @@ instance IsEncoding Authenticator where
   {-# INLINE encode #-}
 
 
-onetime, onetimeKey :: Int
+onetimeauth_bytes, onetimeauth_keybytes :: Int
 
 -- OneTimeAuth
 -- | Size of a @crypto_onetimeauth@ authenticator.
-onetime    = fromIntegral c_crypto_onetimeauth_bytes
+onetimeauth_bytes    = fromIntegral c_crypto_onetimeauth_bytes
 -- | Size of a @crypto_onetimeauth@ authenticator key.
-onetimeKey = fromIntegral c_crypto_onetimeauth_keybytes
+onetimeauth_keybytes = fromIntegral c_crypto_onetimeauth_keybytes
 
 -- src/libsodium/crypto_onetimeauth/crypto_onetimeauth.c
 foreign import ccall "crypto_onetimeauth_bytes"

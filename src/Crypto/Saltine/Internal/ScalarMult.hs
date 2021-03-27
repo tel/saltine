@@ -9,8 +9,8 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.ScalarMult (
-    mult
-  , multScalar
+    scalarmult_bytes
+  , scalarmult_scalarbytes
   , c_scalarmult
   , c_scalarmult_base
   , GroupElement(..)
@@ -36,7 +36,7 @@ instance Show GroupElement where
     show = bin2hex . encode
 
 instance IsEncoding GroupElement where
-  decode v = if S.length v == mult
+  decode v = if S.length v == scalarmult_bytes
            then Just (GE v)
            else Nothing
   {-# INLINE decode #-}
@@ -49,7 +49,7 @@ instance Show Scalar where
     show = bin2hex . encode
 
 instance IsEncoding Scalar where
-  decode v = if S.length v == multScalar
+  decode v = if S.length v == scalarmult_scalarbytes
            then Just (Sc v)
            else Nothing
   {-# INLINE decode #-}
@@ -57,14 +57,14 @@ instance IsEncoding Scalar where
   {-# INLINE encode #-}
 
 
-mult, multScalar :: Int
+scalarmult_bytes, scalarmult_scalarbytes :: Int
 
 -- ScalarMult
 -- | Size of a group element string representation for
 -- @crypto_scalarmult@.
-mult = fromIntegral c_crypto_scalarmult_bytes
+scalarmult_bytes = fromIntegral c_crypto_scalarmult_bytes
 -- | Size of a integer string representation for @crypto_scalarmult@.
-multScalar = fromIntegral c_crypto_scalarmult_scalarbytes
+scalarmult_scalarbytes = fromIntegral c_crypto_scalarmult_scalarbytes
 
 -- src/libsodium/crypto_scalarmult/crypto_scalarmult.c
 foreign import ccall "crypto_scalarmult_bytes"

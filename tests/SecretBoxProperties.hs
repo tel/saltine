@@ -20,12 +20,12 @@ import           Test.QuickCheck.Arbitrary
 
 instance Arbitrary Nonce where
     arbitrary =
-        do bs <- S.pack <$> vector Bytes.secretBoxNonce
+        do bs <- S.pack <$> vector Bytes.secretbox_noncebytes
            pure $ fromJust  (decode bs)
 
 instance Arbitrary Key where
     arbitrary =
-        do bs <- S.pack <$> vector Bytes.secretBoxKey
+        do bs <- S.pack <$> vector Bytes.secretbox_keybytes
            pure $ fromJust (decode bs)
 
 -- | Ciphertext can be decrypted

@@ -9,8 +9,8 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.Auth (
-    auth
-  , authKey
+    auth_bytes
+  , auth_keybytes
   , c_auth
   , c_auth_verify
   , Key(..)
@@ -20,6 +20,8 @@ module Crypto.Saltine.Internal.Auth (
 
 import Control.DeepSeq
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -35,10 +37,10 @@ newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, N
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show = bin2hex . encode
+    show k = "Auth.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding Key where
-  decode v = if S.length v == authKey
+  decode v = if S.length v == auth_keybytes
            then Just (Key v)
            else Nothing
   {-# INLINE decode #-}
@@ -48,10 +50,10 @@ instance IsEncoding Key where
 -- | An opaque 'auth' authenticator.
 newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Authenticator where
-    show = bin2hex . encode
+    show k = "Auth.Authenticator " <> bin2hex (encode k)
 
 instance IsEncoding Authenticator where
-  decode v = if S.length v == auth
+  decode v = if S.length v == auth_bytes
            then Just (Au v)
            else Nothing
   {-# INLINE decode #-}
@@ -59,13 +61,13 @@ instance IsEncoding Authenticator where
   {-# INLINE encode #-}
 
 
-auth, authKey :: Int
+auth_bytes, auth_keybytes :: Int
 
 -- Authentication
 -- | Size of a @crypto_auth@ authenticator.
-auth    = fromIntegral c_crypto_auth_bytes
+auth_bytes    = fromIntegral c_crypto_auth_bytes
 -- | Size of a @crypto_auth@ authenticator key.
-authKey = fromIntegral c_crypto_auth_keybytes
+auth_keybytes = fromIntegral c_crypto_auth_keybytes
 
 -- src/libsodium/crypto_auth/crypto_auth.c
 foreign import ccall "crypto_auth_bytes"

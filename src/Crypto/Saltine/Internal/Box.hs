@@ -9,14 +9,14 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.Box (
-    boxPK
-  , boxSK
-  , boxNonce
-  , boxZero
-  , boxBoxZero
-  , boxMac
-  , boxBeforeNM
-  , sealedBox
+    box_publickeybytes
+  , box_secretkeybytes
+  , box_noncebytes
+  , box_zerobytes
+  , box_boxzerobytes
+  , box_macbytes
+  , box_beforenmbytes
+  , box_sealbytes
   , c_box_keypair
   , c_box_easy
   , c_box_open_easy
@@ -34,6 +34,8 @@ module Crypto.Saltine.Internal.Box (
 
 import Control.DeepSeq              (NFData)
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -49,10 +51,10 @@ newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Gener
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 instance Show SecretKey where
-    show = bin2hex . encode
+    show k = "Box.SecretKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding SecretKey where
-  decode v = if S.length v == boxSK
+  decode v = if S.length v == box_secretkeybytes
            then Just (SK v)
            else Nothing
   {-# INLINE decode #-}
@@ -64,10 +66,10 @@ newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Gener
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 instance Show PublicKey where
-    show = bin2hex . encode
+    show k = "Box.SecretKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding PublicKey where
-  decode v = if S.length v == boxPK
+  decode v = if S.length v == box_publickeybytes
            then Just (PK v)
            else Nothing
   {-# INLINE decode #-}
@@ -82,10 +84,10 @@ newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Gen
 instance Eq CombinedKey where
     CK a == CK b = U.compare a b
 instance Show CombinedKey where
-    show = bin2hex . encode
+    show k = "Box.CombinedKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding CombinedKey where
-  decode v = if S.length v == boxBeforeNM
+  decode v = if S.length v == box_beforenmbytes
            then Just (CK v)
            else Nothing
   {-# INLINE decode #-}
@@ -94,9 +96,11 @@ instance IsEncoding CombinedKey where
 
 -- | An opaque 'box' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+instance Show Nonce where
+    show k = "Box.Nonce " <> bin2hex (encode k)
 
 instance IsEncoding Nonce where
-  decode v = if S.length v == boxNonce
+  decode v = if S.length v == box_noncebytes
            then Just (Nonce v)
            else Nothing
   {-# INLINE decode #-}
@@ -104,34 +108,34 @@ instance IsEncoding Nonce where
   {-# INLINE encode #-}
 
 instance IsNonce Nonce where
-  zero            = Nonce (S.replicate boxNonce 0)
+  zero            = Nonce (S.replicate box_noncebytes 0)
   nudge (Nonce n) = Nonce (nudgeBS n)
 
 
-boxPK, boxSK, boxNonce, boxZero, boxBoxZero :: Int
-boxMac, boxBeforeNM, sealedBox :: Int
+box_publickeybytes, box_secretkeybytes, box_noncebytes, box_zerobytes, box_boxzerobytes :: Int
+box_macbytes, box_beforenmbytes, box_sealbytes :: Int
 
 -- Box
 -- | Size of a @crypto_box@ public key
-boxPK       = fromIntegral c_crypto_box_publickeybytes
+box_publickeybytes  = fromIntegral c_crypto_box_publickeybytes
 -- | Size of a @crypto_box@ secret key
-boxSK       = fromIntegral c_crypto_box_secretkeybytes
+box_secretkeybytes  = fromIntegral c_crypto_box_secretkeybytes
 -- | Size of a @crypto_box@ nonce
-boxNonce    = fromIntegral c_crypto_box_noncebytes
+box_noncebytes      = fromIntegral c_crypto_box_noncebytes
 -- | Size of 0-padding prepended to messages before using @crypto_box@
 -- or after using @crypto_box_open@
-boxZero     = fromIntegral c_crypto_box_zerobytes
+box_zerobytes       = fromIntegral c_crypto_box_zerobytes
 -- | Size of 0-padding prepended to ciphertext before using
 -- @crypto_box_open@ or after using @crypto_box@.
-boxBoxZero  = fromIntegral c_crypto_box_boxzerobytes
-boxMac      = fromIntegral c_crypto_box_macbytes
+box_boxzerobytes    = fromIntegral c_crypto_box_boxzerobytes
+box_macbytes        = fromIntegral c_crypto_box_macbytes
 -- | Size of a @crypto_box_beforenm@-generated combined key
-boxBeforeNM = fromIntegral c_crypto_box_beforenmbytes
+box_beforenmbytes   = fromIntegral c_crypto_box_beforenmbytes
 
 -- SealedBox
 -- | Amount by which ciphertext is longer than plaintext
 -- in sealed boxes
-sealedBox = fromIntegral c_crypto_box_sealbytes
+box_sealbytes       = fromIntegral c_crypto_box_sealbytes
 
 -- src/libsodium/crypto_box/crypto_box.c
 foreign import ccall "crypto_box_publickeybytes"

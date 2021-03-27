@@ -13,7 +13,7 @@
 -- When in doubt, just use one of [ interactivePolicy, moderatePolicy, sensitivePolicy ],
 -- but this module also allows you to fine-tune parameters for specific circumstances.
 --
--- This module uses the `Text` type for passwords, because this seems to be the only
+-- This module uses the @Text@ type for passwords, because this seems to be the only
 -- reasonable way to get consistent encodings across locales and architectures, short of
 -- letting users mess around with ByteStrings themselves.
 

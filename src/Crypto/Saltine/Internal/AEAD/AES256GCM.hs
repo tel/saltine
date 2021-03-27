@@ -23,6 +23,8 @@ module Crypto.Saltine.Internal.AEAD.AES256GCM (
 
 import Control.DeepSeq
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -38,7 +40,7 @@ newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, N
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show = bin2hex . encode
+    show k = "AEAD.AES256GCM.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding Key where
   decode v = if S.length v == aead_aes256gcm_keybytes
@@ -51,7 +53,7 @@ instance IsEncoding Key where
 -- | An opaque 'AES256GCM' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Nonce where
-    show = bin2hex . encode
+    show k = "AEAD.AES256GCM.Nonce " <> bin2hex (encode k)
 
 instance IsEncoding Nonce where
   decode v = if S.length v == aead_aes256gcm_npubbytes

@@ -9,9 +9,9 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.Sign (
-    sign
-  , signPK
-  , signSK
+    sign_bytes
+  , sign_publickeybytes
+  , sign_secretkeybytes
   , c_sign_keypair
   , c_sign
   , c_sign_open
@@ -24,6 +24,8 @@ module Crypto.Saltine.Internal.Sign (
 
 import Control.DeepSeq              (NFData)
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -40,10 +42,10 @@ newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Gener
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 instance Show SecretKey where
-    show = bin2hex . encode
+    show k = "Sign.SecretKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding SecretKey where
-  decode v = if S.length v == signSK
+  decode v = if S.length v == sign_secretkeybytes
            then Just (SK v)
            else Nothing
   {-# INLINE decode #-}
@@ -55,10 +57,10 @@ newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Gener
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 instance Show PublicKey where
-    show = bin2hex . encode
+    show k = "Sign.PublicKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding PublicKey where
-  decode v = if S.length v == signPK
+  decode v = if S.length v == sign_publickeybytes
            then Just (PK v)
            else Nothing
   {-# INLINE decode #-}
@@ -68,16 +70,16 @@ instance IsEncoding PublicKey where
 -- | A convenience type for keypairs
 type Keypair = (SecretKey, PublicKey)
 
-sign, signPK, signSK :: Int
+sign_bytes, sign_publickeybytes, sign_secretkeybytes :: Int
 
 -- Signatures
 -- | The maximum size of a signature prepended to a message to form a
 -- signed message.
-sign   = fromIntegral c_crypto_sign_bytes
+sign_bytes          = fromIntegral c_crypto_sign_bytes
 -- | The size of a public key for signing verification
-signPK = fromIntegral c_crypto_sign_publickeybytes
+sign_publickeybytes = fromIntegral c_crypto_sign_publickeybytes
 -- | The size of a secret key for signing
-signSK = fromIntegral c_crypto_sign_secretkeybytes
+sign_secretkeybytes = fromIntegral c_crypto_sign_secretkeybytes
 
 -- src/libsodium/crypto_sign/crypto_sign.c
 foreign import ccall "crypto_sign_bytes"

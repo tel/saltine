@@ -55,6 +55,7 @@ import Crypto.Saltine.Internal.Hash
             ( c_hash
             , c_shorthash
             , c_generichash
+            , shorthash
             , ShorthashKey(..)
             , GenerichashKey(..)
             , GenerichashOutLen(..)
@@ -72,32 +73,22 @@ hash :: ByteString
      -- ^ Message
      -> ByteString
      -- ^ Hash
-hash m = snd . buildUnsafeByteString Bytes.hash $ \ph ->
+hash m = snd . buildUnsafeByteString Bytes.hash_bytes $ \ph ->
   constByteStrings [m] $ \[(pm, _)] -> c_hash ph pm (fromIntegral $ S.length m)
 
 -- | Randomly generates a new key for 'shorthash'.
 newShorthashKey :: IO ShorthashKey
-newShorthashKey = ShK <$> randomByteString Bytes.shorthashKey
-
--- | Computes a very short, fast keyed hash.
-shorthash :: ShorthashKey
-          -> ByteString
-          -- ^ Message
-          -> ByteString
-          -- ^ Hash
-shorthash (ShK k) m = snd . buildUnsafeByteString Bytes.shorthash $ \ph ->
-  constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
-    c_shorthash ph pm (fromIntegral $ S.length m) pk
+newShorthashKey = ShK <$> randomByteString Bytes.shorthash_keybytes
 
 -- | Randomly generates a new key for 'generichash' of the given length.
 newGenerichashKey :: Int -> IO (Maybe GenerichashKey)
-newGenerichashKey n = if n >= 0 && n <= Bytes.generichashKeyLenMax
+newGenerichashKey n = if n >= 0 && n <= Bytes.generichash_keybytes_max
                       then Just . GhK <$> randomByteString n
                       else return Nothing
 
 -- | Create a validated Generichash output length
 generichashOutLen :: Int -> Maybe GenerichashOutLen
-generichashOutLen n = if n > 0 && n <= Bytes.generichashOutLenMax
+generichashOutLen n = if n > 0 && n <= Bytes.generichash_bytes_max
                       then Just $ GhOL $ fromIntegral n
                       else Nothing
 

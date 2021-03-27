@@ -114,7 +114,7 @@ newtype Salt = Salt { unSalt :: ByteString } deriving (Ord, Data, Hashable, Type
 instance Eq Salt where
     Salt a == Salt b = U.compare a b
 instance Show Salt where
-    show = bin2hex . encode
+    show k = "Password.Salt " <> bin2hex (encode k)
 
 instance IsEncoding Salt where
   decode v = if S.length v == pwhash_saltbytes

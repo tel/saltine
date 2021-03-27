@@ -18,8 +18,8 @@ import BenchUtils
 
 scalarMultEnv :: IO (GroupElement, Scalar)
 scalarMultEnv = do
-    bsge <- randomByteString Bytes.mult
-    bssc <- randomByteString Bytes.multScalar
+    bsge <- randomByteString Bytes.scalarmult_bytes
+    bssc <- randomByteString Bytes.scalarmult_scalarbytes
 
     let ge = fromJust $ decode bsge
     let sc = fromJust $ decode bssc

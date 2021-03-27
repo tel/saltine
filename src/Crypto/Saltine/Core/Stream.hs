@@ -68,12 +68,12 @@ import qualified Data.ByteString                as S
 
 -- | Creates a random key of the correct size for 'stream' and 'xor'.
 newKey :: IO Key
-newKey = Key <$> randomByteString Bytes.streamKey
+newKey = Key <$> randomByteString Bytes.stream_keybytes
 
 -- | Creates a random nonce of the correct size for 'stream' and
 -- 'xor'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomByteString Bytes.streamNonce
+newNonce = Nonce <$> randomByteString Bytes.stream_noncebytes
 
 -- | Generates a cryptographic random stream indexed by the 'Key' and
 -- 'Nonce'. These streams are indistinguishable from random noise so

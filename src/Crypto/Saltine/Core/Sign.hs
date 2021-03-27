@@ -58,8 +58,8 @@ newKeypair :: IO Keypair
 newKeypair = do
   -- This is a little bizarre and a likely source of errors.
   -- _err ought to always be 0.
-  ((_err, sk), pk) <- buildUnsafeByteString' Bytes.signPK $ \pkbuf ->
-    buildUnsafeByteString' Bytes.signSK $ \skbuf ->
+  ((_err, sk), pk) <- buildUnsafeByteString' Bytes.sign_publickeybytes $ \pkbuf ->
+    buildUnsafeByteString' Bytes.sign_secretkeybytes $ \skbuf ->
       c_sign_keypair pkbuf skbuf
   return (SK sk, PK pk)
 
@@ -72,7 +72,7 @@ sign :: SecretKey
      -- ^ Signed message
 sign (SK k) m = unsafePerformIO $
   alloca $ \psmlen -> do
-    (_err, sm) <- buildUnsafeByteString' (len + Bytes.sign) $ \psmbuf ->
+    (_err, sm) <- buildUnsafeByteString' (len + Bytes.sign_bytes) $ \psmbuf ->
       constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
         c_sign psmbuf psmlen pm (fromIntegral len) pk
     smlen <- peek psmlen
@@ -106,7 +106,7 @@ signDetached :: SecretKey
              -- ^ Signature
 signDetached (SK k) m = unsafePerformIO $
     alloca $ \psmlen -> do
-        (_err, sm) <- buildUnsafeByteString' Bytes.sign $ \sigbuf ->
+        (_err, sm) <- buildUnsafeByteString' Bytes.sign_bytes $ \sigbuf ->
             constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
                 c_sign_detached sigbuf psmlen pm (fromIntegral len) pk
         smlen <- peek psmlen

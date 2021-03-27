@@ -54,7 +54,7 @@ import qualified Data.ByteString                   as S
 
 -- | Creates a random key of the correct size for 'auth' and 'verify'.
 newKey :: IO Key
-newKey = Key <$> randomByteString Bytes.onetimeKey
+newKey = Key <$> randomByteString Bytes.onetimeauth_keybytes
 
 -- | Builds a keyed 'Authenticator' for a message. This
 -- 'Authenticator' is /impossible/ to forge so long as the 'Key' is
@@ -64,7 +64,7 @@ auth :: Key
      -- ^ Message
      -> Authenticator
 auth (Key key) msg =
-  Au . snd . buildUnsafeByteString Bytes.onetime $ \pa ->
+  Au . snd . buildUnsafeByteString Bytes.onetimeauth_bytes $ \pa ->
     constByteStrings [key, msg] $ \[(pk, _), (pm, _)] ->
       c_onetimeauth pa pm (fromIntegral $ S.length msg) pk
 

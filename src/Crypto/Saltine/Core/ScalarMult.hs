@@ -69,11 +69,11 @@ import qualified Crypto.Saltine.Internal.ScalarMult as Bytes
 
 
 mult :: Scalar -> GroupElement -> GroupElement
-mult (Sc n) (GE p) = GE . snd . buildUnsafeByteString Bytes.mult $ \pq ->
+mult (Sc n) (GE p) = GE . snd . buildUnsafeByteString Bytes.scalarmult_bytes $ \pq ->
   constByteStrings [n, p] $ \[(pn, _), (pp, _)] ->
     c_scalarmult pq pn pp
 
 multBase :: Scalar -> GroupElement
-multBase (Sc n) = GE . snd . buildUnsafeByteString Bytes.mult $ \pq ->
+multBase (Sc n) = GE . snd . buildUnsafeByteString Bytes.scalarmult_bytes $ \pq ->
   constByteStrings [n] $ \[(pn, _)] ->
     c_scalarmult_base pq pn

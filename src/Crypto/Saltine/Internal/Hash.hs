@@ -9,14 +9,16 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.Hash (
-    hash
-  , shorthash
-  , shorthashKey
-  , generichashOutLenMax
-  , generichashKeyLenMax
+    hash_bytes
+  , shorthash_bytes
+  , shorthash_keybytes
+  , generichash_bytes_max
+  , generichash_keybytes_max
   , c_hash
   , c_shorthash
   , c_generichash
+  , nullShKey
+  , shorthash
   , ShorthashKey(..)
   , GenerichashKey(..)
   , GenerichashOutLen(..)
@@ -32,17 +34,33 @@ import Foreign.C
 import Foreign.Ptr
 import GHC.Generics                 (Generic)
 
-import qualified Data.ByteString as S
+import qualified Data.ByteString       as S
+import qualified Data.ByteString.Char8 as S8
 
 -- | An opaque 'shorthash' cryptographic secret key.
 newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq ShorthashKey where
     ShK a == ShK b = U.compare a b
 instance Show ShorthashKey where
-    show = bin2hex . encode
+    show k = "Hash.ShorthashKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+
+-- | Used for our `Show` instances
+nullShKey :: ShorthashKey
+nullShKey = ShK (S8.replicate shorthash_keybytes '\NUL')
+
+-- | Computes a very short, fast keyed hash.
+-- This function is defined here to break circulat module imports
+shorthash :: ShorthashKey
+          -> ByteString
+          -- ^ Message
+          -> ByteString
+          -- ^ Hash
+shorthash (ShK k) m = snd . buildUnsafeByteString shorthash_bytes $ \ph ->
+  constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
+    c_shorthash ph pm (fromIntegral $ S.length m) pk
 
 instance IsEncoding ShorthashKey where
-  decode v = if S.length v == shorthashKey
+  decode v = if S.length v == shorthash_keybytes
            then Just (ShK v)
            else Nothing
   {-# INLINE decode #-}
@@ -54,10 +72,10 @@ newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable,
 instance Eq GenerichashKey where
     GhK a == GhK b = U.compare a b
 instance Show GenerichashKey where
-    show = bin2hex . encode
+    show k = "Hash.GenerichashKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding GenerichashKey where
-  decode v = if S.length v <= generichashKeyLenMax
+  decode v = if S.length v <= generichash_keybytes_max
              then Just (GhK v)
              else Nothing
   {-# INLINE decode #-}
@@ -66,24 +84,24 @@ instance IsEncoding GenerichashKey where
 
 newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
-hash, shorthash, shorthashKey, generichashOutLenMax, generichashKeyLenMax :: Int
+hash_bytes, shorthash_bytes, shorthash_keybytes, generichash_bytes_max, generichash_keybytes_max :: Int
 
 -- Hashes
 -- | The size of a hash resulting from
 -- 'Crypto.Saltine.Internal.Hash.hash'.
-hash         = fromIntegral c_crypto_hash_bytes
+hash_bytes         = fromIntegral c_crypto_hash_bytes
 -- | The size of a keyed hash resulting from
 -- 'Crypto.Saltine.Internal.Hash.shorthash'.
-shorthash    = fromIntegral c_crypto_shorthash_bytes
+shorthash_bytes    = fromIntegral c_crypto_shorthash_bytes
 -- | The size of a hashing key for the keyed hash function
 -- 'Crypto.Saltine.Internal.Hash.shorthash'.
-shorthashKey = fromIntegral c_crypto_shorthash_keybytes
+shorthash_keybytes = fromIntegral c_crypto_shorthash_keybytes
 -- | The maximum output size of the generic hash function
 -- 'Crypto.Saltine.Core.Hash.generichash'
-generichashOutLenMax = fromIntegral c_crypto_generichash_bytes_max
+generichash_bytes_max = fromIntegral c_crypto_generichash_bytes_max
 -- | The maximum key size of the generic hash function
 -- 'Crypto.Saltine.Core.Hash.generichash'
-generichashKeyLenMax = fromIntegral c_crypto_generichash_keybytes_max
+generichash_keybytes_max = fromIntegral c_crypto_generichash_keybytes_max
 
 -- src/libsodium/crypto_generichash/crypto_generichash.c
 foreign import ccall "crypto_generichash_bytes_max"

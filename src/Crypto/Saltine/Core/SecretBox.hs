@@ -63,11 +63,11 @@ import qualified Data.ByteString                   as S
 
 -- | Creates a random key of the correct size for 'secretbox'.
 newKey :: IO Key
-newKey = Key <$> randomByteString Bytes.secretBoxKey
+newKey = Key <$> randomByteString Bytes.secretbox_keybytes
 
 -- | Creates a random nonce of the correct size for 'secretbox'.
 newNonce :: IO Nonce
-newNonce = Nonce <$> randomByteString Bytes.secretBoxNonce
+newNonce = Nonce <$> randomByteString Bytes.secretbox_noncebytes
 
 -- | Encrypts a message. It is infeasible for an attacker to decrypt
 -- the message so long as the 'Nonce' is never repeated.
@@ -83,9 +83,9 @@ secretbox (Key key) (Nonce nonce) msg =
     constByteStrings [key, pad' msg, nonce] $ \
       [(pk, _), (pm, _), (pn, _)] ->
         c_secretbox pc pm (fromIntegral len) pn pk
-  where len    = S.length msg + Bytes.secretBoxZero
-        pad'   = pad Bytes.secretBoxZero
-        unpad' = unpad Bytes.secretBoxBoxZero
+  where len    = S.length msg + Bytes.secretbox_zerobytes
+        pad'   = pad Bytes.secretbox_zerobytes
+        unpad' = unpad Bytes.secretbox_boxzerobytes
 
 -- | Encrypts a message. In contrast with 'secretbox', the result is not
 -- serialized as one element and instead provided as an authentication tag and
@@ -105,7 +105,7 @@ secretboxDetached (Key key) (Nonce nonce) msg =
         c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
   where ctLen  = ptLen
         ptLen  = S.length msg
-        tagLen = Bytes.secretBoxMac
+        tagLen = Bytes.secretbox_macbytes
 
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
@@ -122,9 +122,9 @@ secretboxOpen (Key key) (Nonce nonce) cipher =
           [(pk, _), (pc, _), (pn, _)] ->
             c_secretbox_open pm pc (fromIntegral len) pn pk
   in hush . handleErrno err $ unpad' vec
-  where len    = S.length cipher + Bytes.secretBoxBoxZero
-        pad'   = pad Bytes.secretBoxBoxZero
-        unpad' = unpad Bytes.secretBoxZero
+  where len    = S.length cipher + Bytes.secretbox_boxzerobytes
+        pad'   = pad Bytes.secretbox_boxzerobytes
+        unpad' = unpad Bytes.secretbox_zerobytes
 
 -- | Decrypts a message. Returns 'Nothing' if the keys and message do
 -- not match.
@@ -138,7 +138,7 @@ secretboxOpenDetached
     -> Maybe ByteString
     -- ^ Message
 secretboxOpenDetached (Key key) (Nonce nonce) tag cipher
-    | S.length tag /= Bytes.secretBoxMac = Nothing
+    | S.length tag /= Bytes.secretbox_macbytes = Nothing
     | otherwise =
   let (err, vec) = buildUnsafeByteString len $ \pm ->
         constByteStrings [key, cipher, tag, nonce] $ \

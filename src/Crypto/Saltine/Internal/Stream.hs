@@ -9,8 +9,8 @@
 -- Portability : non-portable
 --
 module Crypto.Saltine.Internal.Stream (
-    streamKey
-  , streamNonce
+    stream_keybytes
+  , stream_noncebytes
   , c_stream
   , c_stream_xor
   , Key(..)
@@ -19,6 +19,8 @@ module Crypto.Saltine.Internal.Stream (
 
 import Control.DeepSeq              (NFData)
 import Crypto.Saltine.Class
+import Crypto.Saltine.Core.Hash     (shorthash)
+import Crypto.Saltine.Internal.Hash (nullShKey)
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
@@ -34,10 +36,10 @@ newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, N
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show = bin2hex . encode
+    show k = "Stream.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
 
 instance IsEncoding Key where
-  decode v = if S.length v == streamKey
+  decode v = if S.length v == stream_keybytes
            then Just (Key v)
            else Nothing
   {-# INLINE decode #-}
@@ -47,27 +49,27 @@ instance IsEncoding Key where
 -- | An opaque 'stream' nonce.
 newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Nonce where
-    show = bin2hex . encode
+    show k = "Stream.Nonce " <> bin2hex (encode k)
 
 instance IsNonce Nonce where
-  zero = Nonce (S.replicate streamNonce 0)
+  zero = Nonce (S.replicate stream_noncebytes 0)
   nudge (Nonce n) = Nonce (nudgeBS n)
 
 instance IsEncoding Nonce where
-  decode v = if S.length v == streamNonce
+  decode v = if S.length v == stream_noncebytes
            then Just (Nonce v)
            else Nothing
   {-# INLINE decode #-}
   encode (Nonce v) = v
   {-# INLINE encode #-}
 
-streamKey, streamNonce :: Int
+stream_keybytes, stream_noncebytes :: Int
 
 -- Streams
 -- | The size of a key for the cryptographic stream generation
-streamKey   = fromIntegral c_crypto_stream_keybytes
+stream_keybytes   = fromIntegral c_crypto_stream_keybytes
 -- | The size of a nonce for the cryptographic stream generation
-streamNonce = fromIntegral c_crypto_stream_noncebytes
+stream_noncebytes = fromIntegral c_crypto_stream_noncebytes
 
 -- src/libsodium/crypto_stream/crypto_stream.c
 -- src/libsodium/include/sodium/crypto_stream.h
