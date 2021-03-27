@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Crypto.Saltine.Internal.Util (
     module Crypto.Saltine.Internal.Util
   , withCString
@@ -178,3 +180,9 @@ uncurry3 f ~(a,b,c) = f a b c
 
 uncurry5 :: (a -> b -> c -> d -> e -> f) -> ((a, b, c, d, e) -> f)
 uncurry5 f ~(a,b,c,d,e) = f a b c d e
+
+(!&&!) :: Bool -> Bool -> Bool
+(!&&!) !a !b = a && b
+
+(!||!) :: Bool -> Bool -> Bool
+(!||!) !a !b = a || b

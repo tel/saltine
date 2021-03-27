@@ -17,17 +17,17 @@ signEnv = newKeypair
 benchSign :: Keypair -> Benchmark
 benchSign alice = do
   let sign :: ByteString -> ByteString
-      sign = S.sign (fst alice)
+      sign = S.sign (secretKey alice)
 
       verify :: ByteString -> Bool
       verify message =
         let signed = sign message
-        in case S.signOpen (snd alice) signed of
+        in case S.signOpen (publicKey alice) signed of
           Nothing -> False
           Just ms -> True
 
-      signDetached               = S.signDetached       (fst alice)
-      signVerifyDetached message = S.signVerifyDetached (snd alice) (signDetached message)
+      signDetached               = S.signDetached       (secretKey alice)
+      signVerifyDetached message = S.signVerifyDetached (publicKey alice) (signDetached message)
   bgroup "Sign"
     [ bench "newKeypair" $ nfIO newKeypair
     , bgroup "sign"

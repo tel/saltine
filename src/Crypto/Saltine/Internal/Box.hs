@@ -81,7 +81,14 @@ instance IsEncoding PublicKey where
 data Keypair = Keypair {
     secretKey :: SecretKey
   , publicKey :: PublicKey
-}
+} deriving (Ord, Data, Typeable, Generic)
+
+instance Eq Keypair where
+    kp1 == kp2 = U.compare (encode $ secretKey kp1) (encode $ secretKey kp2)
+            !&&! U.compare (encode $ publicKey kp1) (encode $ publicKey kp2)
+
+instance Hashable Keypair
+instance NFData   Keypair
 
 -- | An opaque 'boxAfterNM' cryptographic combined key.
 newtype CombinedKey = CK { unCK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)

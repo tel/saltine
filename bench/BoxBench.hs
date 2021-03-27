@@ -22,13 +22,13 @@ boxEnv = do
 benchBox :: (Keypair, Keypair) -> Benchmark
 benchBox (alice, bob) = do
   let encrypt :: ByteString -> IO ByteString
-      encrypt b = newNonce >>= \n -> pure $ box (snd bob) (fst alice) n b
+      encrypt b = newNonce >>= \n -> pure $ box (publicKey bob) (secretKey alice) n b
 
       decrypt :: ByteString -> IO (Maybe ByteString)
       decrypt message = do
         n <- newNonce
-        let ciphertext = box (snd alice) (fst bob) n message
-        return $ boxOpen (snd bob) (fst alice) n ciphertext
+        let ciphertext = box (publicKey alice) (secretKey bob) n message
+        return $ boxOpen (publicKey bob) (secretKey alice) n ciphertext
 
   bgroup "Box"
     [ bench "newKeypair" $ nfIO newKeypair
