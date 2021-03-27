@@ -37,7 +37,7 @@ import qualified Data.ByteString as S
 
 
 -- | An opaque 'ChaCha20Poly1305IETF' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Key = Key { unKey :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
@@ -52,7 +52,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'ChaCha20Poly1305IETF' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Nonce = Nonce { unNonce :: ByteString } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Nonce where
     show k = "AEAD.ChaCha20Poly1305IETF.Nonce " <> bin2hex (encode k)
 

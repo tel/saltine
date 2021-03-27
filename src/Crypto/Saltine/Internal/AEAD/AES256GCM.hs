@@ -37,7 +37,7 @@ import Foreign.Ptr
 import qualified Data.ByteString as S
 
 -- | An opaque 'AES256GCM' cryptographic key.
-newtype Key = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Key = Key { unKey :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
@@ -52,7 +52,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'AES256GCM' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Nonce = Nonce { unNonce :: ByteString } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Nonce where
     show k = "AEAD.AES256GCM.Nonce " <> bin2hex (encode k)
 

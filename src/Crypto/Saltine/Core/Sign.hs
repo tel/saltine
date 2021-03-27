@@ -27,7 +27,7 @@
 -- This is current information as of 2013 June 6.
 
 module Crypto.Saltine.Core.Sign (
-  SecretKey, PublicKey, Keypair,
+  SecretKey, PublicKey, Keypair(..),
   newKeypair,
   sign, signOpen,
   signDetached, signVerifyDetached
@@ -41,7 +41,7 @@ import Crypto.Saltine.Internal.Sign
             , c_sign_verify_detached
             , SecretKey(..)
             , PublicKey(..)
-            , Keypair
+            , Keypair(..)
             )
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
@@ -61,7 +61,7 @@ newKeypair = do
   ((_err, sk), pk) <- buildUnsafeByteString' Bytes.sign_publickeybytes $ \pkbuf ->
     buildUnsafeByteString' Bytes.sign_secretkeybytes $ \skbuf ->
       c_sign_keypair pkbuf skbuf
-  return (SK sk, PK pk)
+  return $ Keypair (SK sk) (PK pk)
 
 -- | Augments a message with a signature forming a \"signed
 -- message\".

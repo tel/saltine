@@ -31,7 +31,7 @@ import qualified Data.ByteString as S
 
 
 -- | A group element.
-newtype GroupElement = GE ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype GroupElement = GE { unGE :: ByteString } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show GroupElement where
     show = bin2hex . encode
 
@@ -44,7 +44,7 @@ instance IsEncoding GroupElement where
   {-# INLINE encode #-}
 
 -- | A scalar integer.
-newtype Scalar       = Sc ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Scalar       = Sc { unSc :: ByteString } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Scalar where
     show = bin2hex . encode
 

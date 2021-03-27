@@ -27,7 +27,7 @@ module Crypto.Saltine.Internal.Box (
   , c_box_seal_open
   , SecretKey(..)
   , PublicKey(..)
-  , Keypair
+  , Keypair(..)
   , CombinedKey(..)
   , Nonce(..)
 ) where
@@ -48,7 +48,7 @@ import GHC.Generics                 (Generic)
 import qualified Data.ByteString as S
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype SecretKey = SK { unSK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 instance Show SecretKey where
@@ -63,7 +63,7 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype PublicKey = PK { unPK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 instance Show PublicKey where
@@ -78,10 +78,13 @@ instance IsEncoding PublicKey where
   {-# INLINE encode #-}
 
 -- | A convenience type for keypairs
-type Keypair = (SecretKey, PublicKey)
+data Keypair = Keypair {
+    secretKey :: SecretKey
+  , publicKey :: PublicKey
+}
 
 -- | An opaque 'boxAfterNM' cryptographic combined key.
-newtype CombinedKey = CK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype CombinedKey = CK { unCK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq CombinedKey where
     CK a == CK b = U.compare a b
 instance Show CombinedKey where
@@ -96,7 +99,7 @@ instance IsEncoding CombinedKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' nonce.
-newtype Nonce = Nonce ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Nonce = Nonce { unNonce :: ByteString } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Nonce where
     show k = "Box.Nonce " <> bin2hex (encode k)
 

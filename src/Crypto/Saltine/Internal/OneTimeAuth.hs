@@ -34,7 +34,7 @@ import GHC.Generics                 (Generic)
 import qualified Data.ByteString as S
 
 -- | An opaque 'auth' cryptographic key.
-newtype Key           = Key ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Key = Key { unKey :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
@@ -49,7 +49,7 @@ instance IsEncoding Key where
   {-# INLINE encode #-}
 
 -- | An opaque 'auth' authenticator.
-newtype Authenticator = Au ByteString deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype Authenticator = Au { unAu :: ByteString } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Show Authenticator where
     show k = "OneTimeAuth.Authenticator " <> bin2hex (encode k)
 

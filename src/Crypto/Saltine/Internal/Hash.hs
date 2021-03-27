@@ -39,7 +39,7 @@ import qualified Data.ByteString       as S
 import qualified Data.ByteString.Char8 as S8
 
 -- | An opaque 'shorthash' cryptographic secret key.
-newtype ShorthashKey = ShK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype ShorthashKey = ShK { unShK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq ShorthashKey where
     ShK a == ShK b = U.compare a b
 instance Show ShorthashKey where
@@ -69,7 +69,7 @@ instance IsEncoding ShorthashKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'generichash' cryptographic secret key.
-newtype GenerichashKey = GhK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype GenerichashKey = GhK { unGhK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq GenerichashKey where
     GhK a == GhK b = U.compare a b
 instance Show GenerichashKey where
@@ -83,7 +83,7 @@ instance IsEncoding GenerichashKey where
   encode (GhK v) = v
   {-# INLINE encode #-}
 
-newtype GenerichashOutLen = GhOL Int deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype GenerichashOutLen = GhOL { unGhOL :: Int } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
 hash_bytes, shorthash_bytes, shorthash_keybytes, generichash_bytes_max, generichash_keybytes_max :: Int
 

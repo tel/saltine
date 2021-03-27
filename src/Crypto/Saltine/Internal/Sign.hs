@@ -19,7 +19,7 @@ module Crypto.Saltine.Internal.Sign (
   , c_sign_verify_detached
   , SecretKey(..)
   , PublicKey(..)
-  , Keypair
+  , Keypair(..)
 ) where
 
 import Control.DeepSeq              (NFData)
@@ -39,7 +39,7 @@ import qualified Data.ByteString as S
 
 
 -- | An opaque 'box' cryptographic secret key.
-newtype SecretKey = SK ByteString deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
+newtype SecretKey = SK { unSK :: ByteString } deriving (Ord, Hashable, Data, Typeable, Generic, NFData)
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 instance Show SecretKey where
@@ -54,7 +54,7 @@ instance IsEncoding SecretKey where
   {-# INLINE encode #-}
 
 -- | An opaque 'box' cryptographic public key.
-newtype PublicKey = PK ByteString deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
+newtype PublicKey = PK { unPK :: ByteString } deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 instance Show PublicKey where
@@ -69,7 +69,10 @@ instance IsEncoding PublicKey where
   {-# INLINE encode #-}
 
 -- | A convenience type for keypairs
-type Keypair = (SecretKey, PublicKey)
+data Keypair = Keypair {
+    secretKey :: SecretKey
+  , publicKey :: PublicKey
+}
 
 sign_bytes, sign_publickeybytes, sign_secretkeybytes :: Int
 

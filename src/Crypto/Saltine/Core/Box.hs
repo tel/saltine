@@ -78,7 +78,7 @@
 --
 -- This is version 2010.08.30 of the box.html web page.
 module Crypto.Saltine.Core.Box (
-  SecretKey, PublicKey, Keypair, CombinedKey, Nonce,
+  SecretKey, PublicKey, Keypair(..), CombinedKey, Nonce,
   newKeypair, beforeNM, newNonce,
   box, boxOpen,
   boxAfterNM, boxOpenAfterNM,
@@ -95,7 +95,7 @@ import Crypto.Saltine.Internal.Box
             , c_box_seal, c_box_seal_open
             , SecretKey(..)
             , PublicKey(..)
-            , Keypair
+            , Keypair(..)
             , CombinedKey(..)
             , Nonce(..)
             )
@@ -113,7 +113,7 @@ newKeypair = do
   ((_err, sk), pk) <- buildUnsafeByteString' Bytes.box_publickeybytes $ \pkbuf ->
     buildUnsafeByteString' Bytes.box_secretkeybytes $ \skbuf ->
       c_box_keypair pkbuf skbuf
-  return (SK sk, PK pk)
+  return $ Keypair (SK sk) (PK pk)
 
 -- | Randomly generates a nonce for usage with 'box' and 'boxOpen'.
 newNonce :: IO Nonce

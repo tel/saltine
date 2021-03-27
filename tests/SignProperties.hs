@@ -14,8 +14,11 @@ import           Test.QuickCheck
 
 testSign :: Test
 testSign = buildTest $ do
-  (sk1,  pk1) <- newKeypair
-  (_sk2, pk2) <- newKeypair
+  kp1 <- newKeypair
+  let sk1 = secretKey kp1
+  let pk1 = publicKey kp1
+  kp2 <- newKeypair
+  let pk2 = publicKey kp2
 
   return $ testGroup "...Internal.Sign" [
 
