@@ -7,6 +7,7 @@ import           Crypto.Saltine.Class
 
 import           Control.Monad           (replicateM)
 import qualified Data.ByteString       as S
+import           Data.Monoid
 import           Data.Word (Word8)
 import           Data.Bits (xor)
 import           Test.QuickCheck
