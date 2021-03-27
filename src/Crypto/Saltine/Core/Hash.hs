@@ -50,10 +50,8 @@ module Crypto.Saltine.Core.Hash (
   generichashOutLen, generichash
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.Hash
             ( c_hash
-            , c_shorthash
             , c_generichash
             , shorthash
             , ShorthashKey(..)

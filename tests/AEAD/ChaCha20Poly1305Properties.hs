@@ -7,10 +7,9 @@ module AEAD.ChaCha20Poly1305Properties (
 
 import           Util
 import           Crypto.Saltine.Core.AEAD.ChaCha20Poly1305IETF
-import           Crypto.Saltine.Class (decode,encode)
+import           Crypto.Saltine.Class (decode)
 import           Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF as Bytes
 
-import           Control.Applicative
 import qualified Data.ByteString                      as S
 import           Data.Maybe (fromJust)
 import           Test.Framework.Providers.QuickCheck2

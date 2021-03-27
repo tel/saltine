@@ -7,10 +7,9 @@ module AEAD.AES256GCMProperties (
 
 import           Util
 import           Crypto.Saltine.Core.AEAD.AES256GCM
-import           Crypto.Saltine.Class (decode,encode)
+import           Crypto.Saltine.Class (decode)
 import           Crypto.Saltine.Internal.AEAD.AES256GCM as Bytes
 
-import           Control.Applicative
 import qualified Data.ByteString                      as S
 import           Data.Maybe (fromJust)
 import           Test.Framework.Providers.QuickCheck2

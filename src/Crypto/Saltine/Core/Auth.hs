@@ -43,7 +43,6 @@ module Crypto.Saltine.Core.Auth (
   auth, verify
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.Auth
             ( c_auth
             , c_auth_verify

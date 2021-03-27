@@ -5,22 +5,15 @@ module PasswordProperties (
   testPassword
 ) where
 
-import Util
 import Crypto.Saltine.Core.Password
 import Crypto.Saltine.Internal.Util
-import Data.Monoid
 import Data.Maybe                             (isJust, isNothing, fromJust)
-import Data.ByteString                        (ByteString)
 import Data.Text                              (Text)
-import Debug.Trace
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
 import Test.QuickCheck
-import Test.QuickCheck.Property               (ioProperty)
 
 import qualified Crypto.Saltine.Internal.Password as I
-import qualified Data.ByteString                  as S
-import qualified Data.ByteString.Char8            as S8
 import qualified Data.Text                        as T
 
 instance Arbitrary Text where
@@ -50,7 +43,7 @@ rightInverseProp pw pol = do
 
 rightInverseFailureProp1 :: Text -> Policy -> Text -> IO Bool
 rightInverseFailureProp1 pw pol per =
-    let npw = T.reverse pw <> T.pack "0"
+    let npw = T.reverse pw <> T.pack "0" <> per
     in do
         h <- pwhashStr pw pol
         pure . not $ pwhashStrVerify (fromJust h) npw

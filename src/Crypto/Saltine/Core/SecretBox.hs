@@ -46,7 +46,6 @@ module Crypto.Saltine.Core.SecretBox (
   newKey, newNonce
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.SecretBox
             ( c_secretbox
             , c_secretbox_detached

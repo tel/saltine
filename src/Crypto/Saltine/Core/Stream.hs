@@ -53,8 +53,6 @@ module Crypto.Saltine.Core.Stream (
   stream, xor
   ) where
 
-
-import Control.Applicative
 import Crypto.Saltine.Internal.Stream ( c_stream
                                       , c_stream_xor
                                       , Key(..)

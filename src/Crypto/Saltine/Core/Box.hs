@@ -85,7 +85,6 @@ module Crypto.Saltine.Core.Box (
   boxSeal, boxSealOpen
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.Box
             ( c_box_keypair
             , c_box_easy

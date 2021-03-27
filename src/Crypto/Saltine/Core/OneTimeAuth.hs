@@ -39,7 +39,6 @@ module Crypto.Saltine.Core.OneTimeAuth (
   auth, verify
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.OneTimeAuth
             ( c_onetimeauth
             , c_onetimeauth_verify

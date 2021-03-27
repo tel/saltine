@@ -5,15 +5,12 @@ module BoxProperties (
   testBox
   ) where
 
-import           Util
-import           Crypto.Saltine.Core.Box
-import qualified Data.ByteString                      as S
-import           Data.Monoid
-
-import           Test.Framework.Providers.QuickCheck2
-import           Test.Framework
-import           Test.QuickCheck.Property
-import           Test.QuickCheck.Monadic
+import Crypto.Saltine.Core.Box
+import Test.Framework.Providers.QuickCheck2
+import Test.Framework
+import Test.QuickCheck.Property
+import Test.QuickCheck.Monadic
+import Util
 
 -- | Ciphertext can be decrypted
 rightInverseProp :: Keypair -> Keypair -> Nonce -> Message -> Bool

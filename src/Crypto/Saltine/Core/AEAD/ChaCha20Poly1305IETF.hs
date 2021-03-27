@@ -21,7 +21,6 @@ module Crypto.Saltine.Core.AEAD.ChaCha20Poly1305IETF (
   newKey, newNonce
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.AEAD.ChaCha20Poly1305IETF
         ( c_aead
         , c_aead_open

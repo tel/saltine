@@ -19,7 +19,6 @@ import PasswordProperties    (testPassword)
 import UtilProperties        (testUtils)
 import Crypto.Saltine
 
-import Data.Monoid
 import Test.Framework
 
 runOpts :: RunnerOptions

@@ -4,15 +4,12 @@ module UtilProperties (
   testUtils
   ) where
 
-import qualified Crypto.Saltine.Internal.Util           as U
-import           Util
+import Test.Framework.Providers.QuickCheck2
+import Test.Framework
+import Test.QuickCheck
+import Util
 
-import qualified Data.ByteString                        as S
-import           Data.ByteString                            (ByteString)
-import           Test.Framework.Providers.QuickCheck2
-import           Test.Framework
-import           Test.QuickCheck
-
+import qualified Crypto.Saltine.Internal.Util as U
 
 -- | Testing the comparison of keys
 keyEquality :: ByteString32 -> Property

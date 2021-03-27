@@ -29,7 +29,6 @@ module Crypto.Saltine.Core.AEAD.AES256GCM (
   newKey, newNonce
   ) where
 
-import Control.Applicative
 import Crypto.Saltine.Internal.AEAD.AES256GCM
             ( c_aead_aes256gcm_is_available
             , c_aead
