@@ -100,6 +100,7 @@ import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
 import Data.Data                    (Data, Typeable)
 import Data.Hashable                (Hashable)
+import Data.Monoid
 import Data.Text                    (Text)
 import GHC.Generics                 (Generic)
 import Foreign.C

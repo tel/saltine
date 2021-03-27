@@ -7,6 +7,7 @@ where
 
 import Data.ByteString          (ByteString)
 import Data.ByteString.Unsafe
+import Data.Monoid
 import Foreign.C
 import Foreign.Marshal.Alloc    (mallocBytes, allocaBytes)
 import Foreign.Ptr

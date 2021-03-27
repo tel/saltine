@@ -8,6 +8,7 @@ module PasswordProperties (
 import Crypto.Saltine.Core.Password
 import Crypto.Saltine.Internal.Util
 import Data.Maybe                             (isJust, isNothing, fromJust)
+import Data.Monoid
 import Data.Text                              (Text)
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework

@@ -6,6 +6,7 @@ module BoxProperties (
   ) where
 
 import Crypto.Saltine.Core.Box
+import Data.Monoid
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework
 import Test.QuickCheck.Property
