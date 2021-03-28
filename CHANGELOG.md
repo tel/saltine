@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Export Key/Nonce/… constructors from Internal module
 - New password hashing module
 - Show instances for most (all?) relevant data types
+- Signature types for detached functions
+
+### Changed
+- newtype accessor functions added, keypairs are separate data types now instead
+of tuples
 
 ## [0.1.1.1] - 2021-01-15
 ### Changed
