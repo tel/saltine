@@ -19,7 +19,8 @@ module Crypto.Saltine.Internal.SecretBox (
   c_secretbox_open,
   c_secretbox_open_detached,
   Key(..),
-  Nonce(..)
+  Nonce(..),
+  Authenticator(..)
 ) where
 
 import Control.DeepSeq              (NFData)
@@ -70,6 +71,20 @@ instance IsEncoding Nonce where
 instance IsNonce Nonce where
   zero            = Nonce (S.replicate secretbox_noncebytes 0)
   nudge (Nonce n) = Nonce (nudgeBS n)
+
+
+-- | An Authenticator for a Message
+newtype Authenticator = Au { unAu :: ByteString } deriving (Eq, Ord, Data, Typeable, Hashable, Generic, NFData)
+instance Show Authenticator where
+    show k = "Sign.Authenticator " <> bin2hex (encode k)
+
+instance IsEncoding Authenticator where
+  decode v = if S.length v == secretbox_macbytes
+           then Just (Au v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Au v) = v
+  {-# INLINE encode #-}
 
 
 -- | Size of a @crypto_secretbox@ secret key

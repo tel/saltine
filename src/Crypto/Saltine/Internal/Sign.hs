@@ -20,6 +20,7 @@ module Crypto.Saltine.Internal.Sign (
   , SecretKey(..)
   , PublicKey(..)
   , Keypair(..)
+  , Signature(..)
 ) where
 
 import Control.DeepSeq              (NFData)
@@ -80,6 +81,23 @@ instance Eq Keypair where
 
 instance Hashable Keypair
 instance NFData   Keypair
+
+
+-- | A signature for a Message
+newtype Signature = Signature { unSignature :: ByteString } deriving (Ord, Data, Typeable, Hashable, Generic, NFData)
+instance Eq Signature where
+    Signature a == Signature b = U.compare a b
+instance Show Signature where
+    show k = "Sign.Signature " <> bin2hex (encode k)
+
+-- | Actual signatures may be shorter, but not when generated with saltine.
+instance IsEncoding Signature where
+  decode v = if S.length v == sign_bytes
+           then Just (Signature v)
+           else Nothing
+  {-# INLINE decode #-}
+  encode (Signature s) = s
+  {-# INLINE encode #-}
 
 sign_bytes, sign_publickeybytes, sign_secretkeybytes :: Int
 

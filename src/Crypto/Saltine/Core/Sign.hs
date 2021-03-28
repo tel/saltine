@@ -27,7 +27,7 @@
 -- This is current information as of 2013 June 6.
 
 module Crypto.Saltine.Core.Sign (
-  SecretKey, PublicKey, Keypair(..),
+  SecretKey, PublicKey, Keypair(..), Signature,
   newKeypair,
   sign, signOpen,
   signDetached, signVerifyDetached
@@ -42,6 +42,7 @@ import Crypto.Saltine.Internal.Sign
             , SecretKey(..)
             , PublicKey(..)
             , Keypair(..)
+            , Signature(..)
             )
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
@@ -102,7 +103,7 @@ signOpen (PK k) sm = unsafePerformIO $
 signDetached :: SecretKey
              -> ByteString
              -- ^ Message
-             -> ByteString
+             -> Signature
              -- ^ Signature
 signDetached (SK k) m = unsafePerformIO $
     alloca $ \psmlen -> do
@@ -110,18 +111,18 @@ signDetached (SK k) m = unsafePerformIO $
             constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
                 c_sign_detached sigbuf psmlen pm (fromIntegral len) pk
         smlen <- peek psmlen
-        return $ S.take (fromIntegral smlen) sm
+        return $ Signature $ S.take (fromIntegral smlen) sm
   where len = S.length m
 
 -- | Returns @True@ if the signature is valid for the given public key and
 -- message.
 signVerifyDetached :: PublicKey
-                   -> ByteString
+                   -> Signature
                    -- ^ Signature
                    -> ByteString
                    -- ^ Message
                    -> Bool
-signVerifyDetached (PK k) sig sm = unsafePerformIO $
+signVerifyDetached (PK k) (Signature sig) sm = unsafePerformIO $
     constByteStrings [k, sig, sm] $ \[(pk, _), (psig, _), (psm, _)] -> do
         res <- c_sign_verify_detached psig psm (fromIntegral len) pk
         return (res == 0)

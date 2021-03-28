@@ -6,6 +6,7 @@ module SignProperties (
 
 import           Util
 import           Crypto.Saltine.Core.Sign
+import           Crypto.Saltine.Internal.Sign
 
 import qualified Data.ByteString                      as S
 import           Test.Framework.Providers.QuickCheck2
@@ -37,6 +38,6 @@ testSign = buildTest $ do
 
     testProperty "Rejects message with mismatched key w/ detached signature"
     $ \(Message bs) -> not (S.null bs) ==>
-                         not (signVerifyDetached pk2 (sign sk1 bs) bs)
+                         not (signVerifyDetached pk2 (Signature bs) (sign sk1 bs))
 
     ]

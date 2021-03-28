@@ -8,7 +8,7 @@ module SecretBoxProperties (
 import           Util
 import           Crypto.Saltine.Core.SecretBox
 import           Crypto.Saltine.Class
-import           Crypto.Saltine.Internal.SecretBox as Bytes
+import           Crypto.Saltine.Internal.SecretBox as Internal
 
 import qualified Data.ByteString                      as S
 import           Data.Maybe (fromJust)
@@ -19,12 +19,12 @@ import           Test.QuickCheck.Arbitrary
 
 instance Arbitrary Nonce where
     arbitrary =
-        do bs <- S.pack <$> vector Bytes.secretbox_noncebytes
+        do bs <- S.pack <$> vector Internal.secretbox_noncebytes
            pure $ fromJust  (decode bs)
 
 instance Arbitrary Key where
     arbitrary =
-        do bs <- S.pack <$> vector Bytes.secretbox_keybytes
+        do bs <- S.pack <$> vector Internal.secretbox_keybytes
            pure $ fromJust (decode bs)
 
 -- | Ciphertext can be decrypted
@@ -46,8 +46,9 @@ rightInverseFailureProp k n (Message bs) p =
 
 -- | Ciphertext cannot be decrypted if the tag is perturbed
 rightInverseTagFailureProp :: Key -> Nonce -> Message -> Message -> Property
-rightInverseTagFailureProp k n (Message bs) (Message fakeTag) =
+rightInverseTagFailureProp k n (Message bs) (Message fakeTagBs) =
   let (realTag, ct) = secretboxDetached k n bs
+      fakeTag       = Internal.Au fakeTagBs
   in realTag /= fakeTag ==> Nothing == secretboxOpenDetached k n fakeTag ct
 
 -- | Ciphertext cannot be decrypted if the ciphertext is perturbed

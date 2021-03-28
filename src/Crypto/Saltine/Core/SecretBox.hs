@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, DeriveGeneric #-}
-
 -- |
 -- Module      : Crypto.Saltine.Core.SecretBox
 -- Copyright   : (c) Joseph Abrahamson 2013
@@ -40,7 +38,7 @@
 --
 -- This is version 2010.08.30 of the secretbox.html web page.
 module Crypto.Saltine.Core.SecretBox (
-  Key, Nonce,
+  Key, Nonce, Authenticator,
   secretbox, secretboxOpen,
   secretboxDetached, secretboxOpenDetached,
   newKey, newNonce
@@ -53,6 +51,7 @@ import Crypto.Saltine.Internal.SecretBox
             , c_secretbox_open_detached
             , Key(..)
             , Nonce(..)
+            , Authenticator(..)
             )
 import Crypto.Saltine.Internal.Util as U
 import Data.ByteString              (ByteString)
@@ -94,14 +93,14 @@ secretboxDetached
     -> Nonce
     -> ByteString
     -- ^ Message
-    -> (ByteString,ByteString)
+    -> (Authenticator,ByteString)
     -- ^ (Authentication Tag, Ciphertext)
 secretboxDetached (Key key) (Nonce nonce) msg =
   buildUnsafeByteString ctLen $ \pc ->
-   fmap snd . buildUnsafeByteString' tagLen $ \ptag ->
-    constByteStrings [key, msg, nonce] $ \
-      [(pk, _), (pmsg, _), (pn, _)] ->
-        c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
+    fmap (Au . snd) . buildUnsafeByteString' tagLen $ \ptag ->
+      constByteStrings [key, msg, nonce] $ \
+        [(pk, _), (pmsg, _), (pn, _)] ->
+          c_secretbox_detached pc ptag pmsg (fromIntegral ptLen) pn pk
   where ctLen  = ptLen
         ptLen  = S.length msg
         tagLen = Bytes.secretbox_macbytes
@@ -130,13 +129,13 @@ secretboxOpen (Key key) (Nonce nonce) cipher =
 secretboxOpenDetached
     :: Key
     -> Nonce
-    -> ByteString
+    -> Authenticator
     -- ^ Auth Tag
     -> ByteString
     -- ^ Ciphertext
     -> Maybe ByteString
     -- ^ Message
-secretboxOpenDetached (Key key) (Nonce nonce) tag cipher
+secretboxOpenDetached (Key key) (Nonce nonce) (Au tag) cipher
     | S.length tag /= Bytes.secretbox_macbytes = Nothing
     | otherwise =
   let (err, vec) = buildUnsafeByteString len $ \pm ->
