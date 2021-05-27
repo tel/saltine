@@ -120,7 +120,7 @@ signVerifyDetached :: PublicKey
                    -> Signature
                    -- ^ Signature
                    -> ByteString
-                   -- ^ Message
+                   -- ^ Message (not signed)
                    -> Bool
 signVerifyDetached (PK k) (Signature sig) sm = unsafePerformIO $
     constByteStrings [k, sig, sm] $ \[(pk, _), (psig, _), (psm, _)] -> do

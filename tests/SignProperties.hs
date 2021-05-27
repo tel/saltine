@@ -38,6 +38,6 @@ testSign = buildTest $ do
 
     testProperty "Rejects message with mismatched key w/ detached signature"
     $ \(Message bs) -> not (S.null bs) ==>
-                         not (signVerifyDetached pk2 (Signature bs) (sign sk1 bs))
+                         not (signVerifyDetached pk2 (signDetached sk1 bs) bs)
 
     ]
