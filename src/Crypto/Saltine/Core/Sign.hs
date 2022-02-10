@@ -40,6 +40,7 @@ import Crypto.Saltine.Internal.Sign
             , c_sign_detached
             , c_sign_verify_detached
             , SecretKey(..)
+            , Signature(..)
             , PublicKey(..)
             , Keypair(..)
             , Signature(..)
