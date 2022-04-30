@@ -1,7 +1,7 @@
 cabal-version: 2.0
 
 name:                saltine
-version:             0.2.0.0
+version:             0.2.0.1
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
@@ -32,7 +32,7 @@ bug-reports:         http://github.com/tel/saltine/issues
 copyright:           Copyright (c) Joseph Abrahamson 2013
 category:            Cryptography
 build-type:          Simple
-tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.4, GHC==8.10.4, GHC==9.0.1
+tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.4, GHC==8.10.7, GHC==9.0.2, GHC==9.2.2
 
 source-repository head
   type: git

@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 ### Changed
 
+## [0.2.0.1] - 2022-04-30
+### Changed
+- Relax version bounds on text and bytestring, thanks [@ysangkok](https://github.com/ysangkok)
+
 ## [0.2.0.0] - 2021-05-27
 ### Added
 - All AEAD variants are now in saltine
