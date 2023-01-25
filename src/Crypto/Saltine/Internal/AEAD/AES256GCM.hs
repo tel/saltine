@@ -41,7 +41,7 @@ newtype Key = Key { unKey :: ByteString } deriving (Ord, Hashable, Data, Typeabl
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show k = "AEAD.AES256GCM.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+    show k = "AEAD.AES256GCM.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "\"}"
 
 instance IsEncoding Key where
   decode v = if S.length v == aead_aes256gcm_keybytes
