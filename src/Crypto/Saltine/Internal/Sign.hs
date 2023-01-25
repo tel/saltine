@@ -79,6 +79,9 @@ instance Eq Keypair where
     kp1 == kp2 = U.compare (encode $ secretKey kp1) (encode $ secretKey kp2)
             !&&! U.compare (encode $ publicKey kp1) (encode $ publicKey kp2)
 
+instance Show Keypair where
+    show k = "Sign.Keypair {secretKey = " <> show (secretKey k) <> ", publicKey = " <> show (publicKey k) <> "}"
+
 instance Hashable Keypair
 instance NFData   Keypair
 
