@@ -40,7 +40,7 @@ newtype Key = Key { unKey :: ByteString } deriving (Ord, Hashable, Data, Typeabl
 instance Eq Key where
     Key a == Key b = U.compare a b
 instance Show Key where
-    show k = "AEAD.XChaCha20Poly1305.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+    show k = "AEAD.XChaCha20Poly1305.Key {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "\"}"
 
 instance IsEncoding Key where
   decode v = if S.length v == aead_xchacha20poly1305_ietf_keybytes

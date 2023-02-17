@@ -43,7 +43,7 @@ newtype ShorthashKey = ShK { unShK :: ByteString } deriving (Ord, Hashable, Data
 instance Eq ShorthashKey where
     ShK a == ShK b = U.compare a b
 instance Show ShorthashKey where
-    show k = "Hash.ShorthashKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+    show k = "Hash.ShorthashKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "\"}"
 
 -- | Used for our `Show` instances
 nullShKey :: ShorthashKey
@@ -73,7 +73,7 @@ newtype GenerichashKey = GhK { unGhK :: ByteString } deriving (Ord, Hashable, Da
 instance Eq GenerichashKey where
     GhK a == GhK b = U.compare a b
 instance Show GenerichashKey where
-    show k = "Hash.GenerichashKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+    show k = "Hash.GenerichashKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "\"}"
 
 instance IsEncoding GenerichashKey where
   decode v = if S.length v <= generichash_keybytes_max

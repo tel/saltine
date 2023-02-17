@@ -44,7 +44,7 @@ newtype SecretKey = SK { unSK :: ByteString } deriving (Ord, Hashable, Data, Typ
 instance Eq SecretKey where
     SK a == SK b = U.compare a b
 instance Show SecretKey where
-    show k = "Sign.SecretKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+    show k = "Sign.SecretKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "\"}"
 
 instance IsEncoding SecretKey where
   decode v = if S.length v == sign_secretkeybytes
@@ -59,7 +59,7 @@ newtype PublicKey = PK { unPK :: ByteString } deriving (Ord, Data, Typeable, Has
 instance Eq PublicKey where
     PK a == PK b = U.compare a b
 instance Show PublicKey where
-    show k = "Sign.PublicKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "}\""
+    show k = "Sign.PublicKey {hashesTo = \"" <> (bin2hex . shorthash nullShKey $ encode k) <> "\"}"
 
 instance IsEncoding PublicKey where
   decode v = if S.length v == sign_publickeybytes
@@ -78,6 +78,9 @@ data Keypair = Keypair {
 instance Eq Keypair where
     kp1 == kp2 = U.compare (encode $ secretKey kp1) (encode $ secretKey kp2)
             !&&! U.compare (encode $ publicKey kp1) (encode $ publicKey kp2)
+
+instance Show Keypair where
+    show k = "Sign.Keypair {secretKey = " <> show (secretKey k) <> ", publicKey = " <> show (publicKey k) <> "}"
 
 instance Hashable Keypair
 instance NFData   Keypair
