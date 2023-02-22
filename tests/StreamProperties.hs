@@ -23,8 +23,8 @@ testStream = buildTest $ do
               ==> S.length (stream k n len) == len,
 
     testProperty "xor munges input"
-    $ \(Message bs) -> not (S.null bs)
-                       ==> xor k n bs /= bs,
+    $ \(ByteString32 bs) ->     -- ByteString32 so we don't fail the test by pure chance, e.g. in case of 1-byte bytestrings
+        xor k n bs /= bs,
 
     testProperty "xor is involutive"
     $ \(Message bs) -> xor k n (xor k n bs) == bs
