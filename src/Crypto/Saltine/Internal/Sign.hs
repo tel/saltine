@@ -17,6 +17,8 @@ module Crypto.Saltine.Internal.Sign (
   , c_sign_open
   , c_sign_detached
   , c_sign_verify_detached
+  , c_sign_ed25519_pk_to_curve25519
+  , c_sign_ed25519_sk_to_curve25519
   , SecretKey(..)
   , PublicKey(..)
   , Keypair(..)
@@ -180,3 +182,17 @@ foreign import ccall "crypto_sign_verify_detached"
                            -> Ptr CChar
                            -- ^ Public key buffer
                            -> IO CInt
+
+foreign import ccall "crypto_sign_ed25519_pk_to_curve25519"
+    c_sign_ed25519_pk_to_curve25519 :: Ptr CChar
+                                    -- ^ X25519 public key output buffer
+                                    -> Ptr CChar
+                                    -- ^ Ed25519 public key buffer
+                                    -> IO CInt
+
+foreign import ccall "crypto_sign_ed25519_sk_to_curve25519"
+    c_sign_ed25519_sk_to_curve25519 :: Ptr CChar
+                                    -- ^ X25519 secret key output buffer
+                                    -> Ptr CChar
+                                    -- ^ Ed25519 secret key buffer
+                                    -> IO CInt
