@@ -27,10 +27,19 @@
 -- This is current information as of 2013 June 6.
 
 module Crypto.Saltine.Core.Sign (
+  -- * Documentation
   SecretKey, PublicKey, Keypair(..), Signature,
   newKeypair,
   sign, signOpen,
-  signDetached, signVerifyDetached
+  signDetached, signVerifyDetached,
+
+  -- * Advanced: Ed25519 to Curve25519
+  --
+  -- | Ed25519 keys can be converted to X25519 keys, so that the same
+  -- key pair can be used both for authenticated encryption
+  -- ("Crypto.Saltine.Core.Box") and for signatures
+  -- ("Crypto.Saltine.Core.Sign").
+  signPublicKeyToScalarMult, signSecretKeyToScalarMult
   ) where
 
 import Crypto.Saltine.Internal.Sign
@@ -39,6 +48,8 @@ import Crypto.Saltine.Internal.Sign
             , c_sign_open
             , c_sign_detached
             , c_sign_verify_detached
+            , c_sign_ed25519_pk_to_curve25519
+            , c_sign_ed25519_sk_to_curve25519
             , SecretKey(..)
             , PublicKey(..)
             , Keypair(..)
@@ -51,6 +62,7 @@ import Foreign.Storable
 import System.IO.Unsafe
 
 import qualified Crypto.Saltine.Internal.Sign as Bytes
+import qualified Crypto.Saltine.Internal.ScalarMult as SM
 import qualified Data.ByteString              as S
 
 -- | Creates a random key of the correct size for 'sign' and
@@ -128,4 +140,22 @@ signVerifyDetached (PK k) (Signature sig) sm = unsafePerformIO $
         return (res == 0)
   where len = S.length sm
 
+-- | Converts an Ed25519 public key to an X25519 public key.
+signPublicKeyToScalarMult :: PublicKey -> Maybe SM.GroupElement
+signPublicKeyToScalarMult (PK pk) = unsafePerformIO $ do
+  (err,x) <- buildUnsafeByteString' SM.scalarmult_bytes $ \xbuf ->
+    constByteStrings [pk] $ \[(edbuf,_)] ->
+      c_sign_ed25519_pk_to_curve25519 xbuf edbuf
+  case err of
+    0 -> return $ Just $ SM.GE x
+    _ -> return   Nothing
 
+-- | Converts an Ed25519 secret key to an X25519 secret key.
+signSecretKeyToScalarMult :: SecretKey -> Maybe SM.Scalar
+signSecretKeyToScalarMult (SK sk) = unsafePerformIO $ do
+  (err,x) <- buildUnsafeByteString' SM.scalarmult_bytes $ \xbuf ->
+    constByteStrings [sk] $ \[(edbuf,_)] ->
+      c_sign_ed25519_sk_to_curve25519 xbuf edbuf
+  case err of
+    0 -> return $ Just $ SM.Sc x
+    _ -> return   Nothing
