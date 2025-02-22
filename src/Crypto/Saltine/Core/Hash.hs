@@ -41,18 +41,28 @@
 -- This is version 2010.08.30 of the hash.html web page. Information
 -- about SipHash has been added.
 module Crypto.Saltine.Core.Hash (
+  -- * Documentation
   ShorthashKey,
   hash,
   shorthash, newShorthashKey,
   GenerichashKey,
   newGenerichashKey,
   GenerichashOutLen,
-  generichashOutLen, generichash
+  generichashOutLen, generichash,
+
+  -- * Advanced: SHA-2
+  --
+  -- | The SHA-256 function is provided for interoperability with
+  -- other applications. If you are looking for a generic hash
+  -- function and not specifically SHA-2, using 'generichash'
+  -- (BLAKE2b) might be a better choice.
+  sha256
   ) where
 
 import Crypto.Saltine.Internal.Hash
             ( c_hash
             , c_generichash
+            , c_hash_sha256
             , shorthash
             , ShorthashKey(..)
             , GenerichashKey(..)
@@ -101,3 +111,8 @@ generichash :: GenerichashKey
 generichash (GhK k) m (GhOL outLen) = snd . buildUnsafeByteString outLen $ \ph ->
   constByteStrings [k, m] $ \[(pk, _), (pm, _)] ->
     c_generichash ph (fromIntegral outLen) pm (fromIntegral $ S.length m) pk (fromIntegral $ S.length k)
+
+-- | Computes a SHA256 hash.
+sha256 :: ByteString -> ByteString
+sha256 m = snd . buildUnsafeByteString Bytes.hash_sha256_bytes $ \ph ->
+  constByteStrings [m] $ \[(pm,_)] -> c_hash_sha256 ph pm (fromIntegral $ S.length m)

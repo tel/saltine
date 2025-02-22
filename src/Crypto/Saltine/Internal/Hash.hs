@@ -14,9 +14,11 @@ module Crypto.Saltine.Internal.Hash (
   , shorthash_keybytes
   , generichash_bytes_max
   , generichash_keybytes_max
+  , hash_sha256_bytes
   , c_hash
   , c_shorthash
   , c_generichash
+  , c_hash_sha256
   , nullShKey
   , shorthash
   , ShorthashKey(..)
@@ -85,7 +87,7 @@ instance IsEncoding GenerichashKey where
 
 newtype GenerichashOutLen = GhOL { unGhOL :: Int } deriving (Eq, Ord, Hashable, Data, Typeable, Generic, NFData)
 
-hash_bytes, shorthash_bytes, shorthash_keybytes, generichash_bytes_max, generichash_keybytes_max :: Int
+hash_bytes, shorthash_bytes, shorthash_keybytes, generichash_bytes_max, generichash_keybytes_max, hash_sha256_bytes :: Int
 
 -- Hashes
 -- | The size of a hash resulting from
@@ -103,6 +105,9 @@ generichash_bytes_max = fromIntegral c_crypto_generichash_bytes_max
 -- | The maximum key size of the generic hash function
 -- 'Crypto.Saltine.Core.Hash.generichash'
 generichash_keybytes_max = fromIntegral c_crypto_generichash_keybytes_max
+-- | The size of a hash resulting from
+-- 'Crypto.Saltine.Core.Hash.sha256'.
+hash_sha256_bytes = fromIntegral c_crypto_hash_sha256_bytes
 
 -- src/libsodium/crypto_generichash/crypto_generichash.c
 foreign import ccall "crypto_generichash_bytes_max"
@@ -121,6 +126,11 @@ foreign import ccall "crypto_shorthash_bytes"
   c_crypto_shorthash_bytes :: CSize
 foreign import ccall "crypto_shorthash_keybytes"
   c_crypto_shorthash_keybytes :: CSize
+
+-- src/libsodium/crypto_hash/sha256/hash_sha256.c
+-- src/libsodium/include/sodium/crypto_hash_sha256.h
+foreign import ccall "crypto_hash_sha256_bytes"
+  c_crypto_hash_sha256_bytes :: CSize
 
 
 foreign import ccall "crypto_hash"
@@ -158,5 +168,15 @@ foreign import ccall "crypto_generichash"
                 -- ^ Constant Key buffer
                 -> CULLong
                 -- ^ Key buffer length
+                -> IO CInt
+                -- ^ Always 0
+
+foreign import ccall "crypto_hash_sha256"
+  c_hash_sha256 :: Ptr CChar
+                -- ^ Output hash buffer
+                -> Ptr CChar
+                -- ^ Constant message buffer
+                -> CULLong
+                -- ^ Message buffer length
                 -> IO CInt
                 -- ^ Always 0
