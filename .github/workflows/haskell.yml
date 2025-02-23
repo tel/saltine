@@ -14,18 +14,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Workaround runner image issue
-      if: ${{ runner.os == 'Linux' }}
-      # https://github.com/actions/runner-images/issues/7061
-      run: sudo chown -R $USER /usr/local/.ghcup
-
-    - uses: haskell/actions/setup@v2
+    - uses: haskell-actions/setup@v2
       with:
         ghc-version: ${{ matrix.ghc-version }}
         cabal-version: '3.14'
 
     - name: Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       env:
         cache-name: cache-cabal-ghc-${{ matrix.ghc-version }}
       with:
