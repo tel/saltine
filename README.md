@@ -43,22 +43,22 @@ binding to NaCl (via
 provide even more simplicity and safety to the usage of cryptography.
 
 Note that it's still possible to shoot yourself in the foot pretty
-easily using Saltine. Nonces must always be unique which must be managed 
+easily using Saltine. Nonces must always be unique which must be managed
 by the library user.
 [`Crypto.Saltine.Core.Stream`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/Stream.hs)
-produces messages which can beundetectably tampered with in-flight. 
-Keys are insecurely read from disk—they may be copied and then paged 
+produces messages which can beundetectably tampered with in-flight.
+Keys are insecurely read from disk—they may be copied and then paged
 back to disk.
 
-When uncertain, use [`Crypto.Saltine.Core.SecretBox`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/SecretBox.hs) 
+When uncertain, use [`Crypto.Saltine.Core.SecretBox`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/SecretBox.hs)
 and [`Crypto.Saltine.Core.Box`](https://github.com/tel/saltine/blob/master/src/Crypto/Saltine/Core/Box.hs).
-If you can think of ways to use Haskell's type system to enforce 
+If you can think of ways to use Haskell's type system to enforce
 security invariants, please suggest them.
 
-To use it on Windows systems, download 
-[a prebuild libsodium-\*-stable-mingw.tar.gz file](https://download.libsodium.org/libsodium/releases/) 
-and copy the files in `libsodium-win64`  into the equivalent places 
-in `C:\Program Files\Haskell Platform\*\mingw`. Then just add saltine 
+To use it on Windows systems, download
+[a prebuild libsodium-\*-stable-mingw.tar.gz file](https://download.libsodium.org/libsodium/releases/)
+and copy the files in `libsodium-win64`  into the equivalent places
+in `C:\Program Files\Haskell Platform\*\mingw`. Then just add saltine
 to your cabal file and watch it go.
 
 Tested with [`libsodium-1.0.18`](https://download.libsodium.org/libsodium/releases/).
