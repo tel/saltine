@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 ### Changed
 
+## [0.2.2.0] - 2025-02-22
+### Added
+- SHA256 support, thanks [@jmazon](https://github.com/jmazon)
+- Ed25519 to Curve25519 conversion support, thanks [@jmazon](https://github.com/jmazon)
+### Changed
+- Version bounds relaxed
+
 ## [0.2.1.0] - 2023-02-17
 ### Changed
 - Fix Show instances formatting, and add instances for Keypairs, thanks [@NicolasT](https://github.com/NicolasT)

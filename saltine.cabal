@@ -1,7 +1,7 @@
 cabal-version: 2.0
 
 name:                saltine
-version:             0.2.1.0
+version:             0.2.2.0
 synopsis:            Cryptography that's easy to digest (NaCl/libsodium bindings).
 description:
 
