@@ -9,10 +9,10 @@ jobs:
 
     strategy:
       matrix:
-        ghc-version: ['8.0.2','8.2.2','8.4.4','8.6.5','8.8.4','8.10.7','9.0.2', '9.2.6', '9.4.4']
+        ghc-version: ['8.0.2','8.2.2','8.4.4','8.6.5','8.8.4','8.10.7','9.0.2', '9.2.8', '9.4.7', '9.6.6', '9.8.4', '9.10.1', '9.12.1']
       fail-fast: false
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Workaround runner image issue
       if: ${{ runner.os == 'Linux' }}
@@ -22,7 +22,7 @@ jobs:
     - uses: haskell/actions/setup@v2
       with:
         ghc-version: ${{ matrix.ghc-version }}
-        cabal-version: '3.8'
+        cabal-version: '3.14'
 
     - name: Cache
       uses: actions/cache@v2
